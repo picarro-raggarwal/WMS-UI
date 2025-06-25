@@ -1,0 +1,61 @@
+version: '3.4'
+services:
+ wms-ui:
+  environment:
+   NGINX_PORT: 3001
+   SERVER_IP: '$host_name'
+   SSL_CERT_FILE: '/etc/nginx/nginx.crt'
+   SSL_CERT_KEY: '/etc/nginx/nginx.key'
+   WMS_BASE_URL: 'http://$host_name:8000'
+   WS_BASE_URL: 'http://$host_name:8090'
+  image: 'picarro-foup-ui-dev.jfrog.io/wms-ui:$foup_ui_tag'
+  ports:
+   - '3001:3001'
+  volumes:
+   - read_only: true
+    source: ./certs/nginx.crt
+    target: /etc/nginx/nginx.crt
+    type: bind
+   - read_only: true
+    source: ./certs/nginx.key
+    target: /etc/nginx/nginx.key
+    type: bind
+  restart: always
+
+  ws-api:
+    image: 'picarro-common-docker-repo.jfrog.io/ws-api:$ws_api_tag'
+    ports:
+    - '8090:8000'
+    environment:
+    APP_LOG_LEVEL: DEBUG
+    MQ_LOG_LEVEL: INFO
+    WS_ALLOWED_ORIGINS: http://localhost:3001,${HOST_BASE_URL:-http://host.docker.internal:4200}
+    WS_ALLOWED_NAMESPACES: running_status,analyzer_heartbeat_event,voc_analyzer_discovery,fenceline_job_state_machine,anemometer_data,catalytic_converter_data,gas_tank_data,hvac_system_data,temperature_controller_data,mfc_data,samlet_data,analyzer_live_data,processed_alerts,acked_alerts,cleared_alerts
+    WS_MQ_CONS_SERVERS: tcp://zmq-proxy:5000
+    WS_MQ_CONS_TOPICS: running_status,events,analyzer_health_alert,fenceline_job_state,subcomponent_data,system_alerts,acked_alerts,cleared_alerts
+    WS_MQ_TYPE: zmq
+    WS_MQ_CONS_TIMEOUT: 10
+    WS_EVENT_LOGOUT: logout
+    WS_LOGIN_ENABLED: "False"
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    volumes:
+    - type: bind
+      source: /etc/localtime
+      target: /etc/localtime
+      read_only: true
+    depends_on:
+    - zmq-proxy
+  zmq-proxy:
+    restart: always
+    image: 'picarro-sam-docker-repo.jfrog.io/zmq:$zmq_proxy_tag'
+    ports:
+    - "5000:5000"
+    - "5001:5001"
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    - "$host_name:host-gateway"
+    environment:
+    ZMQ_SERVER: 0.0.0.0
+    ZMQ_CONS_PORT: 5000
+    ZMQ_PROD_PORT: 5001
