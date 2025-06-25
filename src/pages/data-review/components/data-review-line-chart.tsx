@@ -1,16 +1,16 @@
 import { ChartData } from "@/types/data-review";
+import {
+  formatDateTime,
+  formatDate as formatDateUtil,
+  formatTime as formatTimeUtil
+} from "@/utils";
 import type { EChartsOption } from "echarts";
 import * as echarts from "echarts";
 import type { LineSeriesOption } from "echarts/charts";
 import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
-import { useChartContext } from "./data-review-chart-context";
 import { ThresholdsConfig } from "../types";
-import {
-  formatTime as formatTimeUtil,
-  formatDate as formatDateUtil,
-  formatDateTime,
-} from "@/utils";
+import { useChartContext } from "./data-review-chart-context";
 
 type DataReviewLineChartProps = {
   data: ChartData[];
@@ -25,9 +25,14 @@ type DataReviewLineChartProps = {
   onRegionSelect?: (start: number, end: number) => void;
   zoomStart?: number;
   zoomEnd?: number;
+  onInstance?: (instance: echarts.ECharts) => void;
 };
 
-const formatDate = (timestamp: string | number, timeRange: string, isTooltip = false) => {
+const formatDate = (
+  timestamp: string | number,
+  timeRange: string,
+  isTooltip = false
+) => {
   const date = new Date(Number(timestamp));
 
   if (isTooltip) {
@@ -44,7 +49,10 @@ const formatDate = (timestamp: string | number, timeRange: string, isTooltip = f
   return formatDateUtil(date);
 };
 
-const getColorForValue = (value: number, thresholds: ThresholdsConfig | null): string => {
+const getColorForValue = (
+  value: number,
+  thresholds: ThresholdsConfig | null
+): string => {
   if (!thresholds) return COLORS[0];
   if (value >= thresholds.alarm.value && thresholds.alarm.visible) {
     return thresholds.alarm.color;
@@ -55,7 +63,10 @@ const getColorForValue = (value: number, thresholds: ThresholdsConfig | null): s
   return COLORS[0];
 };
 
-const getIconForValue = (value: number, thresholds: ThresholdsConfig | null): string => {
+const getIconForValue = (
+  value: number,
+  thresholds: ThresholdsConfig | null
+): string => {
   if (!thresholds) {
     return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd"/></svg>';
   }
@@ -108,34 +119,34 @@ const createLineSeries = (
       silent: true,
       lineStyle: {
         type: "dashed" as const,
-        width: 1,
+        width: 1
       },
       symbol: "none",
       label: {
-        show: false,
+        show: false
       },
-      data: [],
+      data: []
     };
     if (thresholds?.warning.visible) {
       markLine.data.push({
         yAxis: thresholds.warning.value,
         lineStyle: {
-          color: thresholds.warning.color,
+          color: thresholds.warning.color
         },
         label: {
-          show: false,
-        },
+          show: false
+        }
       });
     }
     if (thresholds?.alarm.visible) {
       markLine.data.push({
         yAxis: thresholds.alarm.value,
         lineStyle: {
-          color: thresholds.alarm.color,
+          color: thresholds.alarm.color
         },
         label: {
-          show: false,
-        },
+          show: false
+        }
       });
     }
   }
@@ -155,26 +166,26 @@ const createLineSeries = (
                 borderColor: getColorForValue(Number(item.value), thresholds),
                 borderWidth: 2,
                 shadowBlur: 4,
-                shadowColor: getColorForValue(Number(item.value), thresholds),
+                shadowColor: getColorForValue(Number(item.value), thresholds)
               }
-            : undefined,
+            : undefined
       })),
       showSymbol: true,
       smooth: 0,
       sampling: "average",
       lineStyle: {
-        width: 1.5,
+        width: 1.5
       },
       areaStyle: {
-        opacity: 0,
+        opacity: 0
       },
       emphasis: {
-        focus: "series",
+        focus: "series"
       },
       animationDuration: 300,
       animationEasing: "linear",
-      markLine: markLine,
-    } satisfies LineSeriesOption,
+      markLine: markLine
+    } satisfies LineSeriesOption
   ];
 
   // ...(thresholds?.warning.visible
@@ -218,19 +229,22 @@ const createLineSeries = (
 };
 
 const createVisualMap = (thresholds: ThresholdsConfig | null) => {
-  if (!thresholds || (!thresholds.warning.visible && !thresholds.alarm.visible)) {
+  if (
+    !thresholds ||
+    (!thresholds.warning.visible && !thresholds.alarm.visible)
+  ) {
     return {
       show: false,
       pieces: [
         {
           gt: Number.MIN_SAFE_INTEGER,
           lte: Number.MAX_SAFE_INTEGER,
-          color: COLORS[0],
-        },
+          color: COLORS[0]
+        }
       ],
       outOfRange: {
-        color: "#999",
-      },
+        color: "#999"
+      }
     };
   }
 
@@ -244,13 +258,13 @@ const createVisualMap = (thresholds: ThresholdsConfig | null) => {
     show: false,
     pieces: [],
     outOfRange: {
-      color: "#999",
-    },
+      color: "#999"
+    }
   };
 
   const normalPiece: Piece = {
     gt: Number.MIN_SAFE_INTEGER,
-    color: COLORS[0],
+    color: COLORS[0]
   };
   let warningPiece: Piece | undefined = undefined;
   let alarmPiece: Piece | undefined = undefined;
@@ -259,7 +273,7 @@ const createVisualMap = (thresholds: ThresholdsConfig | null) => {
     normalPiece.lte = thresholds.warning.value;
     warningPiece = {
       gt: thresholds.warning.value,
-      color: thresholds.warning.color,
+      color: thresholds.warning.color
     };
   }
 
@@ -272,7 +286,7 @@ const createVisualMap = (thresholds: ThresholdsConfig | null) => {
     }
     alarmPiece = {
       gt: thresholds.alarm.value,
-      color: thresholds.alarm.color,
+      color: thresholds.alarm.color
     };
   }
 
@@ -299,7 +313,7 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
     units = "",
     thresholds,
     timeRange = "realtime",
-    enableZoom = false,
+    enableZoom = false
   } = props;
   const htmlContainerRef = useRef<HTMLDivElement>();
   const chartInstanceRef = useRef<echarts.ECharts>();
@@ -315,6 +329,7 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
     const chartInstance = echarts.init(htmlContainer, theme);
     chartInstanceRef.current = chartInstance;
     setChartInstance(chartInstance);
+    if (props.onInstance) props.onInstance(chartInstance);
 
     // enable the zoom brush, remove the listener because "finished" fires many times
     new Promise((resolve) => {
@@ -322,7 +337,7 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
         chartInstance.dispatchAction({
           type: "takeGlobalCursor",
           key: "dataZoomSelect",
-          dataZoomSelectActive: true,
+          dataZoomSelectActive: true
         });
         resolve(true);
       });
@@ -362,17 +377,17 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
         right: 10,
         top: 35,
         bottom: 12,
-        containLabel: true,
+        containLabel: true
       },
       visualMap: createVisualMap(thresholds),
       xAxis: {
         type: "category",
         data: data.map((item) => item.timestamp),
         axisLine: {
-          show: false,
+          show: false
         },
         axisTick: {
-          show: false,
+          show: false
         },
         axisLabel: {
           color: "#888888",
@@ -380,8 +395,8 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
           formatter: (value: string) => formatDate(Number(value), timeRange),
           hideOverlap: true,
           padding: [8, 0, 0, 0],
-          fontFamily: "Wix Madefor Text Variable, system-ui, sans-serif",
-        },
+          fontFamily: "Wix Madefor Text Variable, system-ui, sans-serif"
+        }
       },
 
       tooltip: {
@@ -404,13 +419,13 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
           lineStyle: {
             color: isDark ? "#374151" : "#374151",
             type: "dashed",
-            width: 0.5,
-          },
+            width: 0.5
+          }
         },
         textStyle: {
           fontFamily: "DM Sans, system-ui, sans-serif",
           color: isDark ? "#e5e7eb" : "#374151",
-          fontSize: 12,
+          fontSize: 12
         },
         formatter: (params: echarts.DefaultLabelFormatterCallbackParams[]) => {
           const mainParam = params[0];
@@ -435,7 +450,7 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
               </div>
             </div>
           `;
-        },
+        }
       },
       toolbox: {
         show: true,
@@ -449,52 +464,63 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
             yAxisIndex: "none",
             icon: {
               zoom: "</>",
-              back: "</>",
+              back: "</>"
             },
             iconStyle: {
               borderWidth: 1.5,
               color: "none",
               borderColor: isDark ? "#9ca3af" : "#6b7280",
-              opacity: 0.75,
+              opacity: 0.75
             },
             emphasis: {
               iconStyle: {
-                borderColor: isDark ? "#e5e7eb" : "#374151",
-              },
-            },
-          },
-        },
+                borderColor: isDark ? "#e5e7eb" : "#374151"
+              }
+            }
+          }
+        }
       },
       yAxis: {
         type: "value",
         splitNumber: 4,
         axisLine: {
-          show: false,
+          show: false
         },
         axisTick: {
-          show: false,
+          show: false
         },
         splitLine: {
           show: true,
           lineStyle: {
-            color: isDark ? "rgba(55, 65, 81, 0.15)" : "rgba(229, 231, 235, 0.5)",
+            color: isDark
+              ? "rgba(55, 65, 81, 0.15)"
+              : "rgba(229, 231, 235, 0.5)",
             type: "solid",
-            width: 1,
-          },
+            width: 1
+          }
         },
         axisLabel: {
           color: "#888888",
           fontSize: 11,
           fontFamily: "Wix Madefor Text Variable, system-ui, sans-serif",
           formatter: (value: number) => `${Math.round(value)}`,
-          padding: [0, 15, 0, 0],
-        },
+          padding: [0, 15, 0, 0]
+        }
       },
-      series: createLineSeries(data, categories, thresholds),
+      series: createLineSeries(data, categories, thresholds)
     };
 
     chartInstanceRef.current.setOption(option);
-  }, [data, categories, index, units, thresholds, theme, timeRange, enableZoom]);
+  }, [
+    data,
+    categories,
+    index,
+    units,
+    thresholds,
+    theme,
+    timeRange,
+    enableZoom
+  ]);
 
   return <div ref={htmlContainerRef} className="w-full h-[300px]" />;
 };

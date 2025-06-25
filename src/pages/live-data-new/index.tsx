@@ -1,6 +1,16 @@
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 import { PageHeader } from "@/components/ui/page-header";
-import { useState } from "react";
-import { generateMockData, MockData } from "./data/mock-data";
+import { Droplets, FlaskConical, RotateCcw } from "lucide-react";
+import React, { useState } from "react";
+import { ChartProvider } from "../data-review/components/data-review-chart-context";
+import DataReviewLineChart from "../data-review/components/data-review-line-chart";
+import { generateMockData, getTextColor, MockData } from "./data/mock-data";
 
 const TOTAL_PORTS = 62;
 
@@ -10,8 +20,8 @@ const LiveDataPage = () => {
   return (
     <>
       <PageHeader />
-      <main className="flex flex-col items-center py-8 w-full h-full overflow-y-auto">
-        <div className="flex flex-wrap justify-center gap-1">
+      <main className="flex flex-col items-center w-full h-full">
+        <div className="flex flex-wrap justify-center gap-1 pt-5">
           {liveData.map((port, index) => (
             <Card port={port} key={index} />
           ))}
@@ -23,116 +33,216 @@ const LiveDataPage = () => {
 
 export default LiveDataPage;
 
-const Card = ({ port, key }: { port: MockData; key: number }) => {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const { isInActive } = port;
+const getCardWidth = (totalPorts: number) => {
+  if (totalPorts <= 16) return 216; // 54 * 4 = 216px
+  if (totalPorts <= 32) return 152; // 38 * 4 = 152px
+  if (totalPorts <= 48) return 128; // 32 * 4 = 128px
+  if (totalPorts <= 64) return 112; // 28 * 4 = 112px
+  return 120; // fallback for very large numbers
+};
 
-  const handleClick = () => {
-    if (!isInActive) {
-      setIsFlipped(!isFlipped);
-    }
-  };
+const getFontSizeClasses = (cardWidth: number) => {
+  if (cardWidth >= 200) {
+    return { main: "text-2xl", label: "text-lg" };
+  } else if (cardWidth >= 150) {
+    return { main: "text-xl", label: "text-base" };
+  } else if (cardWidth >= 120) {
+    return { main: "text-lg", label: "text-sm" };
+  } else {
+    return { main: "text-base", label: "text-xs" };
+  }
+};
+
+const Card = ({ port }: { port: MockData }) => {
+  const [open, setOpen] = React.useState(false);
+  const {
+    isInActive,
+    portNum,
+    conc,
+    label,
+    status,
+    isSampling,
+    isPrime,
+    updatedAt
+  } = port;
+  const cardWidth = getCardWidth(TOTAL_PORTS);
+  const { main: mainFontClass, label: labelFontClass } =
+    getFontSizeClasses(cardWidth);
+
+  const { data: timeSeriesData, categories } = generateMockTimeSeriesData(port);
+  const [chartInstance, setChartInstance] = useState<any>(null);
 
   return (
-    <div
-      key={key}
-      className={`relative w-40 h-40 [perspective:1000px] cursor-pointer group ${
-        isInActive ? "pointer-events-none opacity-40" : " transition-transform duration-200"
-      }`}
-      onClick={handleClick}>
+    <>
       <div
-        className={`relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d] ${
-          isFlipped ? "[transform:rotateY(180deg)]" : ""
-        }`}>
-        <CardFront port={port} />
-        <CardBack port={port} />
+        style={{ width: cardWidth, height: cardWidth }}
+        className={`relative cursor-pointer group ${
+          isInActive
+            ? "pointer-events-none opacity-40"
+            : "transition-transform duration-200"
+        } flex flex-col gap-2 border rounded-md shadow-border py-4 px-3 ${
+          !isInActive && getBgColor(status)
+        } transition-colors duration-200`}
+        onClick={() => !isInActive && setOpen(true)}
+      >
+        <div className="flex justify-center items-center">
+          <span className={`font-semibold text-gray-800 ${labelFontClass}`}>
+            {portNum}. {label}
+          </span>
+        </div>
+        <div className="flex justify-center items-center">
+          <span className={`font-bold text-gray-900 ${mainFontClass}`}>
+            {conc ?? "Flow Error"}
+          </span>
+        </div>
+        <StatusIndicator isSampling={isSampling} isPrime={isPrime} />
       </div>
-    </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-5xl h-[60vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              <div className="flex items-center gap-4 pr-4">
+                <span>
+                  {label} (Port {portNum})
+                </span>
+
+                {isSampling && (
+                  <StatusBadgeLarge type="sampling" label="Sampling" />
+                )}
+                {isPrime && (
+                  <StatusBadgeLarge type="prime" label="Prime Active" />
+                )}
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex  justify-between items-center gap-x-8 gap-y-2 w-full">
+            {/* Sensor Name */}
+            <div className="flex flex-col">
+              <div className="font-medium text-zinc-400 text-xs">
+                Sensor Name
+              </div>
+              <span className="font-bold text-black text-xl">{label}</span>
+            </div>
+
+            {/* Status */}
+            <div className="flex flex-col items-center">
+              <div className="font-medium text-zinc-400 text-xs">Status</div>
+              <div className={`text-lg font-bold  ${getTextColor(status)}`}>
+                {getStatusText(status)}
+              </div>
+            </div>
+
+            {/* Last Updated */}
+            <div className="flex flex-col text-right">
+              <div className="font-medium text-zinc-400 text-xs">
+                Last Updated
+              </div>
+              <div className="font-bold text-black text-base">
+                {new Date(updatedAt).toLocaleString()}
+              </div>
+            </div>
+            {/* Port Number */}
+            {/* <div className="flex flex-col items-center">
+              <div className="font-medium text-zinc-400 text-xs">
+                Port Number
+              </div>
+              <div className="font-bold text-black text-lg">{portNum}</div>
+            </div> */}
+            {/* Concentration */}
+            <div className="flex flex-col items-center">
+              <div className="font-medium text-zinc-400 text-xs">
+                Concentration
+              </div>
+              <div className="font-bold text-black text-lg">{conc ?? "-"}</div>
+            </div>
+
+            {/* StatusChips */}
+            <div className="flex items-center">
+              <StatusChips isSampling={isSampling} isPrime={isPrime} />
+            </div>
+
+            <div className="flex justify-center items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() =>
+                  chartInstance?.dispatchAction({
+                    type: "dataZoom",
+                    start: 0,
+                    end: 100
+                  })
+                }
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset Zoom
+              </Button>
+            </div>
+          </div>
+
+          <div className="h-72">
+            <ChartProvider>
+              <DataReviewLineChart
+                data={timeSeriesData}
+                categories={categories}
+                index={port.id}
+                units={
+                  conc && typeof conc === "string" && conc.includes("ppb")
+                    ? "ppb"
+                    : ""
+                }
+                timeRange="1h"
+                onInstance={setChartInstance}
+              />
+            </ChartProvider>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
-const StatusIndicator = ({ isSampling, isPrime }: { isSampling: boolean; isPrime: boolean }) => (
-  <div className="right-2 bottom-2 absolute flex gap-2">
+const StatusIndicator = ({
+  isSampling,
+  isPrime
+}: {
+  isSampling: boolean;
+  isPrime: boolean;
+}) => (
+  <div className="right-1 bottom-1 absolute flex gap-2">
     {isSampling && <StatusBadge type="sampling" label="S" />}
     {isPrime && <StatusBadge type="prime" label="P" />}
   </div>
 );
 
-const CardFront = ({ port }: { port: MockData }) => {
-  const { portNum, conc, label, status, isSampling, isPrime, isInActive } = port;
-
-  return (
-    <div
-      className={`absolute w-full h-full [backface-visibility:hidden] flex flex-col gap-6 shadow-border py-4 px-3 border-2 rounded-md ${
-        !isInActive && getBgColor(status)
-      } transition-colors duration-200`}>
-      <div className="flex justify-center items-center">
-        <span className="font-semibold text-gray-800 text-lg">
-          {portNum}. {label}
-        </span>
-      </div>
-      <div className="flex justify-center items-center">
-        <span className={`font-bold text-2xl ${conc === null ? "text-gray-900" : "text-gray-900"}`}>
-          {conc ?? "Flow Error"}
-        </span>
-      </div>
-      <StatusIndicator isSampling={isSampling} isPrime={isPrime} />
-    </div>
-  );
-};
-
-const CardBack = ({ port }: { port: MockData }) => {
-  const { portNum, label, status, updatedAt, isSampling, isPrime } = port;
-
-  return (
-    <div className="absolute flex flex-col justify-between bg-white shadow-lg px-3 py-4 border-2 rounded-md w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
-      <div className="text-center">
-        <div className="font-bold text-gray-800 text-lg">
-          {portNum}. {label}
-        </div>
-        <div className="space-y-1">
-          <div className="flex justify-center items-center gap-2">
-            <span className="font-medium text-gray-600 text-sm">Status:</span>
-            <span
-              className={`text-sm font-semibold ${
-                status === 0
-                  ? "text-green-600"
-                  : status === 1
-                  ? "text-amber-600"
-                  : status === 2
-                  ? "text-red-600"
-                  : "text-cyan-500"
-              }`}>
-              {getStatusText(status)}
-            </span>
-          </div>
-          <div className="text-gray-600 text-sm">Last Updated:</div>
-          <div className="text-gray-500 text-xs">{new Date(updatedAt).toLocaleString()}</div>
-        </div>
-      </div>
-
-      <div className="flex justify-center gap-2 mt-2">
-        {isSampling && <StatusBadgeLarge type="sampling" label="Sampling" />}
-        {isPrime && <StatusBadgeLarge type="prime" label="Prime" />}
-      </div>
-    </div>
-  );
-};
-
-const StatusBadge = ({ type, label }: { type: "sampling" | "prime"; label: string }) => (
+const StatusBadge = ({
+  type,
+  label
+}: {
+  type: "sampling" | "prime";
+  label: string;
+}) => (
   <div
     className={`${
       type === "sampling" ? "bg-green-600" : "bg-blue-500"
-    } rounded-full w-8 h-8 flex items-center justify-center shadow-md`}>
-    <span className="font-bold text-white text-sm">{label}</span>
+    } rounded-full w-6 h-6 flex items-center justify-center shadow-md`}
+  >
+    <span className="font-bold text-white text-xs">{label}</span>
   </div>
 );
 
-const StatusBadgeLarge = ({ type, label }: { type: "sampling" | "prime"; label: string }) => (
+const StatusBadgeLarge = ({
+  type,
+  label
+}: {
+  type: "sampling" | "prime";
+  label: string;
+}) => (
   <div
     className={`${
       type === "sampling" ? "bg-green-600" : "bg-blue-500"
-    } text-white px-3 py-1 rounded-full text-sm font-medium shadow-sm`}>
+    } text-white px-3 py-1 rounded-full text-sm font-medium shadow-sm`}
+  >
     {label}
   </div>
 );
@@ -166,3 +276,48 @@ const getStatusText = (status: 0 | 1 | 2 | 3): string => {
       return "Unknown";
   }
 };
+
+function generateMockTimeSeriesData(port: MockData): {
+  data: { timestamp: number; value: number }[];
+  categories: string[];
+} {
+  // Generate 200 points of mock data for the last 200 minutes
+  const now = Date.now();
+  const data = Array.from({ length: 200 }, (_, i) => {
+    return {
+      timestamp: now - (50 - i) * 60 * 1000,
+      value:
+        port.conc && !isNaN(parseFloat(port.conc))
+          ? parseFloat(port.conc) + Math.random() * 10 - 5
+          : Math.random() * 100
+    };
+  });
+  return { data, categories: [port.label] };
+}
+
+function StatusChips({
+  isSampling,
+  isPrime
+}: {
+  isSampling: boolean;
+  isPrime: boolean;
+}) {
+  if (!isSampling && !isPrime) return null;
+  if (isSampling) {
+    return (
+      <span className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded-full font-semibold text-green-700 text-xs transition-colors">
+        <FlaskConical className="w-3 h-3" />
+        Sampling
+      </span>
+    );
+  }
+  if (isPrime) {
+    return (
+      <span className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded-full font-semibold text-blue-700 text-xs transition-colors">
+        <Droplets className="w-3 h-3" />
+        Prime Active
+      </span>
+    );
+  }
+  return null;
+}

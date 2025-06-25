@@ -118,10 +118,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/dashboard/map-display",
         icon: Map,
       },
-
       {
         title: "Live Data",
         url: "/dashboard/live-data",
+        icon: Activity,
+      },
+      {
+        title: "Live Data 2",
+        url: "/dashboard/new-live-data",
         icon: Activity,
       },
       {

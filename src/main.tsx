@@ -22,6 +22,7 @@ import AlertsPage from "./pages/alerts";
 import DashboardPage from "./pages/dashboard";
 import DataReviewPage from "./pages/data-review";
 
+import LiveDataPage2 from "./pages/live-data-2";
 import LiveDataPage from "./pages/live-data-new";
 import LoginPage from "./pages/login";
 import MapDisplay from "./pages/map-display";
@@ -64,6 +65,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route index element={<DashboardPage />} />
                 <Route path="map-display" element={<MapDisplay />} />
                 <Route path="live-data" element={<LiveDataPage />} />
+                <Route path="new-live-data" element={<LiveDataPage2 />} />
                 <Route path="data-review" element={<DataReviewPage />} />
                 <Route path="method" element={<MethodPage />} />
                 <Route path="method/create" element={<CreateRecipePage />} />

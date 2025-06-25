@@ -8,6 +8,9 @@ export type MockData = {
   isPrime: boolean;
   isInActive: boolean;
   status: 0 | 1 | 2 | 3;
+  color: string;
+  colorValue: string;
+  chart: { time: string; value: string }[];
 };
 
 export function generateMockData(count: number): MockData[] {
@@ -49,8 +52,7 @@ export function generateMockData(count: number): MockData[] {
   }
 
   // Choose random indices for isSampling and isPrime only from active ports
-  const samplingIndex =
-    activePorts[Math.floor(Math.random() * activePorts.length)];
+  const samplingIndex = activePorts[Math.floor(Math.random() * activePorts.length)];
   let pumpIndex: number;
   do {
     pumpIndex = activePorts[Math.floor(Math.random() * activePorts.length)];
@@ -60,21 +62,68 @@ export function generateMockData(count: number): MockData[] {
   for (let i = 0; i < count; i++) {
     const portNum = (i % 64) + 1;
     const conc = getRandomConc();
+    const status = getStatusFromConc(conc);
+    // 24 hours, 500 points: interval = 24*60/500 = 2.88 minutes per point
+    const now = Date.now();
+    const numPoints = 500;
+    const intervalMin = (24 * 60) / numPoints;
+    const chart = Array.from({ length: numPoints }, (_, idx) => {
+      const time = new Date(now - (numPoints - 1 - idx) * intervalMin * 60 * 1000).toISOString();
+      // Completely random value between 0 and 100
+      const value = Math.random() * 100;
+      return {
+        time,
+        value: value.toFixed(2),
+      };
+    });
     data.push({
       id: `id-${i + 1}`,
-      label: `Sensor ${i + 1}`,
+      label: `${i + 1}`,
       portNum,
       conc,
       updatedAt: getRandomDate(),
       isSampling: i === samplingIndex,
       isPrime: i === pumpIndex,
       isInActive: false,
-      status: getStatusFromConc(conc)
+      status: status,
+      color: getColorValue(status),
+      colorValue: getColorValue(status),
+      chart,
     });
   }
 
   return data;
 }
+
+export const getStatusText = (status: 0 | 1 | 2 | 3): string => {
+  switch (status) {
+    case 0:
+      return "Normal";
+    case 1:
+      return "Warning";
+    case 2:
+      return "Critical";
+    case 3:
+      return "Flow Error";
+    default:
+      return "Unknown";
+  }
+};
+
+export const getBgColor = (status: 0 | 1 | 2 | 3): string => {
+  switch (status) {
+    case 0:
+      return "bg-inherit";
+    case 1:
+      return "bg-amber-100";
+    case 2:
+      return "bg-red-500";
+    case 3:
+      return "bg-cyan-100"; // flow error
+    default:
+      return "bg-gray-400";
+  }
+};
 
 export const getTextColor = (status: 0 | 1 | 2 | 3) => {
   switch (status) {
@@ -88,5 +137,20 @@ export const getTextColor = (status: 0 | 1 | 2 | 3) => {
       return "text-cyan-600"; // flow error
     default:
       return "text-gray-600";
+  }
+};
+
+export const getColorValue = (status: 0 | 1 | 2 | 3): string => {
+  switch (status) {
+    case 0:
+      return "#30ad3a";
+    case 1:
+      return "#F59E42";
+    case 2:
+      return "#EF4444";
+    case 3:
+      return "#06B6D4"; // flow error
+    default:
+      return "#fff";
   }
 };
