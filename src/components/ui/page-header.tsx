@@ -4,7 +4,7 @@ import { useLocation } from "react-router";
 const routeToPageName: Record<string, string> = {
   "/dashboard": "Overview",
   "/dashboard/live-data": "Live Data",
-  "/dashboard/live-data2": "Live Data 2",
+  "/dashboard/new-live-data": "Live Data 2",
   "/dashboard/data-review": "Data Review",
   "/dashboard/qa-qc": "QA/QC",
   "/dashboard/method": "Method",

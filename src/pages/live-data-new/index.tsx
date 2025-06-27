@@ -1,10 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/ui/page-header";
 import { Droplets, FlaskConical, RotateCcw } from "lucide-react";
 import React, { useState } from "react";
@@ -20,12 +15,10 @@ const LiveDataPage = () => {
   return (
     <>
       <PageHeader />
-      <main className="flex flex-col items-center w-full h-full">
-        <div className="flex flex-wrap justify-center gap-1 pt-5">
-          {liveData.map((port, index) => (
-            <Card port={port} key={index} />
-          ))}
-        </div>
+      <main className="flex flex-wrap justify-center items-center gap-1 mx-auto px-8 md:px-12 py-4 w-full max-w-8xl">
+        {liveData.map((port, index) => (
+          <Card port={port} key={index} />
+        ))}
       </main>
     </>
   );
@@ -98,69 +91,56 @@ const Card = ({ port }: { port: MockData }) => {
         <StatusIndicator isSampling={isSampling} isPrime={isPrime} />
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-5xl h-[60vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              <div className="flex items-center gap-4 pr-4">
-                <span>
-                  {label} (Port {portNum})
-                </span>
+        <DialogContent className="max-w-5xl h-[50vh] overflow-y-auto">
+          <div className="flex justify-between items-center border-zinc-300 border-b border-dashed w-full">
+            <div className="gap-2 grid grid-cols-6">
+              {/* Sensor Name */}
+              <div className="flex flex-col pr-4 border-zinc-300 border-r border-dashed">
+                <div className="font-medium text-zinc-400 text-xs">
+                  Sensor Name
+                </div>
+                <span className="font-bold text-black text-xl">{label}</span>
+              </div>
 
-                {isSampling && (
-                  <StatusBadgeLarge type="sampling" label="Sampling" />
-                )}
-                {isPrime && (
-                  <StatusBadgeLarge type="prime" label="Prime Active" />
-                )}
+              {/* Status */}
+              <div className="flex flex-col items-center pr-4 border-zinc-300 border-r border-dashed">
+                <div className="font-medium text-zinc-400 text-xs">Status</div>
+                <div className={`text-lg font-bold  ${getTextColor(status)}`}>
+                  {getStatusText(status)}
+                </div>
               </div>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex  justify-between items-center gap-x-8 gap-y-2 w-full">
-            {/* Sensor Name */}
-            <div className="flex flex-col">
-              <div className="font-medium text-zinc-400 text-xs">
-                Sensor Name
-              </div>
-              <span className="font-bold text-black text-xl">{label}</span>
-            </div>
 
-            {/* Status */}
-            <div className="flex flex-col items-center">
-              <div className="font-medium text-zinc-400 text-xs">Status</div>
-              <div className={`text-lg font-bold  ${getTextColor(status)}`}>
-                {getStatusText(status)}
+              {/* Last Updated */}
+              <div className="flex flex-col pr-4 border-zinc-300 border-r border-dashed text-right">
+                <div className="font-medium text-zinc-400 text-xs">
+                  Last Updated
+                </div>
+                <div className="font-bold text-black text-base">
+                  {new Date(updatedAt).toLocaleString()}
+                </div>
               </div>
-            </div>
+              {/* Port Number */}
+              <div className="flex flex-col items-center pr-4 border-zinc-300 border-r border-dashed">
+                <div className="font-medium text-zinc-400 text-xs">
+                  Port Number
+                </div>
+                <div className="font-bold text-black text-lg">{portNum}</div>
+              </div>
+              {/* Concentration */}
+              <div className="flex flex-col items-center pr-4 border-zinc-300 border-r border-dashed">
+                <div className="font-medium text-zinc-400 text-xs">
+                  Concentration
+                </div>
+                <div className="font-bold text-black text-lg">
+                  {conc ?? "-"}
+                </div>
+              </div>
 
-            {/* Last Updated */}
-            <div className="flex flex-col text-right">
-              <div className="font-medium text-zinc-400 text-xs">
-                Last Updated
-              </div>
-              <div className="font-bold text-black text-base">
-                {new Date(updatedAt).toLocaleString()}
+              {/* StatusChips */}
+              <div className="flex items-center">
+                <StatusChips isSampling={isSampling} isPrime={isPrime} />
               </div>
             </div>
-            {/* Port Number */}
-            {/* <div className="flex flex-col items-center">
-              <div className="font-medium text-zinc-400 text-xs">
-                Port Number
-              </div>
-              <div className="font-bold text-black text-lg">{portNum}</div>
-            </div> */}
-            {/* Concentration */}
-            <div className="flex flex-col items-center">
-              <div className="font-medium text-zinc-400 text-xs">
-                Concentration
-              </div>
-              <div className="font-bold text-black text-lg">{conc ?? "-"}</div>
-            </div>
-
-            {/* StatusChips */}
-            <div className="flex items-center">
-              <StatusChips isSampling={isSampling} isPrime={isPrime} />
-            </div>
-
             <div className="flex justify-center items-center">
               <Button
                 variant="outline"
@@ -180,22 +160,22 @@ const Card = ({ port }: { port: MockData }) => {
             </div>
           </div>
 
-          <div className="h-72">
-            <ChartProvider>
-              <DataReviewLineChart
-                data={timeSeriesData}
-                categories={categories}
-                index={port.id}
-                units={
-                  conc && typeof conc === "string" && conc.includes("ppb")
-                    ? "ppb"
-                    : ""
-                }
-                timeRange="1h"
-                onInstance={setChartInstance}
-              />
-            </ChartProvider>
-          </div>
+          {/* <div className="relative h-max"> */}
+          <ChartProvider>
+            <DataReviewLineChart
+              data={timeSeriesData}
+              categories={categories}
+              index={port.id}
+              units={
+                conc && typeof conc === "string" && conc.includes("ppb")
+                  ? "ppb"
+                  : ""
+              }
+              timeRange="1h"
+              onInstance={setChartInstance}
+            />
+          </ChartProvider>
+          {/* </div> */}
         </DialogContent>
       </Dialog>
     </>
@@ -283,13 +263,13 @@ function generateMockTimeSeriesData(port: MockData): {
 } {
   // Generate 200 points of mock data for the last 200 minutes
   const now = Date.now();
-  const data = Array.from({ length: 200 }, (_, i) => {
+  const data = Array.from({ length: 500 }, (_, i) => {
     return {
       timestamp: now - (50 - i) * 60 * 1000,
-      value:
-        port.conc && !isNaN(parseFloat(port.conc))
-          ? parseFloat(port.conc) + Math.random() * 10 - 5
-          : Math.random() * 100
+      value: Math.random() * 100
+      // port.conc && !isNaN(parseFloat(port.conc))
+      //   ? parseFloat(port.conc) + Math.random() * 100
+      //   : Math.random() * 100,
     };
   });
   return { data, categories: [port.label] };

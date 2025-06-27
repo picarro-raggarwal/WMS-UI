@@ -37,7 +37,7 @@ export const DetailsPanel = ({ selectedBlock }: DetailsPanelProps) => {
     return (
       <div className="flex flex-col justify-center items-center p-4 border rounded-2xl h-[450px]">
         <div className="flex flex-col justify-center items-center h-1/2 text-zinc-500">
-          <div className="font-semibold text-lg tracking-tight flex gap-2">
+          <div className="flex gap-2 font-semibold text-lg tracking-tight">
             <span>Select a block to view details</span>
           </div>
           <div className="mt-1 text-zinc-400 text-sm">
@@ -50,60 +50,68 @@ export const DetailsPanel = ({ selectedBlock }: DetailsPanelProps) => {
 
   return (
     <div className="shadow-xl p-4 border rounded-2xl transition-all duration-300">
-      <div className="pb-4 border-b border-dashed w-full">
-        <div className="flex flex-wrap justify-between items-center gap-x-8 gap-y-2 w-full ">
-          {/* Sensor Name */}
-          <div className="flex flex-col">
-            <div className="font-medium text-zinc-400 text-xs">Sensor Name</div>
-            <span className="font-bold text-black text-xl">
-              Sensor {selectedBlock.label}
-            </span>
-          </div>
+      <div className="pb-4 w-full">
+        <div className="flex justify-between items-center p-4 border-zinc-300 border-b border-dashed w-full">
+          <div className="gap-2 grid grid-cols-6">
+            {/* Sensor Name */}
+            <div className="flex flex-col border-zinc-300 border-r border-dashed">
+              <div className="font-medium text-zinc-400 text-xs">
+                Sensor Name
+              </div>
+              <span className="font-bold text-black text-xl">
+                Sensor {selectedBlock.label}
+              </span>
+            </div>
 
-          {/* Status */}
-          <div className="flex flex-col items-center">
-            <div className="font-medium text-zinc-400 text-xs">Status</div>
-            <div
-              className={`text-lg font-bold  ${getTextColor(
-                selectedBlock.status
-              )}`}
-            >
-              {getStatusText(selectedBlock.status)}
+            {/* Status */}
+            <div className="flex flex-col items-center border-zinc-300 border-r border-dashed">
+              <div className="font-medium text-zinc-400 text-xs">Status</div>
+              <div
+                className={`text-lg font-bold  ${getTextColor(
+                  selectedBlock.status
+                )}`}
+              >
+                {getStatusText(selectedBlock.status)}
+              </div>
             </div>
-          </div>
 
-          {/* Last Updated */}
-          <div className="flex flex-col text-right">
-            <div className="font-medium text-zinc-400 text-xs">
-              Last Updated
+            {/* Last Updated */}
+            <div className="flex flex-col pr-4 border-zinc-300 border-r border-dashed text-right">
+              <div className="font-medium text-zinc-400 text-xs">
+                Last Updated
+              </div>
+              <div className="font-bold text-black text-base">
+                {new Date(selectedBlock.updatedAt).toLocaleString()}
+              </div>
             </div>
-            <div className="font-bold text-black text-base">
-              {new Date(selectedBlock.updatedAt).toLocaleString()}
-            </div>
-          </div>
-          {/* Port Number */}
-          <div className="flex flex-col items-center">
-            <div className="font-medium text-zinc-400 text-xs">Port Number</div>
-            <div className="font-bold text-black text-lg">
-              {selectedBlock.portNum}
-            </div>
-          </div>
-          {/* Concentration */}
-          <div className="flex flex-col items-center">
-            <div className="font-medium text-zinc-400 text-xs">
-              Concentration
-            </div>
-            <div className="font-bold text-black text-lg">
-              {selectedBlock.conc ?? "-"}
-            </div>
-          </div>
 
-          {/* StatusChips */}
-          <div className="flex items-center">
-            <StatusChips
-              isSampling={selectedBlock.isSampling}
-              isPrime={selectedBlock.isPrime}
-            />
+            {/* Port Number */}
+            <div className="flex flex-col items-center pr-4 border-zinc-300 border-r border-dashed">
+              <div className="font-medium text-zinc-400 text-xs">
+                Port Number
+              </div>
+              <div className="font-bold text-black text-lg">
+                {selectedBlock.portNum}
+              </div>
+            </div>
+
+            {/* Concentration */}
+            <div className="flex flex-col items-center pr-4 border-zinc-300 border-r border-dashed">
+              <div className="font-medium text-zinc-400 text-xs">
+                Concentration
+              </div>
+              <div className="font-bold text-black text-lg">
+                {selectedBlock.conc ?? "-"}
+              </div>
+            </div>
+
+            {/* StatusChips */}
+            <div className="flex items-center">
+              <StatusChips
+                isSampling={selectedBlock.isSampling}
+                isPrime={selectedBlock.isPrime}
+              />
+            </div>
           </div>
 
           <div className="flex justify-center items-center">

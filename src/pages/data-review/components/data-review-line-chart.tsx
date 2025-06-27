@@ -373,7 +373,7 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
       animationDuration: 300,
       animationEasing: "linear",
       grid: {
-        left: 50,
+        left: 40,
         right: 10,
         top: 35,
         bottom: 12,
