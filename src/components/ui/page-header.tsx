@@ -5,13 +5,14 @@ const routeToPageName: Record<string, string> = {
   "/dashboard": "Overview",
   "/dashboard/live-data": "Live Data",
   "/dashboard/new-live-data": "Live Data 2",
+  "/dashboard/map-display": "Map Display",
   "/dashboard/data-review": "Data Review",
   "/dashboard/qa-qc": "QA/QC",
   "/dashboard/method": "Method",
   "/dashboard/method/create": "Create Recipe",
   "/dashboard/settings": "Settings",
   "/dashboard/service": "Service",
-  "/dashboard/alerts": "Alerts",
+  "/dashboard/alerts": "Alerts"
 };
 
 interface PageHeaderProps {
@@ -21,12 +22,13 @@ interface PageHeaderProps {
 
 export function PageHeader({
   pageName: propPageName, // We'll use this as a fallback
-  alertCount = 3,
+  alertCount = 3
 }: PageHeaderProps) {
   const location = useLocation();
 
   // Determine page name from route or use the prop if provided
-  const pageName = propPageName || routeToPageName[location.pathname] || "Dashboard";
+  const pageName =
+    propPageName || routeToPageName[location.pathname] || "Dashboard";
 
   return (
     <header className="relative flex items-center gap-2 bg-white dark:bg-neutral-800/20 shadow-sm border-neutral-100 dark:border-neutral-700 rounded-tl-xl shrink-0">
