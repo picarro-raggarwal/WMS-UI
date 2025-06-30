@@ -10,13 +10,8 @@ export type Boundary = {
 // Image configuration
 export const imageConfig = {
   url: "/mock-map.png", // Using the system figure from public directory
-  // corners: [A, B, C] where:
-  //   A = top-left corner of the image in map coordinates
-  //   B = top-right corner of the image in map coordinates
-  //   C = bottom-left corner of the image in map coordinates
-  // For a non-rotated image, use:
-  //   [ [0, 0], [width, 0], [0, height] ]
-  // If you want to rotate the image, change the order/values of these points.
+  // These coordinates create a simple rectangular space
+  // The coordinates are in [latitude, longitude] format
   corners: [
     [100, 100], // new top-left (was bottom-right)
     [0, 100], // new top-right (was bottom-left)

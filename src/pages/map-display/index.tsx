@@ -20,6 +20,21 @@ const FitImageBounds = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
   return null;
 };
 
+// Helper to get bounds for all boundaries
+function getBoundariesBounds(boundaries: Boundary[]): LatLngBoundsExpression {
+  const allPoints = boundaries.flatMap((b) => b.points);
+  const lats = allPoints.map((p) => p.lat);
+  const lngs = allPoints.map((p) => p.lng);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  return [
+    [minLat, minLng],
+    [maxLat, maxLng]
+  ];
+}
+
 // Recenter button component
 const RecenterButton = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
   const map = useMap();
@@ -37,6 +52,38 @@ const RecenterButton = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
   );
 };
 
+// Helper to lock minZoom to the current zoom after fitting bounds
+const LockMinZoom = () => {
+  const map = useMap();
+  React.useEffect(() => {
+    const currentZoom = map.getZoom();
+    map.setMinZoom(currentZoom);
+    map.setZoom(currentZoom); // Ensure we're at minZoom
+  }, [map]);
+  return null;
+};
+
+// Helper to auto recenter on last zoom out
+const AutoRecenterOnMinZoom = ({
+  bounds
+}: {
+  bounds: LatLngBoundsExpression;
+}) => {
+  const map = useMap();
+  React.useEffect(() => {
+    const handleZoomEnd = () => {
+      if (map.getZoom() === map.getMinZoom()) {
+        map.fitBounds(bounds, { animate: true, padding: [0, 0] });
+      }
+    };
+    map.on("zoomend", handleZoomEnd);
+    return () => {
+      map.off("zoomend", handleZoomEnd);
+    };
+  }, [map, bounds]);
+  return null;
+};
+
 const MapDisplay = () => {
   const [selectedBoundary, setSelectedBoundary] = useState<Boundary | null>(
     null
@@ -48,11 +95,9 @@ const MapDisplay = () => {
     console.log("Clicked boundary:", boundary.name);
   }, []);
 
-  // Use the same bounds as your image
-  const imageBounds: LatLngBoundsExpression = [
-    [0, 0], // top-left
-    [100, 100] // bottom-right
-  ];
+  // Use the bounds that fit all boundaries
+  const boundariesBounds: LatLngBoundsExpression =
+    getBoundariesBounds(mockBoundaries);
 
   return (
     <>
@@ -64,20 +109,25 @@ const MapDisplay = () => {
         >
           <MapContainer
             style={{ width: "100%", height: "100%" }}
-            bounds={imageBounds}
+            bounds={boundariesBounds}
             crs={L.CRS.Simple}
-            zoom={10}
-            minZoom={-5}
-            maxZoom={5}
-            scrollWheelZoom={true}
-            dragging={true}
-            doubleClickZoom={true}
-            boxZoom={true}
-            keyboard={true}
+            // zoom={10}
+            // minZoom={5}
+            maxZoom={30}
+            // scrollWheelZoom={false}
+            // boxZoom={false}
           >
-            <FitImageBounds bounds={imageBounds} />
-            <RecenterButton bounds={imageBounds} />
-            <ImageOverlay url={imageConfig.url} bounds={imageBounds} />
+            <FitImageBounds bounds={boundariesBounds} />
+            {/* <LockMinZoom /> */}
+            <AutoRecenterOnMinZoom bounds={boundariesBounds} />
+            <RecenterButton bounds={boundariesBounds} />
+            <ImageOverlay
+              url={imageConfig.url}
+              bounds={[
+                [0, 0],
+                [100, 100]
+              ]}
+            />
             {mockBoundaries.map((boundary) => (
               <Polygon
                 key={boundary.id}
