@@ -77,10 +77,10 @@ export const boundaryStyles = {
   }
 };
 
-// Map configuration
-export const mapConfig = {
-  center: [50, 50], // Center of our coordinate system
-  zoom: 2,
-  minZoom: 1,
-  maxZoom: 4
-};
+// // Map configuration
+// export const mapConfig = {
+//   center: [50, 50], // Center of our coordinate system
+//   zoom: 2,
+//   minZoom: 1,
+//   maxZoom: 4
+// };

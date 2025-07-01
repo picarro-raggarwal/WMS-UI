@@ -11,13 +11,21 @@ import {
   mockBoundaries
 } from "./data/mock-data";
 
-// Helper to fit bounds on mount
-const FitImageBounds = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
+// Recenter button component
+const RecenterButton = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
   const map = useMap();
-  React.useEffect(() => {
-    map.fitBounds(bounds, { animate: false, padding: [0, 0] });
-  }, [map, bounds]);
-  return null;
+  const handleClick = () => {
+    map.fitBounds(bounds, { animate: true, padding: [0, 0] });
+  };
+  return (
+    <button
+      onClick={handleClick}
+      className="top-4 right-4 z-[1000] absolute bg-white hover:bg-gray-100 shadow px-4 py-2 border border-gray-300 rounded font-medium text-sm"
+      style={{ pointerEvents: "auto" }}
+    >
+      Recenter
+    </button>
+  );
 };
 
 // Helper to get bounds for all boundaries
@@ -35,51 +43,11 @@ function getBoundariesBounds(boundaries: Boundary[]): LatLngBoundsExpression {
   ];
 }
 
-// Recenter button component
-const RecenterButton = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
+// Helper to fit image bounds only once on mount (with animation)
+const FitImageBoundsOnce = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
   const map = useMap();
-  const handleClick = () => {
+  React.useEffect(() => {
     map.fitBounds(bounds, { animate: true, padding: [0, 0] });
-  };
-  return (
-    <button
-      onClick={handleClick}
-      className="absolute z-[1000] top-4 right-4 bg-white border border-gray-300 rounded shadow px-4 py-2 text-sm font-medium hover:bg-gray-100"
-      style={{ pointerEvents: "auto" }}
-    >
-      Recenter
-    </button>
-  );
-};
-
-// Helper to lock minZoom to the current zoom after fitting bounds
-const LockMinZoom = () => {
-  const map = useMap();
-  React.useEffect(() => {
-    const currentZoom = map.getZoom();
-    map.setMinZoom(currentZoom);
-    map.setZoom(currentZoom); // Ensure we're at minZoom
-  }, [map]);
-  return null;
-};
-
-// Helper to auto recenter on last zoom out
-const AutoRecenterOnMinZoom = ({
-  bounds
-}: {
-  bounds: LatLngBoundsExpression;
-}) => {
-  const map = useMap();
-  React.useEffect(() => {
-    const handleZoomEnd = () => {
-      if (map.getZoom() === map.getMinZoom()) {
-        map.fitBounds(bounds, { animate: true, padding: [0, 0] });
-      }
-    };
-    map.on("zoomend", handleZoomEnd);
-    return () => {
-      map.off("zoomend", handleZoomEnd);
-    };
   }, [map, bounds]);
   return null;
 };
@@ -99,35 +67,26 @@ const MapDisplay = () => {
   const boundariesBounds: LatLngBoundsExpression =
     getBoundariesBounds(mockBoundaries);
 
+  const imageBounds: LatLngBoundsExpression = [
+    [0, 0],
+    [100, 100]
+  ];
+
   return (
     <>
       <PageHeader />
-      <main className="flex flex-col mx-auto px-8 md:px-12 py-8 w-full max-w-8xl h-[calc(100vh-4rem)] overflow-hidden">
-        <div
-          className="relative border border-gray-200 rounded-lg w-full h-full overflow-hidden"
-          style={{ minHeight: 400 }}
-        >
+      <main className="flex md:flex-row flex-col mx-auto px-8 md:px-12 py-8 w-full max-w-8xl h-[calc(100vh-4rem)] overflow-hidden">
+        {/* Map Section */}
+        <div className="relative md:flex-1 border border-gray-200 rounded-lg w-full h-[400px] md:h-full overflow-hidden">
           <MapContainer
             style={{ width: "100%", height: "100%" }}
-            bounds={boundariesBounds}
+            bounds={imageBounds} // use boundariesBounds, if auto-zoom needed
             crs={L.CRS.Simple}
-            // zoom={10}
-            // minZoom={5}
-            maxZoom={30}
-            // scrollWheelZoom={false}
-            // boxZoom={false}
+            dragging={true}
           >
-            <FitImageBounds bounds={boundariesBounds} />
-            {/* <LockMinZoom /> */}
-            <AutoRecenterOnMinZoom bounds={boundariesBounds} />
-            <RecenterButton bounds={boundariesBounds} />
-            <ImageOverlay
-              url={imageConfig.url}
-              bounds={[
-                [0, 0],
-                [100, 100]
-              ]}
-            />
+            {/* <FitImageBoundsOnce bounds={imageBounds} /> */}
+            <RecenterButton bounds={imageBounds} />
+            <ImageOverlay url={imageConfig.url} bounds={imageBounds} />
             {mockBoundaries.map((boundary) => (
               <Polygon
                 key={boundary.id}
@@ -153,17 +112,37 @@ const MapDisplay = () => {
               />
             ))}
           </MapContainer>
-
-          {/* Selected boundary info overlay */}
-          {selectedBoundary && (
-            <div className="bottom-4 left-4 absolute bg-white shadow-lg p-4 rounded-lg">
-              <h3 className="font-semibold">{selectedBoundary.name}</h3>
-              <p className="text-gray-600 text-sm">
-                Type: {selectedBoundary.type}
+        </div>
+        {/* Details Panel */}
+        <aside className="flex-shrink-0 bg-white shadow mt-8 md:mt-0 md:ml-8 p-6 border border-gray-200 rounded-lg w-full md:w-96 h-[400px] md:h-full overflow-y-auto">
+          {selectedBoundary ? (
+            <>
+              <h3 className="mb-2 font-semibold text-lg">
+                {selectedBoundary.name}
+              </h3>
+              <p className="mb-2 text-gray-600 text-sm">
+                Type:{" "}
+                <span className="capitalize">{selectedBoundary.type}</span>
               </p>
+              <div className="mb-2 text-gray-500 text-xs">Boundary Points:</div>
+              <ul className="mb-4 text-gray-700 text-xs">
+                {selectedBoundary.points.map((pt, idx) => (
+                  <li key={idx}>
+                    Lat: {pt.lat}, Lng: {pt.lng}
+                  </li>
+                ))}
+              </ul>
+              {/* Add more detailed info here if needed */}
+            </>
+          ) : (
+            <div className="flex flex-col justify-center items-center h-full text-gray-400">
+              <span className="mb-2">No boundary selected</span>
+              <span className="text-xs">
+                Select any boundary on the map to see more info.
+              </span>
             </div>
           )}
-        </div>
+        </aside>
       </main>
     </>
   );
