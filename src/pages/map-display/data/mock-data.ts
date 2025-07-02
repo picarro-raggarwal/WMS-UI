@@ -9,14 +9,8 @@ export type Boundary = {
 
 // Image configuration
 export const imageConfig = {
-  url: "/mock-map.png", // Using the system figure from public directory
-  // These coordinates create a simple rectangular space
-  // The coordinates are in [latitude, longitude] format
-  corners: [
-    [100, 100], // new top-left (was bottom-right)
-    [0, 100], // new top-right (was bottom-left)
-    [0, 0] // new bottom-left (was top-right)
-  ] as [number, number][]
+  url: "/mock-map.png"
+  // corners and bounds will be set dynamically in the component
 };
 
 // Mock boundaries data
@@ -26,10 +20,10 @@ export const mockBoundaries: Boundary[] = [
     name: "Danger Zone A",
     type: "danger",
     points: [
-      { lat: 20, lng: 20 },
-      { lat: 20, lng: 40 },
-      { lat: 40, lng: 40 },
-      { lat: 40, lng: 20 }
+      { lat: 0, lng: 0 },
+      { lat: 200, lng: 400 },
+      { lat: 400, lng: 400 },
+      { lat: 400, lng: 200 }
     ]
   },
   {
@@ -37,10 +31,10 @@ export const mockBoundaries: Boundary[] = [
     name: "Warning Zone B",
     type: "warning",
     points: [
-      { lat: 60, lng: 60 },
-      { lat: 60, lng: 80 },
-      { lat: 80, lng: 80 },
-      { lat: 80, lng: 60 }
+      { lat: 600, lng: 600 },
+      { lat: 600, lng: 800 },
+      { lat: 800, lng: 800 },
+      { lat: 800, lng: 600 }
     ]
   },
   {
@@ -48,9 +42,9 @@ export const mockBoundaries: Boundary[] = [
     name: "Safe Zone C",
     type: "safe",
     points: [
-      { lat: 30, lng: 50 },
-      { lat: 50, lng: 70 },
-      { lat: 70, lng: 50 }
+      { lat: 1500, lng: 500 },
+      { lat: 1500, lng: 700 },
+      { lat: 1000, lng: 1000 }
     ]
   }
 ];
