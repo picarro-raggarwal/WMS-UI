@@ -1,8 +1,10 @@
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import L, { LatLngBoundsExpression, LatLngTuple } from "leaflet";
 import "leaflet-imageoverlay-rotated";
 import "leaflet/dist/leaflet.css";
-import { useCallback, useEffect, useState } from "react";
+import { Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ImageOverlay, MapContainer, Polygon, useMap } from "react-leaflet";
 import {
   Boundary,
@@ -52,6 +54,25 @@ const FitImageBoundsOnce = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
   return null;
 };
 
+// Drawing map click handler component
+const DrawingMapClickHandler = ({
+  isDrawing,
+  onClick
+}: {
+  isDrawing: boolean;
+  onClick: (e: L.LeafletMouseEvent) => void;
+}) => {
+  const map = useMap();
+  useEffect(() => {
+    if (!isDrawing) return;
+    map.on("click", onClick);
+    return () => {
+      map.off("click", onClick);
+    };
+  }, [map, isDrawing, onClick]);
+  return null;
+};
+
 const MapDisplay = () => {
   const [selectedBoundary, setSelectedBoundary] = useState<Boundary | null>(
     null
@@ -60,6 +81,32 @@ const MapDisplay = () => {
     width: number;
     height: number;
   } | null>(null);
+
+  // Add boundary drawing state
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawingPoints, setDrawingPoints] = useState<LatLngTuple[]>([]);
+  const [boundaries, setBoundaries] = useState<Boundary[]>(mockBoundaries);
+  const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
+  // Track map container size
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    const observer = new window.ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height
+        });
+      }
+    });
+    observer.observe(mapContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const handleBoundaryClick = useCallback((boundary: Boundary) => {
     setSelectedBoundary(boundary);
@@ -82,72 +129,180 @@ const MapDisplay = () => {
 
   const imageBounds: LatLngBoundsExpression = [
     [0, 0], // botton-left
-    [imgSize.width, 0], // bottom-right
-    [0, imgSize.height], // top-left
-    [imgSize.width, imgSize.height] // top-right
+    [imgSize.height, 0], // top-left
+    [0, imgSize.width], // botton-right
+    [imgSize.height, imgSize.width] // top-right
   ];
+
+  // Calculate minZoom and maxZoom
+  let minZoom = -5,
+    maxZoom = 2;
+  if (imgSize && containerSize) {
+    const zoomFitWidth = Math.log2(containerSize.width / imgSize.width);
+    const zoomFitHeight = Math.log2(containerSize.height / imgSize.height);
+    minZoom = Math.floor(Math.min(zoomFitWidth, zoomFitHeight));
+    maxZoom = 0; // 1:1 pixel mapping
+  }
+
+  // Map click handler for drawing
+  const handleMapClick = (e: L.LeafletMouseEvent) => {
+    if (isDrawing) {
+      const lat = Math.max(0, e.latlng.lat);
+      const lng = Math.max(0, e.latlng.lng);
+      setDrawingPoints((prev) => [...prev, [lat, lng]]);
+    }
+  };
+
+  // Attach click handler only in drawing mode
+  const handleMapCreated = (map: L.Map) => {
+    mapRef.current = map;
+    map.on("click", handleMapClick);
+  };
 
   return (
     <>
       <PageHeader />
       <main className="flex flex-row mx-auto px-8 md:px-12 py-8 w-full max-w-8xl h-[calc(100vh-4rem)] overflow-hidden">
-        {/* Map Section */}
-        <div className="relative flex flex-1 border border-gray-200 rounded-lg h-full overflow-hidden">
-          <MapContainer
-            style={{ width: "100%", height: "100%" }}
-            bounds={imageBounds}
-            minZoom={-2}
-            maxZoom={2}
-            maxBounds={imageBounds}
-            maxBoundsViscosity={0.5}
-            crs={L.CRS.Simple}
-            dragging={true}
-            zoomSnap={0}
-            zoomDelta={0.5}
-            attributionControl={false}
-            className="w-full h-full"
-            preferCanvas={true}
-            // Use the bounds that fit all boundaries
-            // bounds={boundariesBounds}
-            // Use the image bounds for the map
-          >
-            <FitImageBoundsOnce bounds={imageBounds} />
-            <RecenterButton bounds={imageBounds} />
-            <ImageOverlay url={imageConfig.url} bounds={imageBounds} />
-            {mockBoundaries.map((boundary) => (
-              <Polygon
-                key={boundary.id}
-                positions={boundary.points.map(
-                  (p) => [p.lat, p.lng] as LatLngTuple
-                )}
-                pathOptions={boundaryStyles[boundary.type]}
-                eventHandlers={{
-                  click: () => handleBoundaryClick(boundary),
-                  mouseover: (e) => {
-                    const layer = e.target;
-                    layer.setStyle({
-                      fillOpacity: 0.5
-                    });
-                  },
-                  mouseout: (e) => {
-                    const layer = e.target;
-                    layer.setStyle({
-                      fillOpacity: boundaryStyles[boundary.type].fillOpacity
-                    });
-                  }
-                }}
+        {/* Left: Add Boundary Button and Map Section */}
+        <div
+          ref={mapContainerRef}
+          className="relative flex flex-col flex-1 border border-gray-200 rounded-lg h-full overflow-hidden"
+        >
+          <div className="relative flex-1">
+            <MapContainer
+              style={{ width: "100%", height: "100%" }}
+              bounds={imageBounds}
+              minZoom={minZoom}
+              maxZoom={maxZoom}
+              maxBounds={imageBounds}
+              maxBoundsViscosity={0.5}
+              crs={L.CRS.Simple}
+              dragging={true}
+              zoomSnap={0}
+              zoomDelta={0.5}
+              attributionControl={false}
+              className="w-full h-full"
+              preferCanvas={true}
+            >
+              <DrawingMapClickHandler
+                isDrawing={isDrawing}
+                onClick={handleMapClick}
               />
-            ))}
-          </MapContainer>
+              {!isDrawing && <FitImageBoundsOnce bounds={imageBounds} />}
+              <RecenterButton bounds={imageBounds} />
+              <ImageOverlay url={imageConfig.url} bounds={imageBounds} />
+              {/* Existing boundaries */}
+              {boundaries.map((boundary) => (
+                <Polygon
+                  key={boundary.id}
+                  positions={boundary.points.map(
+                    (p) => [p.lat, p.lng] as LatLngTuple
+                  )}
+                  pathOptions={boundaryStyles[boundary.type]}
+                  eventHandlers={{
+                    click: () => handleBoundaryClick(boundary),
+                    mouseover: (e) => {
+                      const layer = e.target;
+                      layer.setStyle({ fillOpacity: 0.5 });
+                    },
+                    mouseout: (e) => {
+                      const layer = e.target;
+                      layer.setStyle({
+                        fillOpacity: boundaryStyles[boundary.type].fillOpacity
+                      });
+                    }
+                  }}
+                />
+              ))}
+              {/* Live drawing polygon */}
+              {isDrawing && drawingPoints.length > 0 && (
+                <Polygon
+                  positions={drawingPoints}
+                  pathOptions={{ color: "purple", dashArray: "4" }}
+                />
+              )}
+            </MapContainer>
+          </div>
         </div>
-
         {/* Details Panel */}
         <aside className="flex-shrink-0 bg-white shadow mt-8 md:mt-0 ml-0 md:ml-4 p-6 border border-gray-200 rounded-lg w-full md:w-96 h-full overflow-y-auto">
+          <div className="flex justify-between">
+            {/* Add Boundary Button */}
+            <Button
+              variant="primary"
+              onClick={() => {
+                setIsDrawing(true);
+                setDrawingPoints([]);
+                setSelectedBoundary(null);
+              }}
+              disabled={isDrawing}
+              size="sm"
+            >
+              {isDrawing ? "Drawing..." : "Add Boundary"}
+            </Button>
+
+            {/* Save/Cancel for drawing mode */}
+            {isDrawing && (
+              <div className="flex justify-end gap-2 mb-4">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    if (drawingPoints.length >= 3) {
+                      setBoundaries([
+                        ...boundaries,
+                        {
+                          id: `user-${Date.now()}`,
+                          name: `User Boundary ${boundaries.length + 1}`,
+                          type: "safe",
+                          points: drawingPoints.map(([lat, lng]) => ({
+                            lat,
+                            lng
+                          }))
+                        }
+                      ]);
+                    }
+                    setIsDrawing(false);
+                    setDrawingPoints([]);
+                  }}
+                  disabled={drawingPoints.length < 3}
+                >
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setIsDrawing(false);
+                    setDrawingPoints([]);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </div>
+
           {selectedBoundary ? (
             <>
-              <h3 className="mb-2 font-semibold text-lg">
-                {selectedBoundary.name}
-              </h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-semibold text-lg">
+                  {selectedBoundary.name}
+                </h3>
+                <Button
+                  variant="ghost"
+                  className="p-2 h-8"
+                  title="Delete boundary"
+                  onClick={() => {
+                    setBoundaries(
+                      boundaries.filter((b) => b.id !== selectedBoundary.id)
+                    );
+                    setSelectedBoundary(null);
+                  }}
+                >
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </Button>
+              </div>
               <p className="mb-2 text-gray-600 text-sm">
                 Type:{" "}
                 <span className="capitalize">{selectedBoundary.type}</span>
