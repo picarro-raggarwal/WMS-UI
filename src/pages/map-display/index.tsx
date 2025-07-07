@@ -1,20 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import L, { LatLngBoundsExpression, LatLngTuple } from "leaflet";
+import L from "leaflet";
 import "leaflet-imageoverlay-rotated";
 import "leaflet/dist/leaflet.css";
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ImageOverlay, MapContainer, Polygon, useMap } from "react-leaflet";
+import { AnimatedMarker } from "./AnimatedMarker";
 import {
   Boundary,
   boundaryStyles,
+  getMovingMarkers,
   imageConfig,
   mockBoundaries
 } from "./data/mock-data";
 
 // Recenter button component
-const RecenterButton = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
+const RecenterButton = ({ bounds }: { bounds: L.LatLngBoundsExpression }) => {
   const map = useMap();
   const handleClick = () => {
     map.fitBounds(bounds, { animate: true, padding: [0, 0] });
@@ -31,7 +33,7 @@ const RecenterButton = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
 };
 
 // Helper to get bounds for all boundaries
-// function getBoundariesBounds(boundaries: Boundary[]): LatLngBoundsExpression {
+// function getBoundariesBounds(boundaries: Boundary[]): L.LatLngBoundsExpression {
 //   const allPoints = boundaries.flatMap((b) => b.points);
 //   const lats = allPoints.map((p) => p.lat);
 //   const lngs = allPoints.map((p) => p.lng);
@@ -46,7 +48,11 @@ const RecenterButton = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
 // }
 
 // Helper to fit image bounds only once on mount (with animation)
-const FitImageBoundsOnce = ({ bounds }: { bounds: LatLngBoundsExpression }) => {
+const FitImageBoundsOnce = ({
+  bounds
+}: {
+  bounds: L.LatLngBoundsExpression;
+}) => {
   const map = useMap();
   useEffect(() => {
     map.fitBounds(bounds, { animate: true, padding: [0, 0] });
@@ -84,7 +90,7 @@ const MapDisplay = () => {
 
   // Add boundary drawing state
   const [isDrawing, setIsDrawing] = useState(false);
-  const [drawingPoints, setDrawingPoints] = useState<LatLngTuple[]>([]);
+  const [drawingPoints, setDrawingPoints] = useState<L.LatLngTuple[]>([]);
   const [boundaries, setBoundaries] = useState<Boundary[]>(mockBoundaries);
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -92,6 +98,19 @@ const MapDisplay = () => {
     width: number;
     height: number;
   } | null>(null);
+
+  // Move these hooks above the early return
+  const [movingMarkers, setMovingMarkers] = useState(() =>
+    getMovingMarkers(mockBoundaries)
+  );
+
+  useEffect(() => {
+    if (!imgSize) return;
+    const interval = setInterval(() => {
+      setMovingMarkers(getMovingMarkers(boundaries));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [imgSize, boundaries]);
 
   // Track map container size
   useEffect(() => {
@@ -115,7 +134,7 @@ const MapDisplay = () => {
   }, []);
 
   // Use the bounds that fit all boundaries
-  // const boundariesBounds: LatLngBoundsExpression =
+  // const boundariesBounds: L.LatLngBoundsExpression =
   //   getBoundariesBounds(mockBoundaries);
 
   useEffect(() => {
@@ -127,7 +146,7 @@ const MapDisplay = () => {
 
   if (!imgSize) return null;
 
-  const imageBounds: LatLngBoundsExpression = [
+  const imageBounds: L.LatLngBoundsExpression = [
     [0, 0], // botton-left
     [imgSize.height, 0], // top-left
     [0, imgSize.width], // botton-right
@@ -192,27 +211,40 @@ const MapDisplay = () => {
               <RecenterButton bounds={imageBounds} />
               <ImageOverlay url={imageConfig.url} bounds={imageBounds} />
               {/* Existing boundaries */}
-              {boundaries.map((boundary) => (
-                <Polygon
-                  key={boundary.id}
-                  positions={boundary.points.map(
-                    (p) => [p.lat, p.lng] as LatLngTuple
-                  )}
-                  pathOptions={boundaryStyles[boundary.type]}
-                  eventHandlers={{
-                    click: () => handleBoundaryClick(boundary),
-                    mouseover: (e) => {
-                      const layer = e.target;
-                      layer.setStyle({ fillOpacity: 0.5 });
-                    },
-                    mouseout: (e) => {
-                      const layer = e.target;
-                      layer.setStyle({
-                        fillOpacity: boundaryStyles[boundary.type].fillOpacity
-                      });
-                    }
-                  }}
-                />
+              {boundaries.map((boundary, bIdx) => (
+                <>
+                  <Polygon
+                    key={boundary.id}
+                    positions={boundary.points.map(
+                      (p) => [p.lat, p.lng] as L.LatLngTuple
+                    )}
+                    pathOptions={boundaryStyles[boundary.type]}
+                    eventHandlers={{
+                      click: () => handleBoundaryClick(boundary),
+                      mouseover: (e) => {
+                        const layer = e.target;
+                        layer.setStyle({ fillOpacity: 0.5 });
+                      },
+                      mouseout: (e) => {
+                        const layer = e.target;
+                        layer.setStyle({
+                          fillOpacity: boundaryStyles[boundary.type].fillOpacity
+                        });
+                      }
+                    }}
+                  />
+                  {movingMarkers[bIdx]?.map((marker, idx) => (
+                    <AnimatedMarker
+                      key={marker.id}
+                      id={marker.id}
+                      position={[marker.lat, marker.lng]}
+                      deviceType={marker.deviceType}
+                      tagNumber={idx + 1}
+                      color="#2563eb"
+                      size={8}
+                    />
+                  ))}
+                </>
               ))}
               {/* Live drawing polygon */}
               {isDrawing && drawingPoints.length > 0 && (
@@ -307,11 +339,29 @@ const MapDisplay = () => {
                 Type:{" "}
                 <span className="capitalize">{selectedBoundary.type}</span>
               </p>
-              <div className="mb-2 text-gray-500 text-xs">Boundary Points:</div>
+              <div className="mb-2 font-semibold text-gray-500 text-xs">
+                Boundary Points:
+              </div>
               <ul className="mb-4 text-gray-700 text-xs">
                 {selectedBoundary.points.map((pt, idx) => (
                   <li key={idx}>
-                    Lat: {pt.lat}, Lng: {pt.lng}
+                    Lat: {pt.lat.toFixed(4)}, Lng: {pt.lng.toFixed(4)}
+                  </li>
+                ))}
+              </ul>
+              <div className="mb-2 font-semibold text-gray-500 text-xs">
+                Markers:
+              </div>
+              <ul className="mb-4 text-gray-700 text-xs">
+                {(
+                  movingMarkers[
+                    boundaries.findIndex((b) => b.id === selectedBoundary.id)
+                  ] || []
+                ).map((marker, idx) => (
+                  <li key={marker.id}>
+                    <span className="font-mono">Tag #{idx + 1}</span>
+                    {` (Device: ${marker.deviceType})`}: Lat:{" "}
+                    {marker.lat.toFixed(4)}, Lng: {marker.lng.toFixed(4)}
                   </li>
                 ))}
               </ul>
