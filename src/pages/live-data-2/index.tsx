@@ -16,7 +16,7 @@ const LiveDataPage = () => {
       <PageHeader />
       <main className="flex flex-col gap-2 p-2">
         {/* Upper Half: Block Grid */}
-        <div className="flex justify-center items-center items-center w-full">
+        <div className="flex justify-center items-center w-full">
           <BlockGrid
             selectedBlock={selectedBlock}
             onBlockSelect={setSelectedBlock}

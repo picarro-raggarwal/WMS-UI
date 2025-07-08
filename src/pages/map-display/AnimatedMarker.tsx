@@ -53,6 +53,10 @@ export const AnimatedMarker = ({
     };
   }, [position]);
 
+  if (!animatedPos || isNaN(animatedPos[0]) || isNaN(animatedPos[1])) {
+    return null;
+  }
+
   return (
     <CircleMarker
       center={animatedPos}

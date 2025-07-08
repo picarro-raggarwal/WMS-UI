@@ -47,16 +47,21 @@ const RecenterButton = ({ bounds }: { bounds: L.LatLngBoundsExpression }) => {
 //   ];
 // }
 
-// Helper to fit image bounds only once on mount (with animation)
+// FitImageBoundsOnce: Only fits bounds on initial mount to prevent unwanted zoom resets on state changes.
 const FitImageBoundsOnce = ({
   bounds
 }: {
   bounds: L.LatLngBoundsExpression;
 }) => {
   const map = useMap();
+  const hasFit = useRef(false);
   useEffect(() => {
-    map.fitBounds(bounds, { animate: true, padding: [0, 0] });
-  }, [map, bounds]);
+    if (!hasFit.current) {
+      map.fitBounds(bounds, { animate: true, padding: [0, 0] });
+      hasFit.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]); // Only run on mount
   return null;
 };
 

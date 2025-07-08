@@ -59,6 +59,19 @@ export const mockBoundaries: Boundary[] = [
       { lat: 406.8044345522543, lng: 1350.799340372229 },
       { lat: 407.54949761919977, lng: 946.9751580877568 }
     ]
+  },
+  {
+    id: "room-5",
+    name: "Common Area",
+    type: "safe",
+    points: [
+      { lat: 1741.1746, lng: 820.9646 },
+      { lat: 1742.6341, lng: 1119.4308 },
+      { lat: 1665.281, lng: 1117.2415 },
+      { lat: 1664.5512, lng: 892.4797 },
+      { lat: 1542.6836, lng: 892.4797 },
+      { lat: 1540.4944, lng: 822.424 }
+    ]
   }
 ];
 
@@ -138,6 +151,13 @@ export const deviceTypes = ["mobile", "hand-held", "watch"];
 export function getMovingMarkers(boundaries: Boundary[]) {
   return boundaries.map((boundary, bIdx) => {
     const poly = boundary.points.map((p) => [p.lat, p.lng] as [number, number]);
+    if (
+      !poly ||
+      poly.length < 3 ||
+      poly.some(([lat, lng]) => isNaN(lat) || isNaN(lng))
+    ) {
+      return [];
+    }
     // Generate a random number of markers (2-5) for each boundary
     const numMarkers = Math.floor(Math.random() * 4) + 2; // 2 to 5
     return Array.from({ length: numMarkers }).map((_, idx) => {
