@@ -262,7 +262,7 @@ const MapDisplay = () => {
           </div>
         </div>
         {/* Details Panel */}
-        <aside className="flex-shrink-0 bg-white shadow mt-8 md:mt-0 ml-0 md:ml-4 p-6 border border-gray-200 rounded-lg w-full md:w-96 h-full overflow-y-auto">
+        <aside className="flex flex-col flex-shrink-0 bg-white shadow mt-8 md:mt-0 ml-0 md:ml-4 p-6 border border-gray-200 rounded-lg w-full md:w-96 h-full overflow-y-auto">
           <div className="flex justify-between">
             {/* Add Boundary Button */}
             <Button
@@ -321,7 +321,7 @@ const MapDisplay = () => {
           </div>
 
           {selectedBoundary ? (
-            <>
+            <div className="flex-1">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold text-lg">
                   {selectedBoundary.name}
@@ -371,9 +371,9 @@ const MapDisplay = () => {
                 ))}
               </ul>
               {/* Add more detailed info here if needed */}
-            </>
+            </div>
           ) : (
-            <div className="flex flex-col justify-center items-center h-full text-gray-400">
+            <div className="flex flex-col flex-1 justify-center items-center text-gray-400">
               <span className="mb-2">No boundary selected</span>
               <span className="text-xs">
                 Select any boundary on the map to see more info.
