@@ -90,3 +90,52 @@ export const allExposures = Array.from(
 export const allLocations = Array.from(
   new Set(mockHistory.map((h) => h.location))
 );
+
+// Room History mock data
+export const mockRoomHistory = [
+  {
+    timestamp: "2025-06-01 10:00:00",
+    roomId: "Room-101",
+    currentConcentration: 12.5,
+    compounds: ["Methane", "Ethane"],
+    currentTagsPresent: ["T-001", "T-002"]
+  },
+  {
+    timestamp: "2025-06-01 10:05:00",
+    roomId: "Room-102",
+    currentConcentration: 8.1,
+    compounds: ["Propane"],
+    currentTagsPresent: ["T-003"]
+  },
+  {
+    timestamp: "2025-06-01 10:10:00",
+    roomId: "Room-101",
+    currentConcentration: 15.3,
+    compounds: ["Methane", "Propane"],
+    currentTagsPresent: ["T-001", "T-004"]
+  },
+  {
+    timestamp: "2025-06-01 10:15:00",
+    roomId: "Room-103",
+    currentConcentration: 5.6,
+    compounds: ["Ethane"],
+    currentTagsPresent: ["T-005"]
+  },
+  {
+    timestamp: "2025-06-02 10:20:00",
+    roomId: "Room-102",
+    currentConcentration: 20.1,
+    compounds: ["Methane", "Ethane", "Propane"],
+    currentTagsPresent: ["T-002", "T-003", "T-006"]
+  }
+];
+
+export const allRoomIds = Array.from(
+  new Set(mockRoomHistory.map((h) => h.roomId))
+);
+export const allRoomCompounds = Array.from(
+  new Set(mockRoomHistory.flatMap((h) => h.compounds))
+);
+export const allRoomTags = Array.from(
+  new Set(mockRoomHistory.flatMap((h) => h.currentTagsPresent))
+);
