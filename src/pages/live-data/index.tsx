@@ -1,16 +1,17 @@
+import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
-import { useState } from "react";
+import { useLocalStorage } from "@mantine/hooks";
+import { DEFAULT_SELECTED_METRICS } from "../data-review";
 import { ChartConfigDialog } from "./components/chart-config-dialog";
 import { LiveChartRender } from "./components/live-chart-render";
 import { MetricsDisplay } from "./components/metrics-display";
-import { useLocalStorage } from "@mantine/hooks";
-import { DEFAULT_SELECTED_METRICS } from "../data-review";
-import { Badge } from "@/components/ui/badge";
 
 const LiveDataPage = () => {
-  const [selectedMetrics, setSelectedMetrics] = useLocalStorage<[string, string]>({
+  const [selectedMetrics, setSelectedMetrics] = useLocalStorage<
+    [string, string]
+  >({
     key: "live-data-selected-metrics",
-    defaultValue: DEFAULT_SELECTED_METRICS,
+    defaultValue: DEFAULT_SELECTED_METRICS
   });
 
   return (

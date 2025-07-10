@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
-import { Outlet } from "react-router";
+import { SystemStartupModal } from "@/components/SystemStartupModal";
 import { Toaster } from "@/components/ui/sonner";
 import { useSocket } from "@/hooks/useSocket";
-import { SystemStartupModal } from "@/components/SystemStartupModal";
-import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { useGetSystemInfoQuery } from "@/lib/services/systemInfo.slice";
+import { useGetTimeQuery } from "@/lib/services/timesync.slice";
+import { useEffect, useState } from "react";
+import { Outlet } from "react-router";
 import { useGetSystemComponentsAvailabilityQuery } from "./pages/dashboard/data/systemMetrics.slice";
-import { CheckCircle, CheckCircle2 } from "lucide-react";
 
 function App() {
   // Initialize socket connections at app level for all routes
@@ -15,15 +14,15 @@ function App() {
   const {
     data: systemComponentsAvailabilityData,
     isLoading: isLoadingSystemComponentsAvailability,
-    error: errorSystemComponentsAvailability,
+    error: errorSystemComponentsAvailability
   } = useGetSystemComponentsAvailabilityQuery(undefined, {
     skip: !showStartupModal,
-    pollingInterval: 5000,
+    pollingInterval: 5000
   });
 
   // Initialize timesync at root level with polling every 30 seconds
   useGetTimeQuery(undefined, {
-    pollingInterval: 30000,
+    pollingInterval: 30000
   });
 
   // Initialize system info at root level (fetch once on app load)
@@ -45,18 +44,23 @@ function App() {
       }
 
       if (state === "SystemStartup") {
-        const allComponentsAvailable = systemComponentsAvailabilityData?.device_availability
-          ? Object.values(systemComponentsAvailabilityData.device_availability).every((status) => {
-              // Handle both boolean values and nested objects
-              if (typeof status === "boolean") {
-                return status;
-              } else if (typeof status === "object" && status !== null) {
-                // For nested objects, check that all sub-components are true
-                return Object.values(status).every((subStatus) => subStatus === true);
-              }
-              return false;
-            })
-          : false;
+        const allComponentsAvailable =
+          systemComponentsAvailabilityData?.device_availability
+            ? Object.values(
+                systemComponentsAvailabilityData.device_availability
+              ).every((status) => {
+                // Handle both boolean values and nested objects
+                if (typeof status === "boolean") {
+                  return status;
+                } else if (typeof status === "object" && status !== null) {
+                  // For nested objects, check that all sub-components are true
+                  return Object.values(status).every(
+                    (subStatus) => subStatus === true
+                  );
+                }
+                return false;
+              })
+            : false;
 
         if (allComponentsAvailable) {
           setShowStartupModal(false);
@@ -93,8 +97,8 @@ function App() {
         toastOptions={{
           classNames: {
             toast: "bg-white text-black",
-            error: "bg-red-600 text-white",
-          },
+            error: "bg-red-600 text-white"
+          }
         }}
         icons={{
           success: (
@@ -102,21 +106,24 @@ function App() {
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="size-6 text-primary-600">
+              className="size-6 text-primary-600"
+            >
               <path
                 fillRule="evenodd"
                 d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
                 clipRule="evenodd"
               />
             </svg>
-          ),
+          )
         }}
       />
       <SystemStartupModal
         isOpen={showStartupModal}
         onOpenChange={setShowStartupModal}
         systemComponentsAvailabilityData={systemComponentsAvailabilityData}
-        isLoadingSystemComponentsAvailability={isLoadingSystemComponentsAvailability}
+        isLoadingSystemComponentsAvailability={
+          isLoadingSystemComponentsAvailability
+        }
         errorSystemComponentsAvailability={errorSystemComponentsAvailability}
       />
     </div>

@@ -4,7 +4,6 @@ import { useLocation } from "react-router";
 const routeToPageName: Record<string, string> = {
   "/dashboard": "Overview",
   "/dashboard/live-data": "Live Data",
-  "/dashboard/new-live-data": "Live Data 2",
   "/dashboard/map-display": "Map Display",
   "/dashboard/data-review": "Data Review",
   "/dashboard/qa-qc": "QA/QC",
@@ -12,7 +11,9 @@ const routeToPageName: Record<string, string> = {
   "/dashboard/method/create": "Create Recipe",
   "/dashboard/settings": "Settings",
   "/dashboard/service": "Service",
-  "/dashboard/alerts": "Alerts"
+  "/dashboard/alerts": "Alerts",
+  "/dashboard/reports": "Reports",
+  "/dashboard/history": "History"
 };
 
 interface PageHeaderProps {

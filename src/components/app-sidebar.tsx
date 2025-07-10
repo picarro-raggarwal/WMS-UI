@@ -6,7 +6,8 @@ import {
   LifeBuoy,
   Map,
   Settings2,
-  Terminal,
+  Table2,
+  Terminal
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -18,15 +19,18 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  useSidebar,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { useSocket } from "@/hooks/useSocket";
-import { SystemInfoResponse, useGetSystemInfoQuery } from "@/lib/services/systemInfo.slice";
+import {
+  SystemInfoResponse,
+  useGetSystemInfoQuery
+} from "@/lib/services/systemInfo.slice";
 import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import {
   normalizeSeverity,
   severityMap,
-  useGetActiveAlertsQuery,
+  useGetActiveAlertsQuery
 } from "@/pages/alerts/data/alerts.slice";
 import { useGetSystemMetricsQuery } from "@/pages/dashboard/data/systemMetrics.slice";
 import { WebSocketJobStateData } from "@/types/socket";
@@ -40,13 +44,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { toggleSidebar, isHydrated } = useSidebar();
   const [sidebarOpenLocalStorage] = useLocalStorage({
-    key: "sidebar:state",
+    key: "sidebar:state"
   });
-  const { data: systemInfo, isLoading: isLoadingSystemInfo } = useGetSystemInfoQuery();
+  const { data: systemInfo, isLoading: isLoadingSystemInfo } =
+    useGetSystemInfoQuery();
 
   // Get active alerts and WebSocket data for real-time critical alert count
   const { data: activeAlertsData } = useGetActiveAlertsQuery(undefined, {
-    pollingInterval: 10000, // Poll every 10 seconds for accurate count
+    pollingInterval: 10000 // Poll every 10 seconds for accurate count
   });
   const { processedAlerts } = useSocket();
 
@@ -60,11 +65,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     // Add WebSocket alerts that are active and critical
     processedAlerts.forEach((wsAlert) => {
       const alertState = wsAlert.data.processed_alert.alert_state;
-      const normalizedSeverity = normalizeSeverity(wsAlert.data.processed_alert.severity);
+      const normalizedSeverity = normalizeSeverity(
+        wsAlert.data.processed_alert.severity
+      );
       const severityString = severityMap[normalizedSeverity];
       const alertTime = wsAlert.data.processed_alert.last_timestamp * 1000;
 
-      if (alertState === "Active" && severityString === "CRITICAL" && alertTime >= oneHourAgo) {
+      if (
+        alertState === "Active" &&
+        severityString === "CRITICAL" &&
+        alertTime >= oneHourAgo
+      ) {
         // Check if this alert already exists in API data to avoid duplicates
         const exists = allActiveAlerts.some(
           (apiAlert) =>
@@ -85,7 +96,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             published_count: wsAlert.data.processed_alert.published_count || 0,
             consecutive_count: 0,
             error: wsAlert.data.processed_alert.error,
-            redis_key: `ws-${wsAlert.data.processed_alert.driver_name}-${wsAlert.data.processed_alert.alarm_name}`,
+            redis_key: `ws-${wsAlert.data.processed_alert.driver_name}-${wsAlert.data.processed_alert.alarm_name}`
           });
         }
       }
@@ -104,34 +115,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const data = {
     user: {
       name: "service",
-      email: "service@picarro.com",
+      email: "service@picarro.com"
     },
     navMain: [
       {
         title: "Overview",
         url: "/dashboard",
         icon: Home,
-        isActive: true,
+        isActive: true
       },
       {
         title: "Map Display",
         url: "/dashboard/map-display",
-        icon: Map,
+        icon: Map
       },
       {
         title: "Live Data",
         url: "/dashboard/live-data",
-        icon: Activity,
+        icon: Activity
       },
-      {
-        title: "Live Data 2",
-        url: "/dashboard/new-live-data",
-        icon: Activity,
-      },
+
       {
         title: "Data Review",
         url: "/dashboard/data-review",
-        icon: ChartScatter,
+        icon: ChartScatter
       },
       // {
       //   title: "QA/QC",
@@ -141,17 +148,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         title: "Method",
         url: "/dashboard/method",
-        icon: Terminal,
+        icon: Terminal
       },
       {
         title: "Settings",
         url: "/dashboard/settings",
-        icon: Settings2,
+        icon: Settings2
       },
       {
         title: "Reports",
         url: "/dashboard/reports",
-        icon: LifeBuoy,
+        icon: LifeBuoy
       },
       // {
       //   title: "Service",
@@ -168,9 +175,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? `${criticalAlertsCount} active critical alert${
                 criticalAlertsCount === 1 ? "" : "s"
               } within the last hour`
-            : "No critical alerts in the last hour",
+            : "No critical alerts in the last hour"
       },
-    ],
+      {
+        title: "History",
+        url: "/dashboard/history",
+        icon: Table2
+      }
+    ]
   };
 
   return (
@@ -192,8 +204,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 />
                 <div
                   className={`px-2 text-left !text-white    text-base  font-medium ${
-                    sidebarOpenLocalStorage ? "opacity-100" : "opacity-0 pointer-events-none"
-                  }`}>
+                    sidebarOpenLocalStorage
+                      ? "opacity-100"
+                      : "opacity-0 pointer-events-none"
+                  }`}
+                >
                   Fenceline
                   <p className="-mt-0.5 text-neutral-400 text-xs text-nowrap">
                     {isLoadingSystemInfo ? (
@@ -238,7 +253,7 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
     if (timeData?.epoch && timeData?.timezone) {
       setCurrentTime({
         epoch: timeData.epoch,
-        timezone: timeData.timezone,
+        timezone: timeData.timezone
       });
     }
   }, [timeData]);
@@ -252,7 +267,7 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
         prev
           ? {
               ...prev,
-              epoch: prev.epoch + 1,
+              epoch: prev.epoch + 1
             }
           : null
       );
@@ -271,15 +286,17 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
   }, []);
 
   const [sidebarOpenLocalStorage] = useLocalStorage({
-    key: "sidebar:state",
+    key: "sidebar:state"
   });
   const { data: metricsData } = useGetSystemMetricsQuery(undefined, {
     skip:
-      (fencelineJobState?.data as WebSocketJobStateData)?.state === "SystemStartup" || !connected,
+      (fencelineJobState?.data as WebSocketJobStateData)?.state ===
+        "SystemStartup" || !connected,
     pollingInterval:
-      (fencelineJobState?.data as WebSocketJobStateData)?.state === "SystemStartup" || !connected
+      (fencelineJobState?.data as WebSocketJobStateData)?.state ===
+        "SystemStartup" || !connected
         ? 5000
-        : 0,
+        : 0
   });
   const uiVersion = import.meta.env.VITE_UI_VERSION || "dev";
 
@@ -294,7 +311,9 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
     return (
       <div className="space-y-4 px-2 pt-3 border-neutral-800 border-l w-full text-xs text-nowrap -rotate-90">
         <div className="flex items-center mb-4 -ml-1 transition-transform duration-200 ease-out transform">
-          {upsMetric && <BatteryIndicator level={upsMetric?.value ?? 0} label="UPS" />}
+          {upsMetric && (
+            <BatteryIndicator level={upsMetric?.value ?? 0} label="UPS" />
+          )}
           <p className="ml-4 text-neutral-400 text-xs">
             <Tooltip>
               <TooltipTrigger className="cursor-default">
@@ -306,7 +325,8 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
                 <TooltipContent
                   side="right"
                   sideOffset={10}
-                  className="bg-neutral-800/40 backdrop-blur-sm ml-2 p-2 rounded-full text-white text-xs">
+                  className="bg-neutral-800/40 backdrop-blur-sm ml-2 p-2 rounded-full text-white text-xs"
+                >
                   {Intl.DateTimeFormat().resolvedOptions().timeZone}
                 </TooltipContent>
               </div>
@@ -323,7 +343,9 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
         <h2 className="font-medium text-white text-nowrap wrap-nowrap">
           {systemInfo?.model || "Fenceline System"}
         </h2>
-        <p className="text-neutral-400 text-nowrap">{systemInfo?.serial_number}</p>
+        <p className="text-neutral-400 text-nowrap">
+          {systemInfo?.serial_number}
+        </p>
         {/* <p className="text-neutral-400 text-nowrap">build: {uiVersion}</p> */}
         <Tooltip>
           <TooltipTrigger className="cursor-default">
@@ -336,7 +358,9 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
           </TooltipContent>
         </Tooltip>
       </div>
-      {upsMetric?.value && <BatteryIndicator level={upsMetric?.value ?? 0} label="UPS" />}
+      {upsMetric?.value && (
+        <BatteryIndicator level={upsMetric?.value ?? 0} label="UPS" />
+      )}
     </div>
   );
 };
