@@ -32,6 +32,7 @@ import LoginPage from "./pages/login";
 import MapDisplay from "./pages/map-display";
 import MethodPage from "./pages/method";
 import CreateRecipePage from "./pages/method/create-recipe";
+import NotFoundPage from "./pages/NotFoundPage";
 import QAQCPage from "./pages/qa-qc";
 import ReportsPage from "./pages/reports";
 import ServicePage from "./pages/service";
@@ -79,8 +80,12 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="service" element={<ServicePage />} />
                 <Route path="alerts" element={<AlertsPage />} />
                 <Route path="history" element={<HistoryPage />} />
+                {/* Catch-all route for unmatched URLs inside /dashboard */}
+                <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Route>
+            {/* Catch-all route for unmatched URLs outside authenticated area */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </DataProvider>
       </AuthProvider>
