@@ -12,6 +12,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -230,7 +231,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <SystemFooter systemInfo={systemInfo} />
-        {/* <NavUser user={data.user} /> */}
+        <NavUser user={data.user} />
         <FooterToggleSidebar />
       </SidebarFooter>
     </Sidebar>

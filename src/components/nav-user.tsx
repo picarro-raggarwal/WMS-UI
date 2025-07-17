@@ -7,18 +7,18 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 
 export function NavUser({
-  user,
+  user
 }: {
   user: {
     name: string;
@@ -26,43 +26,54 @@ export function NavUser({
     avatar?: string;
   };
 }) {
-  const { isMobile } = useSidebar();
+  const { state } = useSidebar();
   const { logout } = useAuth();
+  const expanded = state === "expanded";
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton size="lg" className="  ">
-              <Avatar className="h-8 w-8 rounded-lg">
+            <SidebarMenuButton
+              size="lg"
+              className={`hover:bg-inherit mx-0 px-2
+                ${
+                  expanded
+                    ? "gap-2 items-center"
+                    : "justify-center items-center"
+                }`}
+            >
+              <Avatar className="rounded-lg w-8 h-8">
                 <AvatarFallback className="bg-white/10 rounded-lg">
                   <User2 className="w-4 h-4" />
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              {expanded && (
+                <span className="font-semibold text-sm">{user.name}</span>
+              )}
+              {expanded && <ChevronsUpDown className="ml-auto size-4" />}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-60 ml-4 rounded-xl shadow-xl bg-neutral-900/90 backdrop-blur-[2px] border border-neutral-800"
-            side={isMobile ? "bottom" : "bottom"}
-            align="end"
-            sideOffset={4}>
+            className="bg-neutral-900/90 shadow-xl backdrop-blur-[2px] border border-neutral-800 rounded-xl w-[--radix-dropdown-menu-trigger-width] min-w-48"
+            side={"top"}
+            // align="end"
+            // sideOffset={4}
+          >
             <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-3 py-3 text-left text-sm text-white">
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+              <div className="flex items-center gap-2 px-3 py-3 text-white text-sm text-left">
+                <div className="flex-1 grid text-sm text-left leading-tight">
+                  <span className="font-semibold">{user.name}</span>
+                  <span className="text-xs">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-neutral-800/40" />
+            <DropdownMenuSeparator className="bg-neutral-300/40" />
             <DropdownMenuItem
               onClick={() => logout()}
-              className="px-3 py-4 text-red-600 !hover:bg-neutral-800">
+              className="px-3 py-4 text-white"
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>
