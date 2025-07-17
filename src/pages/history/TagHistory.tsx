@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,20 +26,96 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
+import * as echarts from "echarts";
 import { ChevronDown, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   allCompounds,
   allExposures,
   allLocations,
-  mockHistory
+  mockHistory,
+  roomHeatmapCompound,
+  roomHeatmapMatrixData,
+  roomHeatmapRooms,
+  roomHeatmapTimes
 } from "./data/mock-data";
+import TagHeatmap from "./TagHeatmap";
+
+function RoomExposureHeatmap() {
+  const chartRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const chart = echarts.init(chartRef.current);
+    const option = {
+      title: {
+        text: `Total Exposure Heatmap (${roomHeatmapCompound})`,
+        left: "center"
+      },
+      tooltip: {
+        position: "top",
+        formatter: (params: any) =>
+          `Room: ${roomHeatmapRooms[Number(params.value[0])]}<br/>Time: ${
+            roomHeatmapTimes[Number(params.value[1])]
+          }<br/>Total Exposure: ${params.value[2]}`
+      },
+      grid: { height: "60%", top: 60 },
+      xAxis: {
+        type: "category",
+        data: roomHeatmapTimes,
+        splitArea: { show: true },
+        name: "Time"
+      },
+      yAxis: {
+        type: "category",
+        data: roomHeatmapRooms,
+        splitArea: { show: true },
+        name: "Room"
+      },
+      visualMap: {
+        type: "piecewise",
+        pieces: [
+          { min: 0, max: 100, color: "#2563eb" },
+          { min: 101, max: 300, color: "#d97706" },
+          { min: 301, color: "#4b5563" }
+        ],
+        show: false,
+        left: "center",
+        bottom: "5%"
+      },
+      series: [
+        {
+          name: "Total Exposure",
+          type: "heatmap",
+          data: roomHeatmapMatrixData.map(([i, j, v]) => [
+            Number(i),
+            Number(j),
+            v
+          ]),
+          label: { show: true },
+          emphasis: {
+            itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.5)" }
+          }
+        }
+      ]
+    };
+    chart.setOption(option);
+    const handleResize = () => chart.resize();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      chart.dispose();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+  return <div ref={chartRef} style={{ width: "100%", height: 400 }} />;
+}
 
 const TagHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompounds, setSelectedCompounds] = useState<string[]>([]);
   const [selectedExposures, setSelectedExposures] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
 
   const filteredHistory = useMemo(() => {
     return mockHistory.filter((row) => {
@@ -318,6 +401,30 @@ const TagHistory = () => {
           </div>
         )}
         {/* Table */}
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>
+                Exposure Heatmap for Tag {selectedTagId}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedTagId ? (
+              <>
+                <TagHeatmap tagId={selectedTagId} />
+                <div className="mt-8">
+                  <RoomExposureHeatmap />
+                </div>
+              </>
+            ) : (
+              <div className="text-neutral-400">
+                No heatmap data available for this tag.
+              </div>
+            )}
+            <DialogClose asChild>
+              <Button variant="outline">Close</Button>
+            </DialogClose>
+          </DialogContent>
+        </Dialog>
         <Card className="bg-transparent !shadow-none !border-none rounded-none !ring-0">
           <div className="relative inset-px flex flex-col bg-white dark:bg-neutral-800 shadow-black/5 shadow-xl dark:shadow-none p-6 dark:border dark:border-neutral-700/20 rounded-xl ring-1 ring-black/5 h-full text-neutral-950 dark:text-neutral-50">
             <Table className="border-separate border-spacing-y-0.5">
@@ -358,6 +465,11 @@ const TagHistory = () => {
                     <TableRow
                       key={row.tagId + idx}
                       className={idx % 2 === 0 ? "bg-neutral-100" : "bg-white"}
+                      onClick={() => {
+                        setSelectedTagId(row.tagId);
+                        setOpenDialog(true);
+                      }}
+                      style={{ cursor: "pointer" }}
                     >
                       <TableCell className="px-4 py-3 rounded-l-lg font-mono text-xs">
                         {row.tagId}

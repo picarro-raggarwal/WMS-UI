@@ -19,15 +19,20 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
+import * as echarts from "echarts";
 import { ChevronDown, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "../data-review/components/date-range-picker";
 import {
   allRoomCompounds,
   allRoomIds,
   allRoomTags,
-  mockRoomHistory
+  mockRoomHistory,
+  roomHeatmapCompound,
+  roomHeatmapMatrixData,
+  roomHeatmapRooms,
+  roomHeatmapTimes
 } from "./data/mock-data";
 
 function parseDateTime(dateTimeStr: string) {
@@ -99,8 +104,79 @@ const RoomHistory = () => {
     setDateRange(undefined);
   };
 
+  // Heatmap chart ref
+  const heatmapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!heatmapRef.current) return;
+    const chart = echarts.init(heatmapRef.current);
+    const option = {
+      title: {
+        text: `Total Exposure Heatmap (${roomHeatmapCompound})`,
+        left: "center"
+      },
+      tooltip: {
+        position: "top",
+        formatter: (params: any) =>
+          `Room: ${roomHeatmapRooms[Number(params.value[0])]}<br/>Time: ${
+            roomHeatmapTimes[Number(params.value[1])]
+          }<br/>Total Exposure: ${params.value[2]}`
+      },
+      grid: { height: "60%", top: 60 },
+      xAxis: {
+        type: "category",
+        data: roomHeatmapTimes,
+        splitArea: { show: true },
+        name: "Time"
+      },
+      yAxis: {
+        type: "category",
+        data: roomHeatmapRooms,
+        splitArea: { show: true },
+        name: "Room"
+      },
+      visualMap: {
+        type: "piecewise",
+        pieces: [
+          { min: 0, max: 100, color: "#2563eb" }, // primary-600
+          { min: 101, max: 300, color: "#d97706" }, // amber-600
+          { min: 301, color: "#4b5563" } // gray-600
+        ],
+        show: false,
+        left: "center",
+        bottom: "5%"
+      },
+      series: [
+        {
+          name: "Total Exposure",
+          type: "heatmap",
+          data: roomHeatmapMatrixData.map(([i, j, v]) => [
+            Number(i),
+            Number(j),
+            v
+          ]),
+          label: { show: true },
+          emphasis: {
+            itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.5)" }
+          }
+        }
+      ]
+    };
+    chart.setOption(option);
+    const handleResize = () => chart.resize();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      chart.dispose();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return (
     <div>
+      {/* Heatmap visualization */}
+      <div className="mb-8">
+        <div ref={heatmapRef} style={{ width: "100%", height: 400 }} />
+      </div>
       <div className="relative inset-px bg-white dark:bg-neutral-800 shadow-black/5 shadow-lg dark:shadow-none dark:border dark:border-neutral-700/20 rounded-xl ring-1 ring-black/5 text-neutral-950 dark:text-neutral-50">
         <div className="flex justify-between items-center gap-6 p-4 border-neutral-200 border-b">
           <div className="flex-1 min-w-[300px] max-w-[400px]">
