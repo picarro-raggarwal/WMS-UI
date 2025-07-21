@@ -98,7 +98,7 @@ export default function AuthLogin() {
           type="submit"
           variant="primary"
           loading={loading}
-          className="bg-primary-600 hover:bg-primary-700 shadow mt-2 rounded-full focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 w-full h-11 font-semibold text-white text-base"
+          className="bg-primary-600 hover:bg-primary-700 shadow mt-2 focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 w-full font-semibold text-white text-base"
         >
           Login
         </Button>

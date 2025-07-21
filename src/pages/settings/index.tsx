@@ -7,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetSystemInfoQuery } from "@/lib/services/systemInfo.slice";
 import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { convertTimestampToTimezone } from "@/lib/utils";
-import { useLocalStorage } from "@mantine/hooks";
 import { formatDateTime } from "@/utils";
+import { useLocalStorage } from "@mantine/hooks";
 import {
   AlertTriangle,
   Cylinder,
@@ -19,40 +19,43 @@ import {
   Settings2,
   Sun,
   Type,
+  User2
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { GasCylinders } from "../qa-qc/components/gas-cylinders";
 import { GeneralTab } from "./components/general-tab";
 import { ThresholdsTab } from "./components/thresholds-tab";
-import { GasCylinders } from "../qa-qc/components/gas-cylinders";
+import { UsersTab } from "./components/users-tab";
 
 const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
   const [isDarkMode, setIsDarkMode] = useLocalStorage({
     key: "theme",
     defaultValue: false,
     serialize: (value) => (value ? "dark" : "light"),
-    deserialize: (value) => value === "dark",
+    deserialize: (value) => value === "dark"
   });
 
   const [isBarlowFont, setIsBarlowFont] = useLocalStorage({
     key: "font",
     defaultValue: false,
     serialize: (value) => (value ? "barlow" : "default"),
-    deserialize: (value) => value === "barlow",
+    deserialize: (value) => value === "barlow"
   });
 
-  const [is24HourFormat, setIs24HourFormat] = useLocalStorage({
+  const [is24HourFormat] = useLocalStorage({
     key: "timeFormat",
     defaultValue: false,
     serialize: (value) => (value ? "24hour" : "12hour"),
-    deserialize: (value) => value === "24hour",
+    deserialize: (value) => value === "24hour"
   });
 
   const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage({
     key: "sidebar:state",
-    defaultValue: true,
+    defaultValue: true
   });
 
-  const { data: systemInfo, isLoading: isSystemInfoLoading } = useGetSystemInfoQuery();
+  const { data: systemInfo, isLoading: isSystemInfoLoading } =
+    useGetSystemInfoQuery();
 
   const { data: timeData } = useGetTimeQuery();
 
@@ -67,7 +70,7 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
     if (timeData?.epoch && timeData?.timezone) {
       setCurrentTime({
         epoch: timeData.epoch,
-        timezone: timeData.timezone,
+        timezone: timeData.timezone
       });
     }
   }, [timeData]);
@@ -81,13 +84,14 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
         prev
           ? {
               ...prev,
-              epoch: prev.epoch + 1,
+              epoch: prev.epoch + 1
             }
           : null
       );
     }, 1000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTime?.timezone]);
 
   // Update browser time every second
@@ -107,7 +111,9 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
       ? convertTimestampToTimezone(
           currentTime.epoch,
           currentTime.timezone,
-          is24HourFormat ? "MMM dd, yyyy • HH:mm:ss" : "MMM dd, yyyy • hh:mm:ss a"
+          is24HourFormat
+            ? "MMM dd, yyyy • HH:mm:ss"
+            : "MMM dd, yyyy • hh:mm:ss a"
         )
       : null;
 
@@ -137,9 +143,9 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
     setIsBarlowFont(!isBarlowFont);
   };
 
-  const toggleTimeFormat = () => {
-    setIs24HourFormat(!is24HourFormat);
-  };
+  // const toggleTimeFormat = () => {
+  //   setIs24HourFormat(!is24HourFormat);
+  // };
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -176,13 +182,23 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
               <Cylinder size={16} />
               <span>Gas Tanks</span>
             </TabsTrigger>
+            <TabsTrigger value="user-management" className={tabClasnames}>
+              <User2 size={16} />
+              <span>User Management</span>
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="thresholds" className="flex-1 space-y-6 mt-0 w-full">
+          <TabsContent
+            value="thresholds"
+            className="flex-1 space-y-6 mt-0 w-full"
+          >
             <ThresholdsTab />
           </TabsContent>
 
-          <TabsContent value="gas-cylinders" className="flex-1 space-y-6 mt-0 w-full">
+          <TabsContent
+            value="gas-cylinders"
+            className="flex-1 space-y-6 mt-0 w-full"
+          >
             <GasCylinders />
           </TabsContent>
 
@@ -191,7 +207,9 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
               <Card className="bg-gradient-to-br from-neutral-50 dark:from-neutral-900 to-neutral-200 dark:to-neutral-800 p-8 border-neutral-200 dark:border-neutral-700">
                 {isSystemInfoLoading ? (
                   <div className="flex justify-center items-center py-12">
-                    <div className="text-neutral-500">Loading system information...</div>
+                    <div className="text-neutral-500">
+                      Loading system information...
+                    </div>
                   </div>
                 ) : systemInfo ? (
                   <div className="flex items-start gap-8">
@@ -248,7 +266,9 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                   {systemInfo && (
                     <div>
                       <div className="flex justify-between items-center py-4 border-neutral-200 dark:border-neutral-700 border-b last:border-b-0">
-                        <span className="text-neutral-600 dark:text-neutral-400">Model</span>
+                        <span className="text-neutral-600 dark:text-neutral-400">
+                          Model
+                        </span>
                         <span className="font-medium text-neutral-900 dark:text-neutral-100">
                           {systemInfo.model}
                         </span>
@@ -268,23 +288,33 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                         {systemInfo.version}
                       </div>
                       <div className="flex justify-between items-center py-4 border-neutral-200 dark:border-neutral-700 border-b last:border-b-0">
-                        <span className="text-neutral-600 dark:text-neutral-400">UI Build</span>
-                        <span className="text-neutral-900 dark:text-neutral-100">{uiVersion}</span>
+                        <span className="text-neutral-600 dark:text-neutral-400">
+                          UI Build
+                        </span>
+                        <span className="text-neutral-900 dark:text-neutral-100">
+                          {uiVersion}
+                        </span>
                       </div>
-                      <div className="hidden flex justify-between items-center py-4 border-neutral-200 dark:border-neutral-700 border-b last:border-b-0">
-                        <span className="text-neutral-600 dark:text-neutral-400">System Time</span>
+                      <div className="flex justify-between items-center py-4 border-neutral-200 dark:border-neutral-700 border-b last:border-b-0">
+                        <span className="text-neutral-600 dark:text-neutral-400">
+                          System Time
+                        </span>
                         <span className="font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
                           {currentTimeFormatted || "Loading..."}
                         </span>
                       </div>
                       <div className="flex justify-between items-center py-4 border-neutral-200 dark:border-neutral-700 border-b last:border-b-0">
-                        <span className="text-neutral-600 dark:text-neutral-400">Local Time</span>
+                        <span className="text-neutral-600 dark:text-neutral-400">
+                          Local Time
+                        </span>
                         <span className="font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
                           {formatDateTime(browserTime)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center py-4 border-neutral-200 dark:border-neutral-700 border-b last:border-b-0">
-                        <span className="text-neutral-600 dark:text-neutral-400">Time Zone</span>
+                        <span className="text-neutral-600 dark:text-neutral-400">
+                          Time Zone
+                        </span>
                         <span className="font-medium text-neutral-900 dark:text-neutral-100">
                           {Intl.DateTimeFormat().resolvedOptions().timeZone}
                         </span>
@@ -302,7 +332,8 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                       {systemInfo.analyzers.map((analyzer, index) => (
                         <div
                           key={index}
-                          className="space-y-4 bg-neutral-50 dark:bg-neutral-700/30 p-4 rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-700">
+                          className="space-y-4 bg-neutral-50 dark:bg-neutral-700/30 p-4 rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-700"
+                        >
                           <div className="flex justify-between items-start">
                             <div>
                               <h4 className="font-semibold text-neutral-900 dark:text-neutral-100">
@@ -312,7 +343,9 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                                 {analyzer.serial_number}
                               </p>
                             </div>
-                            <Badge variant="secondary">Analyzer {index + 1}</Badge>
+                            <Badge variant="secondary">
+                              Analyzer {index + 1}
+                            </Badge>
                           </div>
 
                           <div className="space-y-2">
@@ -337,7 +370,9 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                       ))}
                     </div>
                   ) : (
-                    <div className="py-8 text-neutral-500 text-center">No analyzers configured</div>
+                    <div className="py-8 text-neutral-500 text-center">
+                      No analyzers configured
+                    </div>
                   )}
                 </Card>
               </div>
@@ -376,9 +411,15 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                     <div className="flex justify-between items-center bg-neutral-50 dark:bg-neutral-900 p-3 rounded-lg">
                       <div className="flex items-center gap-2">
                         {isDarkMode ? (
-                          <Moon size={20} className="text-neutral-700 dark:text-neutral-300" />
+                          <Moon
+                            size={20}
+                            className="text-neutral-700 dark:text-neutral-300"
+                          />
                         ) : (
-                          <Sun size={20} className="text-neutral-700 dark:text-neutral-300" />
+                          <Sun
+                            size={20}
+                            className="text-neutral-700 dark:text-neutral-300"
+                          />
                         )}
                         <span className="font-medium text-neutral-700 dark:text-neutral-300 text-sm">
                           <span className="flex items-center gap-1">
@@ -392,13 +433,19 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                           </span>
                         </span>
                       </div>
-                      <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
+                      <Switch
+                        checked={isDarkMode}
+                        onCheckedChange={toggleTheme}
+                      />
                     </div>
                   )}
                   {import.meta.env.VITE_UI_VERSION === "dev" && (
                     <div className="flex justify-between items-center bg-neutral-50 dark:bg-neutral-900 p-3 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <Type size={20} className="text-neutral-700 dark:text-neutral-300" />
+                        <Type
+                          size={20}
+                          className="text-neutral-700 dark:text-neutral-300"
+                        />
                         <span className="font-medium text-neutral-700 dark:text-neutral-300 text-sm">
                           Blendr Font
                           <span className="block text-neutral-500 dark:text-neutral-400 text-xs">
@@ -406,7 +453,10 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                           </span>
                         </span>
                       </div>
-                      <Switch checked={isBarlowFont} onCheckedChange={toggleFont} />
+                      <Switch
+                        checked={isBarlowFont}
+                        onCheckedChange={toggleFont}
+                      />
                     </div>
                   )}
 
@@ -428,7 +478,10 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
 
                   <div className="flex justify-between items-center bg-neutral-50 dark:bg-neutral-900 p-3 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <PanelLeft size={20} className="text-neutral-700 dark:text-neutral-300" />
+                      <PanelLeft
+                        size={20}
+                        className="text-neutral-700 dark:text-neutral-300"
+                      />
                       <span className="font-medium text-neutral-700 dark:text-neutral-300 text-sm">
                         Keep Sidebar Minimized
                         <span className="block text-neutral-500 dark:text-neutral-400 text-xs">
@@ -436,7 +489,10 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                         </span>
                       </span>
                     </div>
-                    <Switch checked={!isSidebarOpen} onCheckedChange={() => toggleSidebar()} />
+                    <Switch
+                      checked={!isSidebarOpen}
+                      onCheckedChange={() => toggleSidebar()}
+                    />
                   </div>
                 </div>
               </div>
@@ -445,6 +501,13 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
 
           <TabsContent value="general" className="flex-1 space-y-6 mt-0 w-full">
             <GeneralTab />
+          </TabsContent>
+
+          <TabsContent
+            value="user-management"
+            className="flex-1 space-y-6 mt-0 w-full"
+          >
+            <UsersTab />
           </TabsContent>
         </Tabs>
       </div>

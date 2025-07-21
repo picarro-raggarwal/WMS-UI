@@ -1,40 +1,45 @@
-import { useState, useEffect } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { DateTimePicker24h } from "@/components/ui/date-time-picker-24hr";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { DateTimePicker24h } from "@/components/ui/date-time-picker-24hr";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Cylinder, Calendar, AlertCircle, Plus, X, Eye } from "lucide-react";
-import {
-  useGetRecentGasTanksQuery,
-  useReplaceGasTankMutation,
-  useGetGasTankTypesQuery,
-  useGetGasTankConcentrationsQuery,
-  RecentGasTank,
-  NewGasTankReplacement,
   ConcentrationData,
-  GasTankTypeConcentration,
   GasTankConcentration,
+  GasTankTypeConcentration,
+  NewGasTankReplacement,
+  RecentGasTank,
+  useGetGasTankConcentrationsQuery,
+  useGetGasTankTypesQuery,
+  useGetRecentGasTanksQuery,
+  useReplaceGasTankMutation
 } from "@/pages/dashboard/data/gasTanks.slice";
 import { format } from "date-fns";
+import { AlertCircle, Calendar, Cylinder, Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type CustomConcentration = {
   id: string;
@@ -63,14 +68,15 @@ type ErrorData = {
 };
 
 const GasTankRow = ({ tank }: { tank: RecentGasTank }) => {
-  const [showConcentrationsDialog, setShowConcentrationsDialog] = useState(false);
+  const [showConcentrationsDialog, setShowConcentrationsDialog] =
+    useState(false);
 
   const {
     data: concentrationsData,
     isLoading: isLoadingConcentrations,
-    error: concentrationsError,
+    error: concentrationsError
   } = useGetGasTankConcentrationsQuery(tank.gas_tank_id, {
-    skip: !showConcentrationsDialog,
+    skip: !showConcentrationsDialog
   });
 
   const handleViewConcentrations = () => {
@@ -88,8 +94,12 @@ const GasTankRow = ({ tank }: { tank: RecentGasTank }) => {
           <div className="flex items-center gap-2">
             <Cylinder className="w-4 h-4 text-gray-400" />
             <div>
-              <div className="font-medium text-gray-900 text-sm">{tank.cylinder_id}</div>
-              <div className="hidden text-gray-500 text-sm">ID: {tank.gas_tank_id}</div>
+              <div className="font-medium text-gray-900 text-sm">
+                {tank.cylinder_id}
+              </div>
+              <div className="hidden text-gray-500 text-sm">
+                ID: {tank.gas_tank_id}
+              </div>
             </div>
           </div>
         </TableCell>
@@ -126,13 +136,17 @@ const GasTankRow = ({ tank }: { tank: RecentGasTank }) => {
             size="sm"
             variant="ghost"
             onClick={handleViewConcentrations}
-            className="flex items-center gap-1 text-xs">
+            className="flex items-center gap-1 text-xs"
+          >
             View Concentrations
           </Button>
         </TableCell>
       </TableRow>
 
-      <Dialog open={showConcentrationsDialog} onOpenChange={handleCloseConcentrationsDialog}>
+      <Dialog
+        open={showConcentrationsDialog}
+        onOpenChange={handleCloseConcentrationsDialog}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
@@ -144,48 +158,63 @@ const GasTankRow = ({ tank }: { tank: RecentGasTank }) => {
 
           <div className="mt-4">
             {isLoadingConcentrations && (
-              <div className="py-8 text-gray-500 text-center">Loading concentrations...</div>
+              <div className="py-8 text-gray-500 text-center">
+                Loading concentrations...
+              </div>
             )}
 
             {concentrationsError && (
               <Alert variant="destructive">
                 <AlertCircle className="w-4 h-4" />
                 <AlertTitle>Error</AlertTitle>
-                <AlertDescription>Failed to load concentrations data</AlertDescription>
+                <AlertDescription>
+                  Failed to load concentrations data
+                </AlertDescription>
               </Alert>
             )}
 
-            {concentrationsData && concentrationsData.result.concentrations.length === 0 && (
-              <div className="py-8 text-gray-500 text-center">
-                No concentration data available for this tank
-              </div>
-            )}
+            {concentrationsData &&
+              concentrationsData.result.concentrations.length === 0 && (
+                <div className="py-8 text-gray-500 text-center">
+                  No concentration data available for this tank
+                </div>
+              )}
 
-            {concentrationsData && concentrationsData.result.concentrations.length > 0 && (
-              <div className="space-y-3">
-                <p className="mb-4 text-gray-600 text-sm">
-                  Verified concentrations for this gas tank:
-                </p>
-                {concentrationsData.result.concentrations.map(
-                  (conc: GasTankConcentration, index: number) => (
-                    <div key={index} className="bg-gray-50 p-3 border rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">{conc.compound_name}</p>
-                          <p className="text-gray-600 text-xs">Unit: {conc.concentration_unit}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium text-gray-900 text-sm">
-                            {conc.verified_concentration}
-                          </p>
-                          <p className="text-gray-600 text-xs">{conc.concentration_unit}</p>
+            {concentrationsData &&
+              concentrationsData.result.concentrations.length > 0 && (
+                <div className="space-y-3">
+                  <p className="mb-4 text-gray-600 text-sm">
+                    Verified concentrations for this gas tank:
+                  </p>
+                  {concentrationsData.result.concentrations.map(
+                    (conc: GasTankConcentration, index: number) => (
+                      <div
+                        key={index}
+                        className="bg-gray-50 p-3 border rounded-lg"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">
+                              {conc.compound_name}
+                            </p>
+                            <p className="text-gray-600 text-xs">
+                              Unit: {conc.concentration_unit}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-900 text-sm">
+                              {conc.verified_concentration}
+                            </p>
+                            <p className="text-gray-600 text-xs">
+                              {conc.concentration_unit}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                )}
-              </div>
-            )}
+                    )
+                  )}
+                </div>
+              )}
           </div>
         </DialogContent>
       </Dialog>
@@ -194,9 +223,15 @@ const GasTankRow = ({ tank }: { tank: RecentGasTank }) => {
 };
 
 export const GasCylinders = () => {
-  const { data: recentTanks, isLoading, error, refetch } = useGetRecentGasTanksQuery(10);
+  const {
+    data: recentTanks,
+    isLoading,
+    error,
+    refetch
+  } = useGetRecentGasTanksQuery(10);
   const { data: tankTypes } = useGetGasTankTypesQuery();
-  const [replaceGasTank, { isLoading: isReplacing }] = useReplaceGasTankMutation();
+  const [replaceGasTank, { isLoading: isReplacing }] =
+    useReplaceGasTankMutation();
 
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [selectedTank, setSelectedTank] = useState<RecentGasTank | null>(null);
@@ -210,10 +245,14 @@ export const GasCylinders = () => {
     analytical_accuracy: "",
     replace_technician: "",
     replaced_time: "",
-    concentrations: {},
+    concentrations: {}
   });
-  const [concentrationValues, setConcentrationValues] = useState<Record<string, string>>({});
-  const [customConcentrations, setCustomConcentrations] = useState<CustomConcentration[]>([]);
+  const [concentrationValues, setConcentrationValues] = useState<
+    Record<string, string>
+  >({});
+  const [customConcentrations, setCustomConcentrations] = useState<
+    CustomConcentration[]
+  >([]);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
 
@@ -224,10 +263,11 @@ export const GasCylinders = () => {
       const newConcentrations: Record<string, ConcentrationData> = {};
 
       concentrationTypes.forEach((conc: GasTankTypeConcentration) => {
-        newConcentrationValues[conc.name] = conc.default_concentration.toString();
+        newConcentrationValues[conc.name] =
+          conc.default_concentration.toString();
         newConcentrations[conc.name] = {
           concentration_unit: conc.unit,
-          verified_concentration: conc.default_concentration,
+          verified_concentration: conc.default_concentration
         };
       });
 
@@ -243,8 +283,8 @@ export const GasCylinders = () => {
             id: Date.now().toString(),
             name: "",
             unit: "",
-            concentration: "",
-          },
+            concentration: ""
+          }
         ]);
       } else {
         setCustomConcentrations([]);
@@ -259,13 +299,19 @@ export const GasCylinders = () => {
         cylinder_id: tank.cylinder_id,
         production_number: tank.production_number.toString(),
         tank_type: tank.tank_type,
-        certification_date: format(new Date(tank.certification_date), "yyyy-MM-dd'T'HH:mm"),
-        expiration_date: format(new Date(tank.expiration_date), "yyyy-MM-dd'T'HH:mm"),
+        certification_date: format(
+          new Date(tank.certification_date),
+          "yyyy-MM-dd'T'HH:mm"
+        ),
+        expiration_date: format(
+          new Date(tank.expiration_date),
+          "yyyy-MM-dd'T'HH:mm"
+        ),
         blend_tolerance: tank.blend_tolerance.toString(),
         analytical_accuracy: tank.analytical_accuracy.toString(),
         replace_technician: tank.replace_technician,
         replaced_time: "",
-        concentrations: {},
+        concentrations: {}
       });
     } else {
       setSelectedTank(null);
@@ -279,7 +325,7 @@ export const GasCylinders = () => {
         analytical_accuracy: "",
         replace_technician: "",
         replaced_time: "",
-        concentrations: {},
+        concentrations: {}
       });
     }
     setConcentrationValues({});
@@ -298,7 +344,10 @@ export const GasCylinders = () => {
     setFormData((prev) => ({ ...prev, tank_type: value }));
   };
 
-  const handleConcentrationChange = (concentrationName: string, value: string) => {
+  const handleConcentrationChange = (
+    concentrationName: string,
+    value: string
+  ) => {
     setConcentrationValues((prev) => ({ ...prev, [concentrationName]: value }));
 
     const numericValue = parseFloat(value) || 0;
@@ -308,9 +357,9 @@ export const GasCylinders = () => {
         ...prev.concentrations,
         [concentrationName]: {
           ...prev.concentrations[concentrationName],
-          verified_concentration: numericValue,
-        },
-      },
+          verified_concentration: numericValue
+        }
+      }
     }));
   };
 
@@ -319,14 +368,16 @@ export const GasCylinders = () => {
       id: Date.now().toString(),
       name: "",
       unit: "",
-      concentration: "",
+      concentration: ""
     };
     setCustomConcentrations((prev) => [...prev, newConcentration]);
   };
 
   const removeCustomConcentration = (id: string) => {
     setCustomConcentrations((prev) => prev.filter((conc) => conc.id !== id));
-    const concentrationToRemove = customConcentrations.find((conc) => conc.id === id);
+    const concentrationToRemove = customConcentrations.find(
+      (conc) => conc.id === id
+    );
     if (concentrationToRemove && concentrationToRemove.name) {
       setFormData((prev) => {
         const newConcentrations = { ...prev.concentrations };
@@ -345,7 +396,9 @@ export const GasCylinders = () => {
       prev.map((conc) => (conc.id === id ? { ...conc, [field]: value } : conc))
     );
 
-    const updatedConcentration = customConcentrations.find((conc) => conc.id === id);
+    const updatedConcentration = customConcentrations.find(
+      (conc) => conc.id === id
+    );
     if (updatedConcentration) {
       const newConc = { ...updatedConcentration, [field]: value };
       if (newConc.name && newConc.unit && newConc.concentration) {
@@ -355,9 +408,9 @@ export const GasCylinders = () => {
             ...prev.concentrations,
             [newConc.name]: {
               concentration_unit: newConc.unit,
-              verified_concentration: parseFloat(newConc.concentration) || 0,
-            },
-          },
+              verified_concentration: parseFloat(newConc.concentration) || 0
+            }
+          }
         }));
       }
     }
@@ -373,16 +426,27 @@ export const GasCylinders = () => {
     setFormError("");
     setFormSuccess("");
 
-    if (!formData.cylinder_id || !formData.production_number || !formData.tank_type) {
-      setFormError("Cylinder ID, Production Number, and Tank Type are required");
+    if (
+      !formData.cylinder_id ||
+      !formData.production_number ||
+      !formData.tank_type
+    ) {
+      setFormError(
+        "Cylinder ID, Production Number, and Tank Type are required"
+      );
       return;
     }
 
     if (tankTypes?.tank_types[formData.tank_type]) {
       const requiredConcentrations = tankTypes.tank_types[formData.tank_type];
       for (const conc of requiredConcentrations) {
-        if (!concentrationValues[conc.name] || parseFloat(concentrationValues[conc.name]) <= 0) {
-          setFormError(`${conc.name} concentration is required and must be greater than 0`);
+        if (
+          !concentrationValues[conc.name] ||
+          parseFloat(concentrationValues[conc.name]) <= 0
+        ) {
+          setFormError(
+            `${conc.name} concentration is required and must be greater than 0`
+          );
           return;
         }
       }
@@ -392,10 +456,16 @@ export const GasCylinders = () => {
       for (const customConc of customConcentrations) {
         if (customConc.name && customConc.unit && customConc.concentration) {
           if (parseFloat(customConc.concentration) <= 0) {
-            setFormError(`${customConc.name} concentration must be greater than 0`);
+            setFormError(
+              `${customConc.name} concentration must be greater than 0`
+            );
             return;
           }
-        } else if (customConc.name || customConc.unit || customConc.concentration) {
+        } else if (
+          customConc.name ||
+          customConc.unit ||
+          customConc.concentration
+        ) {
           setFormError(
             "Please complete all fields for custom concentrations or remove incomplete entries"
           );
@@ -414,7 +484,7 @@ export const GasCylinders = () => {
         blend_tolerance: parseFloat(formData.blend_tolerance) || 0,
         analytical_accuracy: parseFloat(formData.analytical_accuracy) || 0,
         replace_technician: formData.replace_technician,
-        concentrations: formData.concentrations,
+        concentrations: formData.concentrations
       };
 
       await replaceGasTank(replacementData).unwrap();
@@ -428,43 +498,57 @@ export const GasCylinders = () => {
     } catch (err: unknown) {
       if (err && typeof err === "object" && "data" in err) {
         const serverData = (err as { data: unknown }).data;
-        if (serverData && typeof serverData === "object" && "error" in serverData) {
+        if (
+          serverData &&
+          typeof serverData === "object" &&
+          "error" in serverData
+        ) {
           const errorData = serverData.error as ErrorData;
           if (errorData?.description) {
             setFormError(errorData.description);
           } else if (errorData?.message) {
             setFormError(errorData.message);
           } else {
-            setFormError("Failed to record gas tank replacement. Please try again.");
+            setFormError(
+              "Failed to record gas tank replacement. Please try again."
+            );
           }
         } else {
-          setFormError("Failed to record gas tank replacement. Please try again.");
+          setFormError(
+            "Failed to record gas tank replacement. Please try again."
+          );
         }
       } else {
-        setFormError("Failed to record gas tank replacement. Please try again.");
+        setFormError(
+          "Failed to record gas tank replacement. Please try again."
+        );
       }
     }
   };
 
   if (isLoading) return <div className="p-4">Loading gas tanks...</div>;
-  if (error) return <div className="p-4 text-red-500">Error loading gas tanks</div>;
+  if (error)
+    return <div className="p-4 text-red-500">Error loading gas tanks</div>;
 
   return (
     <div className="space-y-8">
       <Card className="p-6">
-        <CardTitle className="flex justify-between items-center mb-2 mb-4 text-lg">
+        <CardTitle className="flex justify-between items-center mb-4 text-lg">
           <span>Gas Cylinder Reference Information</span>
           <Button
             size="sm"
             onClick={() => handleReplaceClick()}
             variant="outline"
-            className="tracking-normal">
+            className="tracking-normal"
+          >
             Record Tank Replacement
           </Button>
         </CardTitle>
         <CardContent className="p-0">
           {recentTanks?.length === 0 ? (
-            <div className="py-8 text-gray-500 text-center">No recent gas tanks found</div>
+            <div className="py-8 text-gray-500 text-center">
+              No recent gas tanks found
+            </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
               <Table>
@@ -570,7 +654,10 @@ export const GasCylinders = () => {
               <div>
                 <div className="flex flex-col space-y-1.5 mb-2">
                   <Label htmlFor="tank_type">Tank Type</Label>
-                  <Select value={formData.tank_type} onValueChange={handleTankTypeChange}>
+                  <Select
+                    value={formData.tank_type}
+                    onValueChange={handleTankTypeChange}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select tank type" />
                     </SelectTrigger>
@@ -600,11 +687,19 @@ export const GasCylinders = () => {
                       <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
                         {tankTypes.tank_types[formData.tank_type].map(
                           (conc: GasTankTypeConcentration) => (
-                            <div key={conc.name} className="bg-white p-3 border rounded">
-                              <Label htmlFor={`conc_${conc.name}`} className="font-medium text-sm">
+                            <div
+                              key={conc.name}
+                              className="bg-white p-3 border rounded"
+                            >
+                              <Label
+                                htmlFor={`conc_${conc.name}`}
+                                className="font-medium text-sm"
+                              >
                                 {conc.name}
                               </Label>
-                              <p className="mb-2 text-gray-500 text-xs">Unit: {conc.unit}</p>
+                              <p className="mb-2 text-gray-500 text-xs">
+                                Unit: {conc.unit}
+                              </p>
                               <Input
                                 id={`conc_${conc.name}`}
                                 name={`conc_${conc.name}`}
@@ -612,7 +707,10 @@ export const GasCylinders = () => {
                                 step="0.01"
                                 value={concentrationValues[conc.name] || ""}
                                 onChange={(e) =>
-                                  handleConcentrationChange(conc.name, e.target.value)
+                                  handleConcentrationChange(
+                                    conc.name,
+                                    e.target.value
+                                  )
                                 }
                                 required
                                 placeholder={`Default: ${conc.default_concentration}`}
@@ -641,7 +739,8 @@ export const GasCylinders = () => {
                         onClick={addCustomConcentration}
                         size="sm"
                         variant="outline"
-                        className="flex items-center gap-1">
+                        className="flex items-center gap-1"
+                      >
                         <Plus className="w-3 h-3" />
                         Add Gas
                       </Button>
@@ -649,21 +748,30 @@ export const GasCylinders = () => {
 
                     {customConcentrations.length === 0 && (
                       <div className="py-4 text-gray-500 text-sm text-center">
-                        No custom concentrations added yet. Click "Add Gas" to get started.
+                        No custom concentrations added yet. Click "Add Gas" to
+                        get started.
                       </div>
                     )}
 
                     <div className="space-y-3">
                       {customConcentrations.map((customConc) => (
-                        <div key={customConc.id} className="bg-white p-3 border rounded">
+                        <div
+                          key={customConc.id}
+                          className="bg-white p-3 border rounded"
+                        >
                           <div className="flex justify-between items-center mb-2">
-                            <Label className="font-medium text-sm">Gas Component</Label>
+                            <Label className="font-medium text-sm">
+                              Gas Component
+                            </Label>
                             <Button
                               type="button"
-                              onClick={() => removeCustomConcentration(customConc.id)}
+                              onClick={() =>
+                                removeCustomConcentration(customConc.id)
+                              }
                               size="sm"
                               variant="ghost"
-                              className="p-0 w-6 h-6 text-red-500 hover:text-red-700">
+                              className="p-0 w-6 h-6 text-red-500 hover:text-red-700"
+                            >
                               <X className="w-3 h-3" />
                             </Button>
                           </div>
@@ -671,7 +779,8 @@ export const GasCylinders = () => {
                             <div>
                               <Label
                                 htmlFor={`custom_name_${customConc.id}`}
-                                className="text-gray-600 text-xs">
+                                className="text-gray-600 text-xs"
+                              >
                                 Gas Name
                               </Label>
                               <Input
@@ -691,7 +800,8 @@ export const GasCylinders = () => {
                             <div>
                               <Label
                                 htmlFor={`custom_unit_${customConc.id}`}
-                                className="text-gray-600 text-xs">
+                                className="text-gray-600 text-xs"
+                              >
                                 Unit
                               </Label>
                               <Input
@@ -711,7 +821,8 @@ export const GasCylinders = () => {
                             <div>
                               <Label
                                 htmlFor={`custom_conc_${customConc.id}`}
-                                className="text-gray-600 text-xs">
+                                className="text-gray-600 text-xs"
+                              >
                                 Concentration
                               </Label>
                               <Input
@@ -780,7 +891,9 @@ export const GasCylinders = () => {
                   />
                 </div>
                 <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="analytical_accuracy">Analytical Accuracy (%)</Label>
+                  <Label htmlFor="analytical_accuracy">
+                    Analytical Accuracy (%)
+                  </Label>
                   <Input
                     id="analytical_accuracy"
                     name="analytical_accuracy"
@@ -814,10 +927,16 @@ export const GasCylinders = () => {
                 type="button"
                 variant="outline"
                 className="flex-1"
-                onClick={() => setShowReplaceDialog(false)}>
+                onClick={() => setShowReplaceDialog(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" variant="primary" disabled={isReplacing} className="flex-1">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isReplacing}
+                className="flex-1"
+              >
                 {isReplacing ? "Recording..." : "Record Replacement"}
               </Button>
             </div>

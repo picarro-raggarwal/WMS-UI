@@ -1,22 +1,29 @@
-import { useState } from "react";
-import { Card, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, UserPlus, Pencil, Trash2, Shield } from "lucide-react";
+import { Card, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
+import {
+  KeyRound,
+  Pencil,
+  Search,
+  Shield,
+  Trash2,
+  UserPlus
+} from "lucide-react";
+import { useState } from "react";
 
 type UserRole = "Client" | "Picarro" | "Admin" | "Service";
 
@@ -35,23 +42,161 @@ const mockUsers: User[] = [
     name: "John Doe",
     email: "john@picarro.com",
     role: "Picarro",
-    lastActive: "2024-03-15T10:30:00",
+    lastActive: "2024-03-15T10:30:00"
   },
   {
     id: "2",
     name: "Jane Smith",
     email: "jane@client.com",
     role: "Client",
-    lastActive: "2024-03-14T15:45:00",
+    lastActive: "2024-03-14T15:45:00"
   },
   {
     id: "3",
     name: "Bob Wilson",
     email: "bob@service.com",
     role: "Service",
-    lastActive: "2024-03-13T09:20:00",
-  },
+    lastActive: "2024-03-13T09:20:00"
+  }
 ];
+
+// Reusable UserForm component for Add/Edit User
+function UserForm({
+  initialUser,
+  onSubmit,
+  submitLabel,
+  onChange,
+  loading = false
+}: {
+  initialUser: Partial<User>;
+  onSubmit: () => void;
+  submitLabel: string;
+  onChange: (user: Partial<User>) => void;
+  loading?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="space-y-2">
+        <label className="font-medium text-sm">Name</label>
+        <Input
+          value={initialUser.name || ""}
+          onChange={(e) => onChange({ ...initialUser, name: e.target.value })}
+          placeholder="Enter name"
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="font-medium text-sm">Email</label>
+        <Input
+          type="email"
+          value={initialUser.email || ""}
+          onChange={(e) => onChange({ ...initialUser, email: e.target.value })}
+          placeholder="Enter email"
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="font-medium text-sm">Role</label>
+        <Select
+          value={initialUser.role}
+          onValueChange={(value: UserRole) =>
+            onChange({ ...initialUser, role: value })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Admin">Admin</SelectItem>
+            <SelectItem value="Picarro">Picarro</SelectItem>
+            <SelectItem value="Service">Service</SelectItem>
+            <SelectItem value="Client">Client</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <Button
+        onClick={onSubmit}
+        className="bg-primary-600 hover:bg-primary-700 shadow mt-2 focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 w-full font-semibold text-white text-base"
+        disabled={loading}
+      >
+        {submitLabel}
+      </Button>
+    </div>
+  );
+}
+
+// UpdatePasswordDialog component
+type UpdatePasswordDialogProps = {
+  open: boolean;
+  user: User | null;
+  onOpenChange: (open: boolean) => void;
+};
+
+function UpdatePasswordDialog({
+  open,
+  user,
+  onOpenChange
+}: UpdatePasswordDialogProps) {
+  const [newPassword, setNewPassword] = useState("");
+  const [retypePassword, setRetypePassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const handleClose = () => {
+    setNewPassword("");
+    setRetypePassword("");
+    setPasswordError("");
+    onOpenChange(false);
+  };
+
+  const handleUpdate = () => {
+    if (!newPassword || !retypePassword) {
+      setPasswordError("Both fields are required.");
+    } else if (newPassword !== retypePassword) {
+      setPasswordError("Passwords do not match.");
+    } else {
+      setPasswordError("");
+      handleClose();
+      // Here you would call your API to update the password
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Update Password</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <label className="font-medium text-sm">New Password</label>
+            <Input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="font-medium text-sm">Re-type Password</label>
+            <Input
+              type="password"
+              value={retypePassword}
+              onChange={(e) => setRetypePassword(e.target.value)}
+              placeholder="Re-type new password"
+            />
+          </div>
+          {passwordError && (
+            <div className="text-red-500 text-sm">{passwordError}</div>
+          )}
+          <Button
+            className="bg-primary-600 hover:bg-primary-700 shadow mt-2 focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 w-full font-semibold text-white text-base"
+            onClick={handleUpdate}
+          >
+            Update Password
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export const UsersTab = () => {
   const [users, setUsers] = useState<User[]>(mockUsers);
@@ -61,8 +206,11 @@ export const UsersTab = () => {
   const [newUser, setNewUser] = useState<Partial<User>>({
     name: "",
     email: "",
-    role: "Client",
+    role: "Client"
   });
+  const [passwordDialogUser, setPasswordDialogUser] = useState<User | null>(
+    null
+  );
 
   const filteredUsers = users.filter(
     (user) =>
@@ -77,7 +225,7 @@ export const UsersTab = () => {
         id: Math.random().toString(36).substr(2, 9),
         name: newUser.name,
         email: newUser.email,
-        role: newUser.role,
+        role: newUser.role
       };
       setUsers([...users, user]);
       setNewUser({ name: "", email: "", role: "Client" });
@@ -115,7 +263,7 @@ export const UsersTab = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="top-2.5 left-2 absolute w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search users..."
             value={searchQuery}
@@ -123,9 +271,10 @@ export const UsersTab = () => {
             className="pl-8"
           />
         </div>
+
         <Dialog open={isAddingUser} onOpenChange={setIsAddingUser}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 shadow focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2">
               <UserPlus size={16} />
               Add User
             </Button>
@@ -134,43 +283,12 @@ export const UsersTab = () => {
             <DialogHeader>
               <DialogTitle>Add New User</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  value={newUser.name}
-                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                  placeholder="Enter name"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Email</label>
-                <Input
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  placeholder="Enter email"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Role</label>
-                <Select
-                  value={newUser.role}
-                  onValueChange={(value: UserRole) => setNewUser({ ...newUser, role: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Picarro">Picarro</SelectItem>
-                    <SelectItem value="Client">Client</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleAddUser} className="w-full">
-                Add User
-              </Button>
-            </div>
+            <UserForm
+              initialUser={newUser}
+              onChange={setNewUser}
+              onSubmit={handleAddUser}
+              submitLabel="Add User"
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -178,101 +296,94 @@ export const UsersTab = () => {
       <Card className="p-6">
         <CardTitle className="mb-6">User Management</CardTitle>
         <div className="space-y-4">
-          {/* {filteredUsers.map((user) => (
-            <div
-              key={user.id}
-              className="grid grid-cols-[1fr,auto,auto] gap-4 items-center p-4 bg-neutral-50 rounded-lg dark:bg-neutral-900">
-              <div>
-                <div className="font-medium">{user.name}</div>
-                <div className="text-sm text-muted-foreground">{user.email}</div>
-                {user.lastActive && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Last active: {new Date(user.lastActive).toLocaleString()}
+          {filteredUsers.length === 0 ? (
+            <div className="py-12 text-muted-foreground text-base text-center">
+              No users found.
+            </div>
+          ) : (
+            filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="items-center gap-4 grid grid-cols-[1fr,auto,auto] bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg"
+              >
+                <div>
+                  <div className="font-medium">{user.name}</div>
+                  <div className="text-muted-foreground text-sm">
+                    {user.email}
                   </div>
-                )}
-              </div>
+                  {user.lastActive && (
+                    <div className="mt-1 text-muted-foreground text-xs">
+                      Last active: {new Date(user.lastActive).toLocaleString()}
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleBadgeClass(
-                    user.role
-                  )}`}>
-                  <Shield size={12} />
-                  {user.role}
-                </span>
-              </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleBadgeClass(
+                      user.role
+                    )}`}
+                  >
+                    <Shield size={12} />
+                    {user.role}
+                  </span>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <Dialog
-                  open={editingUser?.id === user.id}
-                  onOpenChange={() => setEditingUser(null)}>
-                  <DialogTrigger asChild>
+                <div className="flex items-center gap-2">
+                  <Dialog
+                    open={editingUser?.id === user.id}
+                    onOpenChange={(open) => setEditingUser(open ? user : null)}
+                  >
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => setEditingUser(user)}>
+                      className="p-0 w-8 h-8"
+                      onClick={() => setEditingUser(user)}
+                    >
                       <Pencil size={16} />
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit User</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Name</label>
-                        <Input
-                          value={editingUser?.name}
-                          onChange={(e) =>
-                            setEditingUser({ ...editingUser!, name: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Email</label>
-                        <Input
-                          type="email"
-                          value={editingUser?.email}
-                          onChange={(e) =>
-                            setEditingUser({ ...editingUser!, email: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Role</label>
-                        <Select
-                          value={editingUser?.role}
-                          onValueChange={(value: UserRole) =>
-                            setEditingUser({ ...editingUser!, role: value })
-                          }>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Admin">Admin</SelectItem>
-                            <SelectItem value="Picarro">Picarro</SelectItem>
-                            <SelectItem value="Service">Service</SelectItem>
-                            <SelectItem value="Client">Client</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Button onClick={handleUpdateUser} className="w-full">
-                        Update User
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => handleDeleteUser(user.id)}>
-                  <Trash2 size={16} />
-                </Button>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit User</DialogTitle>
+                      </DialogHeader>
+                      <UserForm
+                        initialUser={editingUser || {}}
+                        onChange={(user) =>
+                          setEditingUser({ ...editingUser!, ...user })
+                        }
+                        onSubmit={handleUpdateUser}
+                        submitLabel="Update User"
+                      />
+                    </DialogContent>
+                  </Dialog>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-0 w-8 h-8"
+                    onClick={() => setPasswordDialogUser(user)}
+                    title="Update Password"
+                  >
+                    <KeyRound size={16} />
+                  </Button>
+                  <UpdatePasswordDialog
+                    open={passwordDialogUser?.id === user.id}
+                    user={passwordDialogUser}
+                    onOpenChange={(open) =>
+                      setPasswordDialogUser(open ? user : null)
+                    }
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hover:bg-red-50 p-0 w-8 h-8 text-red-600 hover:text-red-700"
+                    onClick={() => handleDeleteUser(user.id)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))} */}
+            ))
+          )}
         </div>
       </Card>
     </div>

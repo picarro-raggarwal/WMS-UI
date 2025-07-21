@@ -15,7 +15,7 @@ const NotFoundPage = () => (
       </CardContent>
       <Link
         to="/"
-        className="inline-block mt-2 px-6 py-2 rounded-lg bg-primary-700 text-primary-foreground font-medium shadow hover:bg-primary/90 transition-colors"
+        className="inline-block mt-2 px-6 py-2 rounded-lg bg-primary-600 text-primary-foreground font-medium shadow hover:bg-primary/90 transition-colors"
       >
         Go to Home
       </Link>
