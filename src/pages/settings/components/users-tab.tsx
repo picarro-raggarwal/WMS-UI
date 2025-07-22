@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -7,14 +8,13 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   KeyRound,
   Pencil,
@@ -25,13 +25,13 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-type UserRole = "Client" | "Picarro" | "Admin" | "Service";
+type UserRole = "Customer" | "Picarro Service" | "Admin";
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: UserRole[];
   lastActive?: string;
 }
 
@@ -39,24 +39,24 @@ interface User {
 const mockUsers: User[] = [
   {
     id: "1",
-    name: "John Doe",
-    email: "john@picarro.com",
-    role: "Picarro",
-    lastActive: "2024-03-15T10:30:00"
+    name: "Bob Wilson",
+    email: "bob@admin.com",
+    role: ["Admin"],
+    lastActive: "2024-03-13T09:20:00"
   },
   {
     id: "2",
-    name: "Jane Smith",
-    email: "jane@client.com",
-    role: "Client",
-    lastActive: "2024-03-14T15:45:00"
+    name: "John Doe",
+    email: "john@picarro.com",
+    role: ["Picarro Service"],
+    lastActive: "2024-03-15T10:30:00"
   },
   {
     id: "3",
-    name: "Bob Wilson",
-    email: "bob@service.com",
-    role: "Service",
-    lastActive: "2024-03-13T09:20:00"
+    name: "Jane Smith",
+    email: "jane@customer.com",
+    role: ["Customer"],
+    lastActive: "2024-03-14T15:45:00"
   }
 ];
 
@@ -74,6 +74,28 @@ function UserForm({
   onChange: (user: Partial<User>) => void;
   loading?: boolean;
 }) {
+  const roles: UserRole[] = ["Admin", "Picarro Service", "Customer"];
+  const selectedRoles = initialUser.role || [];
+
+  if (!Array.isArray(selectedRoles)) {
+    console.error("User role must be an array");
+    return null;
+  }
+
+  const handleRoleChange = (role: UserRole) => {
+    if (selectedRoles.includes(role)) {
+      onChange({
+        ...initialUser,
+        role: selectedRoles.filter((r) => r !== role)
+      });
+    } else {
+      onChange({ ...initialUser, role: [...selectedRoles, role] });
+    }
+  };
+
+  const selectedLabel =
+    selectedRoles.length > 0 ? selectedRoles.join(", ") : "Select roles";
+
   return (
     <div className="flex flex-col gap-2">
       <div className="space-y-2">
@@ -94,23 +116,33 @@ function UserForm({
         />
       </div>
       <div className="space-y-2">
-        <label className="font-medium text-sm">Role</label>
-        <Select
-          value={initialUser.role}
-          onValueChange={(value: UserRole) =>
-            onChange({ ...initialUser, role: value })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Admin">Admin</SelectItem>
-            <SelectItem value="Picarro">Picarro</SelectItem>
-            <SelectItem value="Service">Service</SelectItem>
-            <SelectItem value="Client">Client</SelectItem>
-          </SelectContent>
-        </Select>
+        <label className="font-medium text-sm">Roles</label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="justify-between w-full"
+              type="button"
+            >
+              <span className="font-normal">{selectedLabel}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[180px]">
+            {roles.map((role) => (
+              <DropdownMenuItem
+                key={role}
+                className="flex items-center space-x-2 cursor-pointer"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleRoleChange(role);
+                }}
+              >
+                <Checkbox checked={selectedRoles.includes(role)} />
+                <span>{role}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <Button
         onClick={onSubmit}
@@ -129,7 +161,6 @@ type UpdatePasswordDialogProps = {
   user: User | null;
   onOpenChange: (open: boolean) => void;
 };
-
 function UpdatePasswordDialog({
   open,
   user,
@@ -206,7 +237,7 @@ export const UsersTab = () => {
   const [newUser, setNewUser] = useState<Partial<User>>({
     name: "",
     email: "",
-    role: "Client"
+    role: ["Customer"]
   });
   const [passwordDialogUser, setPasswordDialogUser] = useState<User | null>(
     null
@@ -216,25 +247,31 @@ export const UsersTab = () => {
     (user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchQuery.toLowerCase())
+      user.role.some((r) => r.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleAddUser = () => {
-    if (newUser.name && newUser.email && newUser.role) {
+    if (
+      newUser.name &&
+      newUser.email &&
+      newUser.role &&
+      newUser.role.length > 0
+    ) {
       const user: User = {
         id: Math.random().toString(36).substr(2, 9),
         name: newUser.name,
         email: newUser.email,
-        role: newUser.role
+        role: newUser.role,
+        lastActive: new Date().toISOString()
       };
       setUsers([...users, user]);
-      setNewUser({ name: "", email: "", role: "Client" });
+      setNewUser({ name: "", email: "", role: ["Customer"] });
       setIsAddingUser(false);
     }
   };
 
   const handleUpdateUser = () => {
-    if (editingUser) {
+    if (editingUser && editingUser.role && editingUser.role.length > 0) {
       setUsers(users.map((u) => (u.id === editingUser.id ? editingUser : u)));
       setEditingUser(null);
     }
@@ -250,11 +287,9 @@ export const UsersTab = () => {
     switch (role) {
       case "Admin":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-      case "Picarro":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
-      case "Service":
+      case "Picarro Service":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "Client":
+      case "Customer":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
     }
   };
@@ -318,15 +353,18 @@ export const UsersTab = () => {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleBadgeClass(
-                      user.role
-                    )}`}
-                  >
-                    <Shield size={12} />
-                    {user.role}
-                  </span>
+                <div className="flex flex-wrap gap-1">
+                  {user.role.map((r) => (
+                    <span
+                      key={r}
+                      className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleBadgeClass(
+                        r
+                      )}`}
+                    >
+                      <Shield size={12} />
+                      {r}
+                    </span>
+                  ))}
                 </div>
 
                 <div className="flex items-center gap-2">
