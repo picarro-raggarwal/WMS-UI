@@ -1,3 +1,4 @@
+import { useLoginMutation } from "@/common/authAPI";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
@@ -14,19 +15,51 @@ export default function AuthLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loginMutation] = useLoginMutation();
+
+  // const handleSubmit = async (e: { preventDefault: () => void }) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setError("");
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //     if (username.toLowerCase() === "service" && password === "service") {
+  //       login();
+  //       navigate("/dashboard");
+  //     } else {
+  //       setError("Invalid username or password");
+  //     }
+  //   }, 1000);
+  // };
+
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-    setTimeout(() => {
-      setLoading(false);
-      if (username.toLowerCase() === "service" && password === "service") {
-        login();
+    setError(null);
+
+    try {
+      const response = await loginMutation({
+        username,
+        password
+      }).unwrap();
+
+      // Only proceed if access_token exists
+      if (response && response.access_token) {
+        login(response);
         navigate("/dashboard");
       } else {
         setError("Invalid username or password");
       }
-    }, 1000);
+    } catch (err: any) {
+      setError(
+        err?.data?.error_description ||
+          err?.data?.message ||
+          "Invalid username or password"
+      );
+      console.error("Login failed:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

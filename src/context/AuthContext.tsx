@@ -1,3 +1,4 @@
+import { AuthTokenResponse } from "@/common/authAPI";
 import { createContext, useContext, useState } from "react";
 import { Navigate, useLocation } from "react-router";
 
@@ -10,13 +11,13 @@ interface User {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: () => void;
+  login: (res: AuthTokenResponse) => void;
   logout: () => void;
 }
 
 const defaultUser = {
   name: "service",
-  email: "service@picarro.com",
+  email: "service@picarro.com"
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -36,12 +37,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const login = () => {
+  // const login = () => {
+  //   setIsAuthenticated(true);
+  //   localStorage.setItem("isAuthenticated", "true");
+
+  //   setUser(defaultUser);
+  //   localStorage.setItem("user", JSON.stringify(defaultUser));
+  // };
+
+  const login = (res: AuthTokenResponse) => {
     setIsAuthenticated(true);
     localStorage.setItem("isAuthenticated", "true");
-
-    setUser(defaultUser);
-    localStorage.setItem("user", JSON.stringify(defaultUser));
+    localStorage.setItem("token", res.access_token);
+    localStorage.setItem("refresh_token", res.refresh_token);
+    // setUser(defaultUser);
+    localStorage.setItem("user", JSON.stringify(user));
   };
 
   const logout = () => {

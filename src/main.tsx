@@ -11,7 +11,7 @@ import "@fontsource/barlow/700.css";
 import "@fontsource/barlow/800.css";
 import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import App from "./App";
 import {
   AuthProvider,
@@ -50,14 +50,7 @@ createRoot(document.getElementById("root")!).render(
           <Routes>
             <Route path="/" element={<App />}>
               {/* renders into the outlet in <Root> at "/" */}
-              <Route
-                index
-                element={
-                  <PublicRoute>
-                    <LoginPage />
-                  </PublicRoute>
-                }
-              />
+              <Route index element={<Navigate to="/login" replace />} />
 
               <Route
                 path="dashboard"
@@ -83,6 +76,15 @@ createRoot(document.getElementById("root")!).render(
                 {/* Catch-all route for unmatched URLs inside /dashboard */}
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
+
+              <Route
+                path="login"
+                element={
+                  <PublicRoute>
+                    <LoginPage />
+                  </PublicRoute>
+                }
+              />
             </Route>
             {/* Catch-all route for unmatched URLs outside authenticated area */}
             <Route path="*" element={<NotFoundPage />} />

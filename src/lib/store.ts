@@ -1,11 +1,12 @@
+import { authApi } from "@/common/authAPI";
 import { systemInfoApi } from "@/lib/services/systemInfo.slice";
 import { timeSyncApi } from "@/lib/services/timesync.slice";
 import { alertsApi } from "@/pages/alerts/data/alerts.slice";
 import { gasTanksApi } from "@/pages/dashboard/data/gasTanks.slice";
 import { systemMetricsApi } from "@/pages/dashboard/data/systemMetrics.slice";
 import { systemStatusApi } from "@/pages/dashboard/data/systemStatus.slice";
-import { dataReviewApi } from "@/pages/data-review/data/dataReview.api";
 import { dataExportApi } from "@/pages/data-review/data/dataExport.api";
+import { dataReviewApi } from "@/pages/data-review/data/dataReview.api";
 import { metricsApi } from "@/pages/live-data/data/metrics.slice";
 import { fencelineJobApi } from "@/pages/method/data/fencelineJob.slice";
 import { fencelineSchedulerApi } from "@/pages/method/data/fencelineScheduler.slice";
@@ -20,6 +21,7 @@ import socketReducer from "./services/socketSlice";
 export const store = configureStore({
   reducer: {
     socket: socketReducer,
+    [authApi.reducerPath]: authApi.reducer,
     [recipesApi.reducerPath]: recipesApi.reducer,
     [systemStatusApi.reducerPath]: systemStatusApi.reducer,
     [systemMetricsApi.reducerPath]: systemMetricsApi.reducer,
@@ -34,10 +36,11 @@ export const store = configureStore({
     [systemInfoApi.reducerPath]: systemInfoApi.reducer,
     [thresholdsApi.reducerPath]: thresholdsApi.reducer,
     [settingsApi.reducerPath]: settingsApi.reducer,
-    [alertsApi.reducerPath]: alertsApi.reducer,
+    [alertsApi.reducerPath]: alertsApi.reducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
+      .concat(authApi.middleware)
       .concat(recipesApi.middleware)
       .concat(systemStatusApi.middleware)
       .concat(systemMetricsApi.middleware)
@@ -52,7 +55,7 @@ export const store = configureStore({
       .concat(systemInfoApi.middleware)
       .concat(thresholdsApi.middleware)
       .concat(settingsApi.middleware)
-      .concat(alertsApi.middleware),
+      .concat(alertsApi.middleware)
 });
 
 setupListeners(store.dispatch);
