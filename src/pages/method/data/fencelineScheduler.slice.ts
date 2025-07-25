@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 interface HealthCheckResponse {
   status: string;
@@ -51,23 +52,24 @@ interface RunManualJobRequest {
 
 export const fencelineSchedulerApi = createApi({
   reducerPath: "fencelineSchedulerApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_scheduler/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_scheduler/api/v1"),
   tagTypes: ["SchedulerHealth", "Schedule"],
   endpoints: (builder) => ({
     getHealthCheck: builder.query<HealthCheckResponse, void>({
       query: () => "/health_check",
       providesTags: ["SchedulerHealth"],
-      transformResponse: (response: Omit<HealthCheckResponse, "lastFetched">) => ({
+      transformResponse: (
+        response: Omit<HealthCheckResponse, "lastFetched">
+      ) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
+        lastFetched: Date.now()
+      })
     }),
     isSchedulerRunning: builder.query<boolean, void>({
       query: () => "/is_scheduler_running",
       providesTags: ["SchedulerHealth"],
-      transformResponse: (response: SchedulerRunningResponse) => response.running,
+      transformResponse: (response: SchedulerRunningResponse) =>
+        response.running
     }),
     getCurrentSchedule: builder.query<ScheduleJob[], void>({
       query: () => "/get_current_schedule",
@@ -80,9 +82,13 @@ export const fencelineSchedulerApi = createApi({
           // Parse each job string into a proper object
           return rawArray.map((jobString: string) => {
             // Clean up the string (remove newlines and escape characters)
-            const cleanedString = jobString.replace(/\\n/g, "").replace(/\\/g, "");
+            const cleanedString = jobString
+              .replace(/\\n/g, "")
+              .replace(/\\/g, "");
             // Parse the string into a JSON object, converting Python None to null
-            const jsonString = cleanedString.replace(/'/g, '"').replace(/None/g, "null");
+            const jsonString = cleanedString
+              .replace(/'/g, '"')
+              .replace(/None/g, "null");
             const parsedJob = JSON.parse(jsonString);
 
             return parsedJob;
@@ -91,61 +97,64 @@ export const fencelineSchedulerApi = createApi({
           console.error("Error parsing schedule response:", error);
           return [];
         }
-      },
+      }
     }),
     scheduleMeasureJob: builder.mutation<void, ScheduleMeasureJobRequest>({
       query: (jobDetails) => ({
         url: "/schedule_measure_job",
         method: "POST",
-        body: jobDetails,
+        body: jobDetails
       }),
-      invalidatesTags: ["Schedule"],
+      invalidatesTags: ["Schedule"]
     }),
-    scheduleCalibrationJob: builder.mutation<void, ScheduleCalibrationJobRequest>({
+    scheduleCalibrationJob: builder.mutation<
+      void,
+      ScheduleCalibrationJobRequest
+    >({
       query: (jobDetails) => ({
         url: "/schedule_calibration_job",
         method: "POST",
-        body: jobDetails,
+        body: jobDetails
       }),
-      invalidatesTags: ["Schedule"],
+      invalidatesTags: ["Schedule"]
     }),
     runManualJob: builder.mutation<void, RunManualJobRequest>({
       query: (jobDetails) => ({
         url: "/run_manual",
         method: "POST",
-        body: jobDetails,
+        body: jobDetails
       }),
-      invalidatesTags: ["Schedule"],
+      invalidatesTags: ["Schedule"]
     }),
     stopScheduler: builder.mutation<void, void>({
       query: () => ({
         url: "/stop_scheduler",
-        method: "POST",
+        method: "POST"
       }),
-      invalidatesTags: ["SchedulerHealth", "Schedule"],
+      invalidatesTags: ["SchedulerHealth", "Schedule"]
     }),
     scrapSchedule: builder.mutation<void, void>({
       query: () => ({
         url: "/scrap_schedule",
-        method: "POST",
+        method: "POST"
       }),
-      invalidatesTags: ["Schedule"],
+      invalidatesTags: ["Schedule"]
     }),
     startScheduler: builder.mutation<void, void>({
       query: () => ({
         url: "/start_scheduler",
-        method: "POST",
+        method: "POST"
       }),
-      invalidatesTags: ["SchedulerHealth", "Schedule"],
+      invalidatesTags: ["SchedulerHealth", "Schedule"]
     }),
     stopManualRun: builder.mutation<void, void>({
       query: () => ({
         url: "/stop_manual_run",
-        method: "POST",
+        method: "POST"
       }),
-      invalidatesTags: ["SchedulerHealth", "Schedule"],
-    }),
-  }),
+      invalidatesTags: ["SchedulerHealth", "Schedule"]
+    })
+  })
 });
 
 export const {
@@ -158,5 +167,5 @@ export const {
   useStopSchedulerMutation,
   useScrapScheduleMutation,
   useStartSchedulerMutation,
-  useStopManualRunMutation,
+  useStopManualRunMutation
 } = fencelineSchedulerApi;

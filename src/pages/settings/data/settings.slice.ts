@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface MetricThreshold {
   warning: number;
@@ -28,25 +29,24 @@ export interface SetHardwareSettingsRequest {
 
 export const settingsApi = createApi({
   reducerPath: "settingsApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_settings",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_settings"),
   tagTypes: ["Settings"],
   endpoints: (builder) => ({
     getHardwareSettings: builder.query<SettingsResponse, void>({
       query: () => "/get_hardware_settings",
-      providesTags: ["Settings"],
+      providesTags: ["Settings"]
     }),
 
     setHardwareSettings: builder.mutation<void, SetHardwareSettingsRequest>({
       query: (thresholds) => ({
         url: "/set_hardware_settings",
         method: "POST",
-        body: thresholds,
+        body: thresholds
       }),
-      invalidatesTags: ["Settings"],
-    }),
-  }),
+      invalidatesTags: ["Settings"]
+    })
+  })
 });
 
-export const { useGetHardwareSettingsQuery, useSetHardwareSettingsMutation } = settingsApi;
+export const { useGetHardwareSettingsQuery, useSetHardwareSettingsMutation } =
+  settingsApi;

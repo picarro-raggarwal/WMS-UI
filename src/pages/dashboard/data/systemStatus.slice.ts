@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 interface SystemStatus {
   system_status: Record<string, unknown>;
@@ -11,9 +12,7 @@ interface SystemStatus {
 
 export const systemStatusApi = createApi({
   reducerPath: "systemStatusApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_data/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
   tagTypes: ["SystemStatus"],
   endpoints: (builder) => ({
     getSystemStatus: builder.query<SystemStatus, void>({
@@ -21,10 +20,10 @@ export const systemStatusApi = createApi({
       providesTags: ["SystemStatus"],
       transformResponse: (response: Omit<SystemStatus, "lastFetched">) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
-    }),
-  }),
+        lastFetched: Date.now()
+      })
+    })
+  })
 });
 
 export const { useGetSystemStatusQuery } = systemStatusApi;

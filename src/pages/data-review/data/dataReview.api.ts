@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import { WindData } from "../types";
 
 interface WindRoseParams {
@@ -9,9 +10,7 @@ interface WindRoseParams {
 
 export const dataReviewApi = createApi({
   reducerPath: "dataReviewApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_data/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
   tagTypes: ["WindRose"],
   endpoints: (builder) => ({
     getWindRose: builder.query<WindData, WindRoseParams>({
@@ -20,13 +19,13 @@ export const dataReviewApi = createApi({
         params: {
           start,
           end,
-          downsample_data,
-        },
+          downsample_data
+        }
       }),
       transformResponse: (response: { result: WindData }) => response.result,
-      providesTags: ["WindRose"],
-    }),
-  }),
+      providesTags: ["WindRose"]
+    })
+  })
 });
 
 export const { useGetWindRoseQuery } = dataReviewApi;

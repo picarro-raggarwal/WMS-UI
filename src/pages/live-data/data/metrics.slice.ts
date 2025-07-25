@@ -1,5 +1,6 @@
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
 import { MetricsResponse } from "@/types/data-review";
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 type DownsampleMode = "MEAN" | "MEDIAN" | "FIRST" | "LAST";
 
@@ -30,17 +31,22 @@ export type MetricDataResponse = {
 
 export const metricsApi = createApi({
   reducerPath: "metricsApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_data/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
   tagTypes: ["Metrics"],
   endpoints: (builder) => ({
     getMetrics: builder.query<MetricsResponse, void>({
       query: () => "/configure_charts_list",
-      providesTags: ["Metrics"],
+      providesTags: ["Metrics"]
     }),
     getMetricData: builder.query<MetricDataResponse, MetricDataParams>({
-      query: ({ start, end, metrics, latest_value, downsample_data, downsample_mode }) => ({
+      query: ({
+        start,
+        end,
+        metrics,
+        latest_value,
+        downsample_data,
+        downsample_mode
+      }) => ({
         url: "/metric_data",
         params: {
           start,
@@ -48,12 +54,13 @@ export const metricsApi = createApi({
           metrics,
           latest_value,
           downsample_data,
-          downsample_mode,
-        },
+          downsample_mode
+        }
       }),
-      transformResponse: (response: { result: MetricDataResponse }) => response.result,
-    }),
-  }),
+      transformResponse: (response: { result: MetricDataResponse }) =>
+        response.result
+    })
+  })
 });
 
 export const { useGetMetricsQuery, useGetMetricDataQuery } = metricsApi;

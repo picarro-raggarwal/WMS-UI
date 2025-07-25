@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 interface ExportConcentrationParams {
   data_type?: "avg" | "time_series";
@@ -50,12 +51,13 @@ interface AvailableSubcomponentsResponse {
 
 export const dataExportApi = createApi({
   reducerPath: "dataExportApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_data_export/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_data_export/api/v1"),
   tagTypes: ["Export"],
   endpoints: (builder) => ({
-    exportConcentration: builder.mutation<ExportResponse, ExportConcentrationParams>({
+    exportConcentration: builder.mutation<
+      ExportResponse,
+      ExportConcentrationParams
+    >({
       query: ({ data_type = "avg", start_time, end_time }) => {
         const body: Record<string, string | number> = { data_type };
         if (start_time !== undefined) body.start_time = start_time;
@@ -64,53 +66,61 @@ export const dataExportApi = createApi({
         return {
           url: "/export/concentration",
           method: "POST",
-          body,
+          body
         };
       },
-      invalidatesTags: ["Export"],
+      invalidatesTags: ["Export"]
     }),
-    exportSubcomponents: builder.mutation<ExportResponse, ExportSubcomponentsParams>({
+    exportSubcomponents: builder.mutation<
+      ExportResponse,
+      ExportSubcomponentsParams
+    >({
       query: ({ subcomponents, start_time, end_time }) => {
-        const body: Record<string, string | number | string[]> = { subcomponents };
+        const body: Record<string, string | number | string[]> = {
+          subcomponents
+        };
         if (start_time !== undefined) body.start_time = start_time;
         if (end_time !== undefined) body.end_time = end_time;
 
         return {
           url: "/export/subcomponents",
           method: "POST",
-          body,
+          body
         };
       },
-      invalidatesTags: ["Export"],
+      invalidatesTags: ["Export"]
     }),
     getExportStatus: builder.query<ExportStatusResponse, { task_id: string }>({
       query: ({ task_id }) => ({
-        url: `/export_status/${task_id}`,
+        url: `/export_status/${task_id}`
       }),
-      providesTags: ["Export"],
+      providesTags: ["Export"]
     }),
     getAllExports: builder.query<AllExportsResponse, void>({
       query: () => ({
-        url: "/all_exports",
+        url: "/all_exports"
       }),
-      providesTags: ["Export"],
+      providesTags: ["Export"]
     }),
     downloadExportFile: builder.query<Blob, { file_name: string }>({
       query: ({ file_name }) => ({
         url: "/download_export_file",
         params: {
-          file_name,
+          file_name
         },
-        responseHandler: (response) => response.blob(),
+        responseHandler: (response) => response.blob()
       }),
-      providesTags: ["Export"],
+      providesTags: ["Export"]
     }),
-    getAvailableSubcomponents: builder.query<AvailableSubcomponentsResponse, void>({
+    getAvailableSubcomponents: builder.query<
+      AvailableSubcomponentsResponse,
+      void
+    >({
       query: () => ({
-        url: "/export/available_subcomponent_list",
-      }),
-    }),
-  }),
+        url: "/export/available_subcomponent_list"
+      })
+    })
+  })
 });
 
 export const {
@@ -119,5 +129,5 @@ export const {
   useGetExportStatusQuery,
   useGetAllExportsQuery,
   useDownloadExportFileQuery,
-  useGetAvailableSubcomponentsQuery,
+  useGetAvailableSubcomponentsQuery
 } = dataExportApi;

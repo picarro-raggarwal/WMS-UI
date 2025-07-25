@@ -14,6 +14,7 @@ import { fencelineStateMachineApi } from "@/pages/method/data/fencelineStateMach
 import { recipesApi } from "@/pages/method/data/recipes.slice";
 import { settingsApi } from "@/pages/settings/data/settings.slice";
 import { thresholdsApi } from "@/pages/settings/data/thresholds.slice";
+import { userManagementApi } from "@/pages/settings/data/user-management.slice";
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import socketReducer from "./services/socketSlice";
@@ -36,7 +37,8 @@ export const store = configureStore({
     [systemInfoApi.reducerPath]: systemInfoApi.reducer,
     [thresholdsApi.reducerPath]: thresholdsApi.reducer,
     [settingsApi.reducerPath]: settingsApi.reducer,
-    [alertsApi.reducerPath]: alertsApi.reducer
+    [alertsApi.reducerPath]: alertsApi.reducer,
+    [userManagementApi.reducerPath]: userManagementApi.reducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -56,6 +58,7 @@ export const store = configureStore({
       .concat(thresholdsApi.middleware)
       .concat(settingsApi.middleware)
       .concat(alertsApi.middleware)
+      .concat(userManagementApi.middleware)
 });
 
 setupListeners(store.dispatch);

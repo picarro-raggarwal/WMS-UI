@@ -1,5 +1,5 @@
-import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
 import { createApi } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "./ProtectedBaseQuery";
 
 export interface LoginCredentials {
   username: string;
@@ -29,12 +29,11 @@ interface UserIdentity {
   email: string;
 }
 
-const authBaseURL = import.meta.env.VITE_KEYCLOAK_URL as string;
 const realms = import.meta.env.VITE_KEYCLOAK_REALMS as string;
 const client_id = import.meta.env.VITE_KEYCLOAK_CLIENTID as string;
 const client_secret = import.meta.env.VITE_AUTH_CLIENT_SECRET as string;
 
-const authURL = `${authBaseURL}/realms/${realms}/protocol/openid-connect`;
+const authURL = `/realms/${realms}/protocol/openid-connect`;
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -65,8 +64,58 @@ export const authApi = createApi({
       transformResponse: (response: UserIdentity) => {
         return response;
       }
+    }),
+
+    updateUserPassword: builder.mutation<
+      void,
+      { userId: string; newPassword: string }
+    >({
+      query: ({ userId, newPassword }) => ({
+        url: `/admin/realms/${realms}/users/${userId}/reset-password`,
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          type: "password",
+          value: newPassword,
+          temporary: false
+        })
+      })
+    }),
+
+    getUsers: builder.query<any[], void>({
+      query: () => ({
+        url: `/admin/realms/${realms}/users`,
+        method: "GET"
+      })
+    }),
+
+    deleteUser: builder.mutation<void, { userId: string }>({
+      query: ({ userId }) => ({
+        url: `/admin/realms/${realms}/users/${userId}`,
+        method: "DELETE"
+      })
+    }),
+
+    updateUser: builder.mutation<void, { userId: string; data: any }>({
+      query: ({ userId, data }) => ({
+        url: `/admin/realms/${realms}/users/${userId}`,
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      })
     })
   })
 });
 
-export const { useLoginMutation, useGetUserInfoQuery } = authApi;
+export const {
+  useLoginMutation,
+  useGetUserInfoQuery,
+  useUpdateUserPasswordMutation,
+  useGetUsersQuery,
+  useDeleteUserMutation,
+  useUpdateUserMutation
+} = authApi;

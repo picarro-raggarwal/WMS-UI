@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface Alert {
   driver_name: string;
@@ -70,7 +71,7 @@ export const severityMap: Record<number, string> = {
   0: "CRITICAL",
   1: "HIGH",
   2: "WARNING",
-  3: "INFO",
+  3: "INFO"
 };
 
 // Map severity strings to numbers for API
@@ -78,7 +79,7 @@ export const severityToNumber: Record<string, number> = {
   CRITICAL: 0,
   HIGH: 1,
   WARNING: 2,
-  INFO: 3,
+  INFO: 3
 };
 
 // Helper function to normalize severity (handles both string and number)
@@ -91,9 +92,7 @@ export const normalizeSeverity = (severity: number | string): number => {
 
 export const alertsApi = createApi({
   reducerPath: "alertsApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_alert/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_alert/api/v1"),
   tagTypes: ["Alerts", "ActiveAlerts", "AlertsSummary"],
   endpoints: (builder) => ({
     getAlerts: builder.query<AlertsResponse, AlertsQueryParams | void>({
@@ -104,49 +103,53 @@ export const alertsApi = createApi({
               ...(params.state && { state: params.state }),
               ...(params.severity && { severity: params.severity }),
               ...(params.driver_name && { driver_name: params.driver_name }),
-              ...(params.limit && { limit: params.limit }),
+              ...(params.limit && { limit: params.limit })
             }
-          : {},
+          : {}
       }),
       providesTags: ["Alerts"],
       transformResponse: (response: Omit<AlertsResponse, "lastFetched">) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
+        lastFetched: Date.now()
+      })
     }),
     getActiveAlerts: builder.query<ActiveAlertsResponse, void>({
       query: () => "/alerts/active",
       providesTags: ["ActiveAlerts"],
-      transformResponse: (response: Omit<ActiveAlertsResponse, "lastFetched">) => ({
+      transformResponse: (
+        response: Omit<ActiveAlertsResponse, "lastFetched">
+      ) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
+        lastFetched: Date.now()
+      })
     }),
     getAlertsSummary: builder.query<AlertsSummaryResponse, void>({
       query: () => "/alerts/summary",
       providesTags: ["AlertsSummary"],
-      transformResponse: (response: Omit<AlertsSummaryResponse, "lastFetched">) => ({
+      transformResponse: (
+        response: Omit<AlertsSummaryResponse, "lastFetched">
+      ) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
+        lastFetched: Date.now()
+      })
     }),
     acknowledgeAlert: builder.mutation<void, AlertActionRequest>({
       query: (alertData) => ({
         url: "/alerts/acknowledge",
         method: "POST",
-        body: alertData,
+        body: alertData
       }),
-      invalidatesTags: ["Alerts", "ActiveAlerts", "AlertsSummary"],
+      invalidatesTags: ["Alerts", "ActiveAlerts", "AlertsSummary"]
     }),
     clearAlert: builder.mutation<void, AlertActionRequest>({
       query: (alertData) => ({
         url: "/alerts/clear",
         method: "POST",
-        body: alertData,
+        body: alertData
       }),
-      invalidatesTags: ["Alerts", "ActiveAlerts", "AlertsSummary"],
-    }),
-  }),
+      invalidatesTags: ["Alerts", "ActiveAlerts", "AlertsSummary"]
+    })
+  })
 });
 
 export const {
@@ -154,5 +157,5 @@ export const {
   useGetActiveAlertsQuery,
   useGetAlertsSummaryQuery,
   useAcknowledgeAlertMutation,
-  useClearAlertMutation,
+  useClearAlertMutation
 } = alertsApi;

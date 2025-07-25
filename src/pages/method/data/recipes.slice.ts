@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface RecipeStep {
   recipe_step_id: number;
@@ -73,9 +74,7 @@ export interface DeleteRecipeRequest {
 
 export const recipesApi = createApi({
   reducerPath: "recipesApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_recipes/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_recipes/api/v1"),
   tagTypes: ["Recipe", "Step"],
   endpoints: (builder) => ({
     getAllRecipes: builder.query<Recipe[], void>({
@@ -86,44 +85,46 @@ export const recipesApi = createApi({
           ? [
               ...result.map(({ recipe_row_id }) => ({
                 type: "Recipe" as const,
-                id: recipe_row_id.toString(),
+                id: recipe_row_id.toString()
               })),
-              { type: "Recipe", id: "LIST" },
+              { type: "Recipe", id: "LIST" }
             ]
-          : [{ type: "Recipe", id: "LIST" }],
+          : [{ type: "Recipe", id: "LIST" }]
     }),
 
     getAllSteps: builder.query<Step[], void>({
       query: () => "/get_all_steps?include_config=true",
       transformResponse: (response: StepResponse) => response.result,
-      providesTags: [{ type: "Step", id: "LIST" }],
+      providesTags: [{ type: "Step", id: "LIST" }]
     }),
 
     getRecipeById: builder.query<Recipe, number>({
       query: (id) => `/get_recipe/${id}?include_steps=true`,
       transformResponse: (response: { result: Recipe }) => response.result,
-      providesTags: (result, error, id) => [{ type: "Recipe", id: id.toString() }],
+      providesTags: (result, error, id) => [
+        { type: "Recipe", id: id.toString() }
+      ]
     }),
 
     createRecipe: builder.mutation<Recipe, CreateRecipeRequest>({
       query: (recipe) => ({
         url: "/create_new_recipe",
         method: "POST",
-        body: recipe,
+        body: recipe
       }),
-      invalidatesTags: [{ type: "Recipe", id: "LIST" }],
+      invalidatesTags: [{ type: "Recipe", id: "LIST" }]
     }),
 
     updateRecipe: builder.mutation<Recipe, UpdateRecipeRequest>({
       query: (recipe) => ({
         url: "/update_recipe",
         method: "POST",
-        body: recipe,
+        body: recipe
       }),
       invalidatesTags: (result, error, { recipe_row_id }) => [
         { type: "Recipe", id: recipe_row_id.toString() },
-        { type: "Recipe", id: "LIST" },
-      ],
+        { type: "Recipe", id: "LIST" }
+      ]
     }),
 
     deleteRecipe: builder.mutation<void, DeleteRecipeRequest>({
@@ -131,15 +132,15 @@ export const recipesApi = createApi({
         url: `/delete_recipe?recipe_name=${encodeURIComponent(params.name)}`,
         method: "DELETE",
         body: {
-          recipe_row_id: params.id,
-        },
+          recipe_row_id: params.id
+        }
       }),
       invalidatesTags: (result, error, params) => [
         { type: "Recipe", id: params.id.toString() },
-        { type: "Recipe", id: "LIST" },
-      ],
-    }),
-  }),
+        { type: "Recipe", id: "LIST" }
+      ]
+    })
+  })
 });
 
 export const {
@@ -148,5 +149,5 @@ export const {
   useCreateRecipeMutation,
   useUpdateRecipeMutation,
   useDeleteRecipeMutation,
-  useGetAllStepsQuery,
+  useGetAllStepsQuery
 } = recipesApi;

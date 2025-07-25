@@ -1,7 +1,7 @@
 import type {
   BaseQueryFn,
   FetchArgs,
-  FetchBaseQueryError,
+  FetchBaseQueryError
 } from "@reduxjs/toolkit/query";
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { AuthTokenResponse } from "./authAPI";
@@ -21,22 +21,21 @@ export const protectedBaseQuery = (
       }
 
       return headers;
-    },
+    }
   });
 
-  const authBaseURL = import.meta.env.VITE_KEYCLOAK_URL as string;
   const realms = import.meta.env.VITE_KEYCLOAK_REALMS as string;
   const client_id = import.meta.env.VITE_KEYCLOAK_CLIENTID as string;
   const client_secret = import.meta.env.VITE_AUTH_CLIENT_SECRET as string;
 
-  const authURL = `${authBaseURL}/realms/${realms}/protocol/openid-connect`;
+  const authURL = `/realms/${realms}/protocol/openid-connect`;
 
   const refreshRawBaseQuery = fetchBaseQuery({
     baseUrl: authURL,
     prepareHeaders: (headers) => {
       headers.set("Content-Type", "application/x-www-form-urlencoded");
       return headers;
-    },
+    }
   });
 
   return async (args, api, extraOptions) => {
@@ -44,6 +43,18 @@ export const protectedBaseQuery = (
 
     // Handle 401 Unauthorized errors
     if (result.error && result.error.status === 401) {
+      // If this is a login attempt (/token), do not reload the browser
+      // let isLoginAttempt = false;
+      // if (typeof args === "string") {
+      //   isLoginAttempt = args === "/token";
+      // } else if (typeof args === "object" && args.url) {
+      //   isLoginAttempt = args.url === "/token";
+      // }
+      // if (isLoginAttempt) {
+      //   // Do not clear auth data or reload
+      //   return result;
+      // }
+
       // Attempt to refresh the token
       const refreshToken = localStorage.getItem("refresh_token");
       if (refreshToken) {
@@ -52,14 +63,15 @@ export const protectedBaseQuery = (
             url: "/token",
             method: "POST",
             headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
+              "Content-Type": "application/x-www-form-urlencoded"
             },
             body: new URLSearchParams({
               client_id: client_id,
+              scope: "openid",
               client_secret: client_secret,
               grant_type: "refresh_token",
-              refresh_token: refreshToken,
-            }).toString(),
+              refresh_token: refreshToken
+            }).toString()
           };
 
           const refreshResponse = (await refreshRawBaseQuery(
@@ -80,7 +92,6 @@ export const protectedBaseQuery = (
             // Retry the original request with the new token
             return await baseQuery(args, api, extraOptions);
           } else {
-            // Handle the error (e.g., clear tokens and redirect)
             clearAuthData();
           }
         } catch (refreshError) {
@@ -96,7 +107,7 @@ export const protectedBaseQuery = (
 };
 
 const clearAuthData = () => {
-  window.location.href = "/";
+  // window.location.href = "/";
   localStorage.removeItem("token");
   localStorage.removeItem("refresh_token");
   localStorage.removeItem("isAuthenticated");

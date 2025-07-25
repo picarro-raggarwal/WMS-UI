@@ -15,50 +15,39 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { KeyRound, Pencil, Search, Trash2, UserPlus } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
-  KeyRound,
-  Pencil,
-  Search,
-  Shield,
-  Trash2,
-  UserPlus
-} from "lucide-react";
-import { useState } from "react";
+  useCreateUserMutation,
+  useDeleteUserMutation,
+  useGetGroupsListQuery,
+  useGetUserByIdQuery,
+  useGetUsersListQuery,
+  useUpdateUserMutation,
+  useUpdateUserPasswordMutation
+} from "../data/user-management.slice";
 
-type UserRole = "Customer" | "Picarro Service" | "Admin";
-
-interface User {
+// Add Group type
+interface Group {
   id: string;
   name: string;
-  email: string;
-  role: UserRole[];
-  lastActive?: string;
+  path: string;
 }
-
-// Mock data - replace with actual API call
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Bob Wilson",
-    email: "bob@admin.com",
-    role: ["Admin"],
-    lastActive: "2024-03-13T09:20:00"
-  },
-  {
-    id: "2",
-    name: "John Doe",
-    email: "john@picarro.com",
-    role: ["Picarro Service"],
-    lastActive: "2024-03-15T10:30:00"
-  },
-  {
-    id: "3",
-    name: "Jane Smith",
-    email: "jane@customer.com",
-    role: ["Customer"],
-    lastActive: "2024-03-14T15:45:00"
-  }
-];
+// Updated User type to match API, with optional role
+interface User {
+  id: string;
+  username: string;
+  enabled: boolean;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  access: {
+    edit: boolean;
+    manageGroup?: boolean;
+    delete: boolean;
+  };
+  groups?: Group[];
+}
 
 // Reusable UserForm component for Add/Edit User
 function UserForm({
@@ -66,44 +55,90 @@ function UserForm({
   onSubmit,
   submitLabel,
   onChange,
-  loading = false
+  loading = false,
+  groupsOptions
 }: {
   initialUser: Partial<User>;
   onSubmit: () => void;
   submitLabel: string;
   onChange: (user: Partial<User>) => void;
   loading?: boolean;
+  groupsOptions: Group[];
 }) {
-  const roles: UserRole[] = ["Admin", "Picarro Service", "Customer"];
-  const selectedRoles = initialUser.role || [];
+  const selectedGroups = Array.isArray(initialUser.groups)
+    ? initialUser.groups
+    : [];
+  const [error, setError] = useState<string>("");
 
-  if (!Array.isArray(selectedRoles)) {
-    console.error("User role must be an array");
-    return null;
-  }
-
-  const handleRoleChange = (role: UserRole) => {
-    if (selectedRoles.includes(role)) {
+  const handleGroupChange = (group: Group) => {
+    const exists = selectedGroups.some((g) => g.id === group.id);
+    if (exists) {
       onChange({
         ...initialUser,
-        role: selectedRoles.filter((r) => r !== role)
+        groups: selectedGroups.filter((g) => g.id !== group.id)
       });
     } else {
-      onChange({ ...initialUser, role: [...selectedRoles, role] });
+      onChange({ ...initialUser, groups: [...selectedGroups, group] });
     }
   };
 
-  const selectedLabel =
-    selectedRoles.length > 0 ? selectedRoles.join(", ") : "Select roles";
+  const handleSubmit = () => {
+    if (
+      !initialUser.username ||
+      !initialUser.firstName ||
+      !initialUser.lastName ||
+      !initialUser.email ||
+      !initialUser.enabled ||
+      selectedGroups.length === 0
+    ) {
+      setError("All fields are required, including at least one group.");
+      return;
+    }
+    setError("");
+    onSubmit();
+  };
+
+  // For badge display and dropdown
+  const MAX_VISIBLE_GROUPS = 3;
+  const visibleGroups = selectedGroups.slice(0, MAX_VISIBLE_GROUPS);
+  const hiddenCount = selectedGroups.length - MAX_VISIBLE_GROUPS;
 
   return (
-    <div className="flex flex-col gap-2">
+    <form
+      className="flex flex-col gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit();
+      }}
+    >
       <div className="space-y-2">
-        <label className="font-medium text-sm">Name</label>
+        <label className="font-medium text-sm">Username</label>
         <Input
-          value={initialUser.name || ""}
-          onChange={(e) => onChange({ ...initialUser, name: e.target.value })}
-          placeholder="Enter name"
+          value={initialUser.username || ""}
+          onChange={(e) =>
+            onChange({ ...initialUser, username: e.target.value })
+          }
+          placeholder="Enter username"
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="font-medium text-sm">First Name</label>
+        <Input
+          value={initialUser.firstName || ""}
+          onChange={(e) =>
+            onChange({ ...initialUser, firstName: e.target.value })
+          }
+          placeholder="Enter first name"
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="font-medium text-sm">Last Name</label>
+        <Input
+          value={initialUser.lastName || ""}
+          onChange={(e) =>
+            onChange({ ...initialUser, lastName: e.target.value })
+          }
+          placeholder="Enter last name"
         />
       </div>
       <div className="space-y-2">
@@ -116,7 +151,7 @@ function UserForm({
         />
       </div>
       <div className="space-y-2">
-        <label className="font-medium text-sm">Roles</label>
+        <label className="font-medium text-sm">Groups</label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -124,34 +159,69 @@ function UserForm({
               className="justify-between w-full"
               type="button"
             >
-              <span className="font-normal">{selectedLabel}</span>
+              <span className="flex flex-wrap gap-1">
+                {selectedGroups.length > 0 ? (
+                  <>
+                    {visibleGroups.map((group) => (
+                      <span
+                        key={group.id}
+                        className="flex justify-center items-center bg-primary-100 dark:bg-primary-900 px-3 py-1 rounded-full font-medium text-primary-800 dark:text-primary-200 text-xs"
+                      >
+                        {group.name}
+                      </span>
+                    ))}
+                    {hiddenCount > 0 && (
+                      <span className="flex justify-center items-center bg-muted px-3 py-1 rounded-full font-medium text-muted-foreground text-xs">
+                        +{hiddenCount}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="font-normal text-muted-foreground">
+                    Select groups
+                  </span>
+                )}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px]">
-            {roles.map((role) => (
-              <DropdownMenuItem
-                key={role}
-                className="flex items-center space-x-2 cursor-pointer"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  handleRoleChange(role);
-                }}
-              >
-                <Checkbox checked={selectedRoles.includes(role)} />
-                <span>{role}</span>
-              </DropdownMenuItem>
-            ))}
+            {groupsOptions.map((group) => {
+              const checked = selectedGroups.some((g) => g.id === group.id);
+              return (
+                <DropdownMenuItem
+                  key={group.id}
+                  className="flex items-center space-x-2 cursor-pointer"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    handleGroupChange(group);
+                  }}
+                >
+                  <Checkbox checked={checked} />
+                  <span>{group.name}</span>
+                </DropdownMenuItem>
+              );
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <div className="flex items-center gap-2 mt-2">
+        <Checkbox
+          checked={initialUser.enabled ?? true}
+          onCheckedChange={(checked) =>
+            onChange({ ...initialUser, enabled: !!checked })
+          }
+        />
+        <label className="font-medium text-sm">Enabled</label>
+      </div>
       <Button
-        onClick={onSubmit}
+        type="submit"
         className="bg-primary-600 hover:bg-primary-700 shadow mt-2 focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 w-full font-semibold text-white text-base"
         disabled={loading}
       >
         {submitLabel}
       </Button>
-    </div>
+      {error && <div className="mt-2 text-red-500 text-sm">{error}</div>}
+    </form>
   );
 }
 
@@ -169,23 +239,39 @@ function UpdatePasswordDialog({
   const [newPassword, setNewPassword] = useState("");
   const [retypePassword, setRetypePassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [updateUserPassword, { isLoading }] = useUpdateUserPasswordMutation();
 
   const handleClose = () => {
     setNewPassword("");
     setRetypePassword("");
     setPasswordError("");
+    setSuccessMsg("");
     onOpenChange(false);
   };
 
-  const handleUpdate = () => {
+  const handleUpdatePassword = async () => {
     if (!newPassword || !retypePassword) {
       setPasswordError("Both fields are required.");
     } else if (newPassword !== retypePassword) {
       setPasswordError("Passwords do not match.");
+    } else if (!user) {
+      setPasswordError("No user selected.");
     } else {
       setPasswordError("");
-      handleClose();
-      // Here you would call your API to update the password
+      try {
+        await updateUserPassword({ userId: user.id, newPassword }).unwrap();
+        setSuccessMsg("Password updated successfully.");
+        setTimeout(() => {
+          handleClose();
+        }, 1200);
+      } catch (err: any) {
+        setPasswordError(
+          err?.data?.error_description ||
+            err?.data?.message ||
+            "Failed to update password."
+        );
+      }
     }
   };
 
@@ -219,10 +305,14 @@ function UpdatePasswordDialog({
           )}
           <Button
             className="bg-primary-600 hover:bg-primary-700 shadow mt-2 focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 w-full font-semibold text-white text-base"
-            onClick={handleUpdate}
+            onClick={handleUpdatePassword}
+            disabled={isLoading}
           >
-            Update Password
+            {isLoading ? "Updating..." : "Update Password"}
           </Button>
+          {successMsg && (
+            <div className="mt-2 text-green-600 text-sm">{successMsg}</div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -230,69 +320,113 @@ function UpdatePasswordDialog({
 }
 
 export const UsersTab = () => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddingUser, setIsAddingUser] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [newUser, setNewUser] = useState<Partial<User>>({
-    name: "",
+    username: "",
+    firstName: "",
+    lastName: "",
     email: "",
-    role: ["Customer"]
+    enabled: true,
+    groups: []
   });
   const [passwordDialogUser, setPasswordDialogUser] = useState<User | null>(
     null
   );
-
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.role.some((r) => r.toLowerCase().includes(searchQuery.toLowerCase()))
+  const [editingUserForm, setEditingUserForm] = useState<Partial<User> | null>(
+    null
   );
 
+  // API hooks
+  const {
+    data: usersResponse,
+    isLoading: isUsersLoading,
+    isError: isUsersError,
+    refetch: refetchUsers
+  } = useGetUsersListQuery();
+
+  const users: User[] = usersResponse?.result || [];
+
+  const { data: groupsResponse, isLoading: isGroupsLoading } =
+    useGetGroupsListQuery();
+  const groupOptions = groupsResponse?.result || [];
+
+  const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
+  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
+
+  const { data: editingUserData, isLoading: isEditingUserLoading } =
+    useGetUserByIdQuery(editingUserId!, { skip: !editingUserId });
+
+  // When editingUserData loads, set editingUserForm
+  useEffect(() => {
+    if (editingUserData?.result) {
+      setEditingUserForm(editingUserData.result);
+    }
+  }, [editingUserData]);
+
+  const filteredUsers = users.filter((user) => {
+    const name = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+    const groups = Array.isArray(user.groups)
+      ? user.groups.map((g) => g.name).join(", ")
+      : "";
+    return (
+      user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      groups.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
   const handleAddUser = () => {
-    if (
-      newUser.name &&
-      newUser.email &&
-      newUser.role &&
-      newUser.role.length > 0
-    ) {
-      const user: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-        lastActive: new Date().toISOString()
-      };
-      setUsers([...users, user]);
-      setNewUser({ name: "", email: "", role: ["Customer"] });
-      setIsAddingUser(false);
+    // Prepare payload for user creation
+    const payload = {
+      username: newUser.username ?? "",
+      enabled: newUser.enabled ?? true,
+      firstName: newUser.firstName ?? "",
+      lastName: newUser.lastName ?? "",
+      email: newUser.email ?? "",
+      groups: newUser.groups || [],
+      credentials: {
+        type: "password",
+        temporary: true,
+        value: "Picarro@1234"
+      }
+    };
+
+    console.log(payload);
+    setIsAddingUser(false);
+    createUser(payload);
+  };
+
+  const handleUpdateUser = async () => {
+    if (editingUserId && editingUserForm) {
+      try {
+        await updateUser({
+          userId: editingUserId,
+          data: editingUserForm as User
+        }).unwrap();
+        setEditingUserId(null);
+        refetchUsers();
+      } catch (err) {
+        // handle error (show toast, etc)
+      }
     }
   };
 
-  const handleUpdateUser = () => {
-    if (editingUser && editingUser.role && editingUser.role.length > 0) {
-      setUsers(users.map((u) => (u.id === editingUser.id ? editingUser : u)));
-      setEditingUser(null);
-    }
-  };
-
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter((u) => u.id !== userId));
+      try {
+        await deleteUser({ userId }).unwrap();
+        refetchUsers();
+      } catch (err) {
+        // handle error (show toast, etc)
+      }
     }
   };
 
-  const getRoleBadgeClass = (role: UserRole) => {
-    switch (role) {
-      case "Admin":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-      case "Picarro Service":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "Customer":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-    }
-  };
+  // Remove getRoleBadgeClass and all role-related UI
 
   return (
     <div className="space-y-6">
@@ -323,6 +457,7 @@ export const UsersTab = () => {
               onChange={setNewUser}
               onSubmit={handleAddUser}
               submitLabel="Add User"
+              groupsOptions={groupOptions}
             />
           </DialogContent>
         </Dialog>
@@ -331,7 +466,15 @@ export const UsersTab = () => {
       <Card className="p-6">
         <CardTitle className="mb-6">User Management</CardTitle>
         <div className="space-y-4">
-          {filteredUsers.length === 0 ? (
+          {isUsersLoading ? (
+            <div className="py-12 text-muted-foreground text-base text-center">
+              Loading users...
+            </div>
+          ) : isUsersError ? (
+            <div className="py-12 text-red-500 text-base text-center">
+              Failed to load users.
+            </div>
+          ) : filteredUsers.length === 0 ? (
             <div className="py-12 text-muted-foreground text-base text-center">
               No users found.
             </div>
@@ -342,41 +485,60 @@ export const UsersTab = () => {
                 className="items-center gap-4 grid grid-cols-[1fr,auto,auto] bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg"
               >
                 <div>
-                  <div className="font-medium">{user.name}</div>
-                  <div className="text-muted-foreground text-sm">
-                    {user.email}
+                  <div className="font-medium">
+                    {user.firstName || user.lastName
+                      ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                      : user.username}
                   </div>
-                  {user.lastActive && (
-                    <div className="mt-1 text-muted-foreground text-xs">
-                      Last active: {new Date(user.lastActive).toLocaleString()}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-1">
-                  {user.role.map((r) => (
+                  <div className="text-muted-foreground text-sm">
+                    {user.email || user.username}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-1 text-xs">
                     <span
-                      key={r}
-                      className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleBadgeClass(
-                        r
-                      )}`}
+                      className={`px-2 py-1 rounded-full font-medium ${
+                        user.enabled
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : "bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                      }`}
                     >
-                      <Shield size={12} />
-                      {r}
+                      {user.enabled ? "Enabled" : "Disabled"}
                     </span>
-                  ))}
+                    {Array.isArray(user.groups) &&
+                      user.groups.map((g) => (
+                        <span
+                          key={g.id}
+                          className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full font-medium text-gray-800 dark:text-gray-200"
+                        >
+                          {g.name}
+                        </span>
+                      ))}
+                    {user.access.edit && (
+                      <span className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded-full font-medium text-blue-800 dark:text-blue-200">
+                        Can Edit
+                      </span>
+                    )}
+                    {user.access.delete && (
+                      <span className="bg-red-100 dark:bg-red-900 px-2 py-1 rounded-full font-medium text-red-800 dark:text-red-200">
+                        Can Delete
+                      </span>
+                    )}
+                  </div>
                 </div>
-
+                <div className="flex flex-wrap gap-1">
+                  {/* No roles, so nothing here */}
+                </div>
                 <div className="flex items-center gap-2">
                   <Dialog
-                    open={editingUser?.id === user.id}
-                    onOpenChange={(open) => setEditingUser(open ? user : null)}
+                    open={editingUserId === user.id}
+                    onOpenChange={(open) =>
+                      setEditingUserId(open ? user.id : null)
+                    }
                   >
                     <Button
                       variant="ghost"
                       size="sm"
                       className="p-0 w-8 h-8"
-                      onClick={() => setEditingUser(user)}
+                      onClick={() => setEditingUserId(user.id)}
                     >
                       <Pencil size={16} />
                     </Button>
@@ -384,14 +546,22 @@ export const UsersTab = () => {
                       <DialogHeader>
                         <DialogTitle>Edit User</DialogTitle>
                       </DialogHeader>
-                      <UserForm
-                        initialUser={editingUser || {}}
-                        onChange={(user) =>
-                          setEditingUser({ ...editingUser!, ...user })
-                        }
-                        onSubmit={handleUpdateUser}
-                        submitLabel="Update User"
-                      />
+                      {isEditingUserLoading ? (
+                        <div className="py-8 text-muted-foreground text-center">
+                          Loading...
+                        </div>
+                      ) : editingUserForm ? (
+                        <UserForm
+                          initialUser={editingUserForm}
+                          onChange={setEditingUserForm}
+                          onSubmit={handleUpdateUser}
+                          submitLabel={
+                            isUpdating ? "Updating..." : "Update User"
+                          }
+                          loading={isUpdating}
+                          groupsOptions={groupOptions}
+                        />
+                      ) : null}
                     </DialogContent>
                   </Dialog>
                   <Button
@@ -415,6 +585,7 @@ export const UsersTab = () => {
                     size="sm"
                     className="hover:bg-red-50 p-0 w-8 h-8 text-red-600 hover:text-red-700"
                     onClick={() => handleDeleteUser(user.id)}
+                    disabled={isDeleting}
                   >
                     <Trash2 size={16} />
                   </Button>

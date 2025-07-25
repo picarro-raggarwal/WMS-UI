@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface TimeSyncResponse {
   datetime: string;
@@ -8,14 +9,12 @@ export interface TimeSyncResponse {
 
 export const timeSyncApi = createApi({
   reducerPath: "timeSyncApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/timesync/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/timesync/api/v1"),
   endpoints: (builder) => ({
     getTime: builder.query<TimeSyncResponse, void>({
-      query: () => "/time",
-    }),
-  }),
+      query: () => "/time"
+    })
+  })
 });
 
 export const { useGetTimeQuery } = timeSyncApi;

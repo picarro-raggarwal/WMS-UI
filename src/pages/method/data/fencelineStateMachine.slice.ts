@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface FencelineState {
   state: string;
@@ -25,9 +26,7 @@ export interface MeasurementStatus {
 
 export const fencelineStateMachineApi = createApi({
   reducerPath: "fencelineStateMachineApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_state_machine/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_state_machine/api/v1"),
   tagTypes: ["FencelineState", "MeasurementStatus"],
   endpoints: (builder) => ({
     getCurrentState: builder.query<FencelineState, void>({
@@ -35,18 +34,21 @@ export const fencelineStateMachineApi = createApi({
       providesTags: ["FencelineState"],
       transformResponse: (response: Omit<FencelineState, "lastFetched">) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
+        lastFetched: Date.now()
+      })
     }),
     getMeasurementStatus: builder.query<MeasurementStatus, void>({
       query: () => "/measurement_status",
       providesTags: ["MeasurementStatus"],
-      transformResponse: (response: Omit<MeasurementStatus, "lastFetched">) => ({
+      transformResponse: (
+        response: Omit<MeasurementStatus, "lastFetched">
+      ) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
-    }),
-  }),
+        lastFetched: Date.now()
+      })
+    })
+  })
 });
 
-export const { useGetCurrentStateQuery, useGetMeasurementStatusQuery } = fencelineStateMachineApi;
+export const { useGetCurrentStateQuery, useGetMeasurementStatusQuery } =
+  fencelineStateMachineApi;

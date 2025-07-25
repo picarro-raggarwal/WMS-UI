@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 type GasTank = {
   gas_tank_name: string;
@@ -90,49 +91,56 @@ export type NewGasTankReplacement = {
 
 export const gasTanksApi = createApi({
   reducerPath: "gasTanksApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_data/api/v1",
-  }),
-  tagTypes: ["GasTanks", "RecentGasTanks", "GasTankTypes", "GasTankConcentrations"],
+  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
+  tagTypes: [
+    "GasTanks",
+    "RecentGasTanks",
+    "GasTankTypes",
+    "GasTankConcentrations"
+  ],
   endpoints: (builder) => ({
     getGasTanks: builder.query<GasTanksResponse, void>({
       query: () => "/gas_tank_status",
       providesTags: ["GasTanks"],
       transformResponse: (response: Omit<GasTanksResponse, "lastFetched">) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
+        lastFetched: Date.now()
+      })
     }),
     getRecentGasTanks: builder.query<RecentGasTank[], number>({
       query: (number) => `/recent_gas_tanks?number=${number}`,
-      transformResponse: (response: RecentGasTanksResponse) => response.recent_tanks,
-      providesTags: ["RecentGasTanks"],
+      transformResponse: (response: RecentGasTanksResponse) =>
+        response.recent_tanks,
+      providesTags: ["RecentGasTanks"]
     }),
     getGasTankTypes: builder.query<GasTankTypesResponse, void>({
       query: () => "/gas_tank_types",
-      providesTags: ["GasTankTypes"],
+      providesTags: ["GasTankTypes"]
     }),
-    getGasTankConcentrations: builder.query<GasTankConcentrationsResponse, number>({
+    getGasTankConcentrations: builder.query<
+      GasTankConcentrationsResponse,
+      number
+    >({
       query: (gasTankId) => `/gas_tank_concentrations?gas_tank_id=${gasTankId}`,
-      providesTags: ["GasTankConcentrations"],
+      providesTags: ["GasTankConcentrations"]
     }),
     updateGasTank: builder.mutation<void, GasTankReplacement>({
       query: (replacement) => ({
         url: "/gas_tank_replaced",
         method: "PUT",
-        body: replacement,
+        body: replacement
       }),
-      invalidatesTags: ["GasTanks"],
+      invalidatesTags: ["GasTanks"]
     }),
     replaceGasTank: builder.mutation<void, NewGasTankReplacement>({
       query: (replacement) => ({
         url: "/gas_tank_replaced",
         method: "PUT",
-        body: replacement,
+        body: replacement
       }),
-      invalidatesTags: ["GasTanks", "RecentGasTanks"],
-    }),
-  }),
+      invalidatesTags: ["GasTanks", "RecentGasTanks"]
+    })
+  })
 });
 
 export const {
@@ -141,5 +149,5 @@ export const {
   useGetRecentGasTanksQuery,
   useReplaceGasTankMutation,
   useGetGasTankTypesQuery,
-  useGetGasTankConcentrationsQuery,
+  useGetGasTankConcentrationsQuery
 } = gasTanksApi;

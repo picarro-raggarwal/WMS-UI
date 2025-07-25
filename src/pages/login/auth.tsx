@@ -85,6 +85,7 @@ export default function AuthLogin() {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Enter your username or email"
             autoComplete="username"
+            required
             className="bg-white px-4 border border-neutral-200 rounded-xl h-11 text-neutral-900 placeholder:text-neutral-500 placeholder:text-sm"
           />
         </div>
@@ -101,6 +102,7 @@ export default function AuthLogin() {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
               placeholder="Enter your password"
               autoComplete="current-password"
               className="bg-white px-4 pr-10 border border-neutral-200 rounded-xl h-11 text-neutral-900 placeholder:text-neutral-500 placeholder:text-sm"

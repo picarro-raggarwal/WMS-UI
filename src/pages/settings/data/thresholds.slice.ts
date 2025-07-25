@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface MetricThreshold {
   warning: number;
@@ -20,9 +21,7 @@ export interface SetThresholdRequest {
 
 export const thresholdsApi = createApi({
   reducerPath: "thresholdsApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_data/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
   tagTypes: ["Thresholds"],
   endpoints: (builder) => ({
     getAllThresholds: builder.query<ThresholdsResponse, void>({
@@ -32,32 +31,32 @@ export const thresholdsApi = createApi({
         response: Omit<ThresholdsResponse, "lastFetched">
       ) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
+        lastFetched: Date.now()
+      })
     }),
 
     setMetricThreshold: builder.mutation<void, SetThresholdRequest>({
       query: (thresholds) => ({
         url: "/set_metric_thresholds",
         method: "PUT",
-        body: thresholds,
+        body: thresholds
       }),
-      invalidatesTags: ["Thresholds"],
+      invalidatesTags: ["Thresholds"]
     }),
 
     setWindRoseThreshold: builder.mutation<void, { calm_threshold: number }>({
       query: (thresholds) => ({
         url: "/set_wind_rose_calm_threshold",
         method: "PUT",
-        body: thresholds,
+        body: thresholds
       }),
-      invalidatesTags: ["Thresholds"],
-    }),
-  }),
+      invalidatesTags: ["Thresholds"]
+    })
+  })
 });
 
 export const {
   useGetAllThresholdsQuery,
   useSetMetricThresholdMutation,
-  useSetWindRoseThresholdMutation,
+  useSetWindRoseThresholdMutation
 } = thresholdsApi;

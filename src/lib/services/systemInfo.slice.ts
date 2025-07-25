@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface AnalyzerInfo {
   model: string;
@@ -20,14 +21,12 @@ export interface SystemInfoResponse {
 
 export const systemInfoApi = createApi({
   reducerPath: "systemInfoApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/system_status/api/v2",
-  }),
+  baseQuery: protectedBaseQuery("/api/system_status/api/v2"),
   endpoints: (builder) => ({
     getSystemInfo: builder.query<SystemInfoResponse, void>({
-      query: () => "/about_info",
-    }),
-  }),
+      query: () => "/about_info"
+    })
+  })
 });
 
 export const { useGetSystemInfoQuery } = systemInfoApi;

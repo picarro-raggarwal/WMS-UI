@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 type Range = [number, number];
 
@@ -48,7 +49,7 @@ export const METRIC_BEHAVIORS: Record<string, { higherIsBetter: boolean }> = {
   mfc_a: { higherIsBetter: false },
   mfc_b: { higherIsBetter: false },
   mfc_c: { higherIsBetter: false },
-  mfc_d: { higherIsBetter: false },
+  mfc_d: { higherIsBetter: false }
 };
 
 interface SystemMetricsResponse {
@@ -58,25 +59,30 @@ interface SystemMetricsResponse {
 
 export const systemMetricsApi = createApi({
   reducerPath: "systemMetricsApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_data/api/v1",
-  }),
+  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
   tagTypes: ["SystemMetrics"],
   endpoints: (builder) => ({
     getSystemMetrics: builder.query<SystemMetricsResponse, void>({
       query: () => "/system_metrics",
       providesTags: ["SystemMetrics"],
-      transformResponse: (response: Omit<SystemMetricsResponse, "lastFetched">) => ({
+      transformResponse: (
+        response: Omit<SystemMetricsResponse, "lastFetched">
+      ) => ({
         ...response,
-        lastFetched: Date.now(),
-      }),
+        lastFetched: Date.now()
+      })
     }),
-    getSystemComponentsAvailability: builder.query<SystemComponentsAvailabilityResponse, void>({
+    getSystemComponentsAvailability: builder.query<
+      SystemComponentsAvailabilityResponse,
+      void
+    >({
       query: () => "/system_components_availability",
-      providesTags: ["SystemMetrics"],
-    }),
-  }),
+      providesTags: ["SystemMetrics"]
+    })
+  })
 });
 
-export const { useGetSystemMetricsQuery, useGetSystemComponentsAvailabilityQuery } =
-  systemMetricsApi;
+export const {
+  useGetSystemMetricsQuery,
+  useGetSystemComponentsAvailabilityQuery
+} = systemMetricsApi;
