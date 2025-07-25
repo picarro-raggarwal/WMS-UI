@@ -44,16 +44,16 @@ export const protectedBaseQuery = (
     // Handle 401 Unauthorized errors
     if (result.error && result.error.status === 401) {
       // If this is a login attempt (/token), do not reload the browser
-      // let isLoginAttempt = false;
-      // if (typeof args === "string") {
-      //   isLoginAttempt = args === "/token";
-      // } else if (typeof args === "object" && args.url) {
-      //   isLoginAttempt = args.url === "/token";
-      // }
-      // if (isLoginAttempt) {
-      //   // Do not clear auth data or reload
-      //   return result;
-      // }
+      let isLoginAttempt = false;
+      if (typeof args === "string") {
+        isLoginAttempt = args === "/token";
+      } else if (typeof args === "object" && args.url) {
+        isLoginAttempt = args.url === "/token";
+      }
+      if (isLoginAttempt) {
+        // Do not clear auth data or reload
+        return result;
+      }
 
       // Attempt to refresh the token
       const refreshToken = localStorage.getItem("refresh_token");
@@ -107,7 +107,7 @@ export const protectedBaseQuery = (
 };
 
 const clearAuthData = () => {
-  // window.location.href = "/";
+  window.location.href = "/";
   localStorage.removeItem("token");
   localStorage.removeItem("refresh_token");
   localStorage.removeItem("isAuthenticated");

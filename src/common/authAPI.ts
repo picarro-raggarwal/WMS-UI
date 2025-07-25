@@ -59,6 +59,21 @@ export const authApi = createApi({
       })
     }),
 
+    logout: builder.mutation<void, { refresh_token: string }>({
+      query: ({ refresh_token }) => ({
+        url: "/logout",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          client_id: client_id,
+          client_secret: client_secret,
+          refresh_token
+        }).toString()
+      })
+    }),
+
     getUserInfo: builder.query({
       query: () => "/userinfo",
       transformResponse: (response: UserIdentity) => {
@@ -113,6 +128,7 @@ export const authApi = createApi({
 
 export const {
   useLoginMutation,
+  useLogoutMutation,
   useGetUserInfoQuery,
   useUpdateUserPasswordMutation,
   useGetUsersQuery,

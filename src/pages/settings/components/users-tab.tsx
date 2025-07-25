@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -8,24 +7,20 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { KeyRound, Pencil, Search, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   useCreateUserMutation,
   useDeleteUserMutation,
   useGetGroupsListQuery,
   useGetUserByIdQuery,
   useGetUsersListQuery,
-  useUpdateUserMutation,
-  useUpdateUserPasswordMutation
+  useUpdateUserMutation
 } from "../data/user-management.slice";
+import UpdatePasswordDialog from "./UpdatePasswordDialog";
+import UserForm from "./UserForm";
 
 // Add Group type
 interface Group {
@@ -49,294 +44,31 @@ interface User {
   groups?: Group[];
 }
 
-// Reusable UserForm component for Add/Edit User
-function UserForm({
-  initialUser,
-  onSubmit,
-  submitLabel,
-  onChange,
-  loading = false,
-  groupsOptions
-}: {
-  initialUser: Partial<User>;
-  onSubmit: () => void;
-  submitLabel: string;
-  onChange: (user: Partial<User>) => void;
-  loading?: boolean;
-  groupsOptions: Group[];
-}) {
-  const selectedGroups = Array.isArray(initialUser.groups)
-    ? initialUser.groups
-    : [];
-  const [error, setError] = useState<string>("");
+// Remove UserForm and UpdatePasswordDialog component implementations from this file
 
-  const handleGroupChange = (group: Group) => {
-    const exists = selectedGroups.some((g) => g.id === group.id);
-    if (exists) {
-      onChange({
-        ...initialUser,
-        groups: selectedGroups.filter((g) => g.id !== group.id)
-      });
-    } else {
-      onChange({ ...initialUser, groups: [...selectedGroups, group] });
-    }
-  };
-
-  const handleSubmit = () => {
-    if (
-      !initialUser.username ||
-      !initialUser.firstName ||
-      !initialUser.lastName ||
-      !initialUser.email ||
-      !initialUser.enabled ||
-      selectedGroups.length === 0
-    ) {
-      setError("All fields are required, including at least one group.");
-      return;
-    }
-    setError("");
-    onSubmit();
-  };
-
-  // For badge display and dropdown
-  const MAX_VISIBLE_GROUPS = 3;
-  const visibleGroups = selectedGroups.slice(0, MAX_VISIBLE_GROUPS);
-  const hiddenCount = selectedGroups.length - MAX_VISIBLE_GROUPS;
-
-  return (
-    <form
-      className="flex flex-col gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleSubmit();
-      }}
-    >
-      <div className="space-y-2">
-        <label className="font-medium text-sm">Username</label>
-        <Input
-          value={initialUser.username || ""}
-          onChange={(e) =>
-            onChange({ ...initialUser, username: e.target.value })
-          }
-          placeholder="Enter username"
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="font-medium text-sm">First Name</label>
-        <Input
-          value={initialUser.firstName || ""}
-          onChange={(e) =>
-            onChange({ ...initialUser, firstName: e.target.value })
-          }
-          placeholder="Enter first name"
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="font-medium text-sm">Last Name</label>
-        <Input
-          value={initialUser.lastName || ""}
-          onChange={(e) =>
-            onChange({ ...initialUser, lastName: e.target.value })
-          }
-          placeholder="Enter last name"
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="font-medium text-sm">Email</label>
-        <Input
-          type="email"
-          value={initialUser.email || ""}
-          onChange={(e) => onChange({ ...initialUser, email: e.target.value })}
-          placeholder="Enter email"
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="font-medium text-sm">Groups</label>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="justify-between w-full"
-              type="button"
-            >
-              <span className="flex flex-wrap gap-1">
-                {selectedGroups.length > 0 ? (
-                  <>
-                    {visibleGroups.map((group) => (
-                      <span
-                        key={group.id}
-                        className="flex justify-center items-center bg-primary-100 dark:bg-primary-900 px-3 py-1 rounded-full font-medium text-primary-800 dark:text-primary-200 text-xs"
-                      >
-                        {group.name}
-                      </span>
-                    ))}
-                    {hiddenCount > 0 && (
-                      <span className="flex justify-center items-center bg-muted px-3 py-1 rounded-full font-medium text-muted-foreground text-xs">
-                        +{hiddenCount}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span className="font-normal text-muted-foreground">
-                    Select groups
-                  </span>
-                )}
-              </span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[180px]">
-            {groupsOptions.map((group) => {
-              const checked = selectedGroups.some((g) => g.id === group.id);
-              return (
-                <DropdownMenuItem
-                  key={group.id}
-                  className="flex items-center space-x-2 cursor-pointer"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    handleGroupChange(group);
-                  }}
-                >
-                  <Checkbox checked={checked} />
-                  <span>{group.name}</span>
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="flex items-center gap-2 mt-2">
-        <Checkbox
-          checked={initialUser.enabled ?? true}
-          onCheckedChange={(checked) =>
-            onChange({ ...initialUser, enabled: !!checked })
-          }
-        />
-        <label className="font-medium text-sm">Enabled</label>
-      </div>
-      <Button
-        type="submit"
-        className="bg-primary-600 hover:bg-primary-700 shadow mt-2 focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 w-full font-semibold text-white text-base"
-        disabled={loading}
-      >
-        {submitLabel}
-      </Button>
-      {error && <div className="mt-2 text-red-500 text-sm">{error}</div>}
-    </form>
-  );
-}
-
-// UpdatePasswordDialog component
-type UpdatePasswordDialogProps = {
-  open: boolean;
-  user: User | null;
-  onOpenChange: (open: boolean) => void;
+const emptyUserState: Partial<User> = {
+  username: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  enabled: true,
+  groups: []
 };
-function UpdatePasswordDialog({
-  open,
-  user,
-  onOpenChange
-}: UpdatePasswordDialogProps) {
-  const [newPassword, setNewPassword] = useState("");
-  const [retypePassword, setRetypePassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [updateUserPassword, { isLoading }] = useUpdateUserPasswordMutation();
-
-  const handleClose = () => {
-    setNewPassword("");
-    setRetypePassword("");
-    setPasswordError("");
-    setSuccessMsg("");
-    onOpenChange(false);
-  };
-
-  const handleUpdatePassword = async () => {
-    if (!newPassword || !retypePassword) {
-      setPasswordError("Both fields are required.");
-    } else if (newPassword !== retypePassword) {
-      setPasswordError("Passwords do not match.");
-    } else if (!user) {
-      setPasswordError("No user selected.");
-    } else {
-      setPasswordError("");
-      try {
-        await updateUserPassword({ userId: user.id, newPassword }).unwrap();
-        setSuccessMsg("Password updated successfully.");
-        setTimeout(() => {
-          handleClose();
-        }, 1200);
-      } catch (err: any) {
-        setPasswordError(
-          err?.data?.error_description ||
-            err?.data?.message ||
-            "Failed to update password."
-        );
-      }
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Update Password</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <label className="font-medium text-sm">New Password</label>
-            <Input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Enter new password"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="font-medium text-sm">Re-type Password</label>
-            <Input
-              type="password"
-              value={retypePassword}
-              onChange={(e) => setRetypePassword(e.target.value)}
-              placeholder="Re-type new password"
-            />
-          </div>
-          {passwordError && (
-            <div className="text-red-500 text-sm">{passwordError}</div>
-          )}
-          <Button
-            className="bg-primary-600 hover:bg-primary-700 shadow mt-2 focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 w-full font-semibold text-white text-base"
-            onClick={handleUpdatePassword}
-            disabled={isLoading}
-          >
-            {isLoading ? "Updating..." : "Update Password"}
-          </Button>
-          {successMsg && (
-            <div className="mt-2 text-green-600 text-sm">{successMsg}</div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export const UsersTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [newUser, setNewUser] = useState<Partial<User>>({
-    username: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    enabled: true,
-    groups: []
-  });
+  const [newUser, setNewUser] = useState<Partial<User>>(emptyUserState);
   const [passwordDialogUser, setPasswordDialogUser] = useState<User | null>(
     null
   );
   const [editingUserForm, setEditingUserForm] = useState<Partial<User> | null>(
     null
   );
+  const [addUserApiError, setAddUserApiError] = useState<string>("");
+  const [editUserApiError, setEditUserApiError] = useState<string>("");
+  const [deleteDialogUser, setDeleteDialogUser] = useState<User | null>(null);
 
   // API hooks
   const {
@@ -387,46 +119,77 @@ export const UsersTab = () => {
       firstName: newUser.firstName ?? "",
       lastName: newUser.lastName ?? "",
       email: newUser.email ?? "",
-      groups: newUser.groups || [],
+      groups: (newUser.groups || []).map((g) => ({
+        ...g,
+        attributes: {},
+        subGroups: [],
+        roles: [{}]
+      })),
       credentials: {
         type: "password",
-        temporary: true,
-        value: "Picarro@1234"
+        temporary: false,
+        value: "admin"
       }
     };
 
-    console.log(payload);
-    setIsAddingUser(false);
-    createUser(payload);
+    setAddUserApiError("");
+    createUser(payload)
+      .unwrap()
+      .then(() => {
+        toast.success("User created successfully.");
+        setNewUser(emptyUserState);
+        setIsAddingUser(false);
+        setAddUserApiError("");
+        refetchUsers();
+      })
+      .catch((err) => {
+        setAddUserApiError(
+          err?.data?.error_description ||
+            err?.data?.message ||
+            "Failed to create user."
+        );
+      });
   };
 
   const handleUpdateUser = async () => {
     if (editingUserId && editingUserForm) {
+      setEditUserApiError("");
       try {
         await updateUser({
           userId: editingUserId,
           data: editingUserForm as User
-        }).unwrap();
-        setEditingUserId(null);
-        refetchUsers();
-      } catch (err) {
-        // handle error (show toast, etc)
+        })
+          .unwrap()
+          .then(() => {
+            toast.success("User updated successfully.");
+            setEditingUserId(null);
+            setEditUserApiError("");
+          });
+      } catch (err: any) {
+        setEditUserApiError(
+          err?.data?.description ||
+            err?.data?.message ||
+            "Failed to update user."
+        );
       }
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      try {
-        await deleteUser({ userId }).unwrap();
-        refetchUsers();
-      } catch (err) {
-        // handle error (show toast, etc)
-      }
+    try {
+      await deleteUser({ userId })
+        .unwrap()
+        .then(() => {
+          toast.success("User deleted successfully.");
+          refetchUsers();
+        });
+      setEditingUserId(null);
+      setPasswordDialogUser(null);
+      setDeleteDialogUser(null);
+    } catch (err) {
+      toast.error("Failed to delete user.");
     }
   };
-
-  // Remove getRoleBadgeClass and all role-related UI
 
   return (
     <div className="space-y-6">
@@ -441,7 +204,13 @@ export const UsersTab = () => {
           />
         </div>
 
-        <Dialog open={isAddingUser} onOpenChange={setIsAddingUser}>
+        <Dialog
+          open={isAddingUser}
+          onOpenChange={(open) => {
+            setAddUserApiError("");
+            setIsAddingUser(open);
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 shadow focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2">
               <UserPlus size={16} />
@@ -458,6 +227,7 @@ export const UsersTab = () => {
               onSubmit={handleAddUser}
               submitLabel="Add User"
               groupsOptions={groupOptions}
+              apiError={addUserApiError}
             />
           </DialogContent>
         </Dialog>
@@ -530,9 +300,10 @@ export const UsersTab = () => {
                 <div className="flex items-center gap-2">
                   <Dialog
                     open={editingUserId === user.id}
-                    onOpenChange={(open) =>
-                      setEditingUserId(open ? user.id : null)
-                    }
+                    onOpenChange={(open) => {
+                      setEditUserApiError("");
+                      setEditingUserId(open ? user.id : null);
+                    }}
                   >
                     <Button
                       variant="ghost"
@@ -560,6 +331,7 @@ export const UsersTab = () => {
                           }
                           loading={isUpdating}
                           groupsOptions={groupOptions}
+                          apiError={editUserApiError}
                         />
                       ) : null}
                     </DialogContent>
@@ -584,7 +356,7 @@ export const UsersTab = () => {
                     variant="ghost"
                     size="sm"
                     className="hover:bg-red-50 p-0 w-8 h-8 text-red-600 hover:text-red-700"
-                    onClick={() => handleDeleteUser(user.id)}
+                    onClick={() => setDeleteDialogUser(user)}
                     disabled={isDeleting}
                   >
                     <Trash2 size={16} />
@@ -595,6 +367,42 @@ export const UsersTab = () => {
           )}
         </div>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={!!deleteDialogUser}
+        onOpenChange={(open) => {
+          if (!open) setDeleteDialogUser(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {deleteDialogUser && (
+              <span>
+                Are you sure you want to delete user{" "}
+                <b>{deleteDialogUser.username}</b>?
+              </span>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteDialogUser(null)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() =>
+                deleteDialogUser && handleDeleteUser(deleteDialogUser.id)
+              }
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

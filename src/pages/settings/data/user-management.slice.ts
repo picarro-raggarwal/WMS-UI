@@ -70,7 +70,7 @@ export const userManagementApi = createApi({
 
     deleteUser: builder.mutation<void, { userId: string }>({
       query: ({ userId }) => ({
-        url: `/${userId}`,
+        url: `/users/${userId}`,
         method: "DELETE"
       }),
       invalidatesTags: ["UsersList"]
@@ -90,7 +90,7 @@ export const userManagementApi = createApi({
       { userId: string; newPassword: string }
     >({
       query: ({ userId, newPassword }) => ({
-        url: `/${userId}/password`,
+        url: `/users/${userId}/reset-password`,
         method: "PUT",
         body: { newPassword }
       }),
