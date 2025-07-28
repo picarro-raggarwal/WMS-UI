@@ -22,6 +22,7 @@ import {
   SidebarMenuItem,
   useSidebar
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/context/AuthContext";
 import { useSocket } from "@/hooks/useSocket";
 import {
   SystemInfoResponse,
@@ -49,6 +50,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   });
   const { data: systemInfo, isLoading: isLoadingSystemInfo } =
     useGetSystemInfoQuery();
+  const { user } = useAuth();
 
   // Get active alerts and WebSocket data for real-time critical alert count
   const { data: activeAlertsData } = useGetActiveAlertsQuery(undefined, {
@@ -114,7 +116,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [activeAlertsData, processedAlerts]);
 
   const data = {
-    user: {
+    user: user || {
       name: "service",
       email: "service@picarro.com"
     },

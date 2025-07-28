@@ -129,7 +129,8 @@ export const UsersTab = () => {
         type: "password",
         temporary: false,
         value: "admin"
-      }
+      },
+      emailVerified: true
     };
 
     setAddUserApiError("");

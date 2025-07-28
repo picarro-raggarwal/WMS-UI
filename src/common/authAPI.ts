@@ -81,24 +81,6 @@ export const authApi = createApi({
       }
     }),
 
-    updateUserPassword: builder.mutation<
-      void,
-      { userId: string; newPassword: string }
-    >({
-      query: ({ userId, newPassword }) => ({
-        url: `/admin/realms/${realms}/users/${userId}/reset-password`,
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          type: "password",
-          value: newPassword,
-          temporary: false
-        })
-      })
-    }),
-
     getUsers: builder.query<any[], void>({
       query: () => ({
         url: `/admin/realms/${realms}/users`,
@@ -130,7 +112,6 @@ export const {
   useLoginMutation,
   useLogoutMutation,
   useGetUserInfoQuery,
-  useUpdateUserPasswordMutation,
   useGetUsersQuery,
   useDeleteUserMutation,
   useUpdateUserMutation

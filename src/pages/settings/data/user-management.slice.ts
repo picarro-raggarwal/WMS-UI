@@ -41,22 +41,24 @@ type CreateUserRequest = {
 
 export const userManagementApi = createApi({
   reducerPath: "userManagementApi",
-  baseQuery: protectedBaseQuery("/slim100-api/v1/admin"),
+  baseQuery: protectedBaseQuery("/slim100-api/v1"),
   tagTypes: ["UsersList"],
   endpoints: (builder) => ({
+    // Prefix all queries with /admin
+
     getUsersList: builder.query<UsersResponse, void>({
-      query: () => "/users",
+      query: () => "/admin/users",
       providesTags: ["UsersList"]
     }),
 
     getGroupsList: builder.query<GroupsResponse, void>({
-      query: () => "/groups",
+      query: () => "/admin/groups",
       providesTags: ["UsersList"]
     }),
 
     createUser: builder.mutation<void, CreateUserRequest>({
       query: (user) => ({
-        url: "/users",
+        url: "/admin/users",
         method: "POST",
         body: user
       }),
@@ -64,13 +66,13 @@ export const userManagementApi = createApi({
     }),
 
     getUserById: builder.query<{ result: User }, string>({
-      query: (id) => `/users/${id}`
+      query: (id) => `/admin/users/${id}`
       // providesTags: ["UsersList"]
     }),
 
     deleteUser: builder.mutation<void, { userId: string }>({
       query: ({ userId }) => ({
-        url: `/users/${userId}`,
+        url: `/admin/users/${userId}`,
         method: "DELETE"
       }),
       invalidatesTags: ["UsersList"]
@@ -78,7 +80,7 @@ export const userManagementApi = createApi({
 
     updateUser: builder.mutation<void, { userId: string; data: User }>({
       query: ({ userId, data }) => ({
-        url: `/users/${userId}`,
+        url: `/admin/users/${userId}`,
         method: "PUT",
         body: data
       }),
@@ -90,11 +92,17 @@ export const userManagementApi = createApi({
       { userId: string; newPassword: string }
     >({
       query: ({ userId, newPassword }) => ({
-        url: `/users/${userId}/reset-password`,
+        url: `/admin/users/${userId}/reset-password`,
         method: "PUT",
-        body: { newPassword }
+        body: { value: newPassword }
       }),
       invalidatesTags: ["UsersList"]
+    }),
+
+    // Prefix all queries with /profile
+    getProfile: builder.query<{ result: User }, void>({
+      query: () => "/profile"
+      // providesTags: ["UsersList"]
     })
   })
 });
@@ -106,5 +114,6 @@ export const {
   useGetUserByIdQuery,
   useDeleteUserMutation,
   useUpdateUserMutation,
-  useUpdateUserPasswordMutation
+  useUpdateUserPasswordMutation,
+  useGetProfileQuery
 } = userManagementApi;

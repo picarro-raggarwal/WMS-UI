@@ -1,11 +1,22 @@
 import { AuthTokenResponse } from "@/common/authAPI";
-import { createContext, useContext, useState } from "react";
+import { useGetProfileQuery } from "@/pages/settings/data/user-management.slice";
+import { createContext, useContext, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router";
 
 // Define user interface
 interface User {
   name: string;
   email: string;
+  id?: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  enabled?: boolean;
+  access?: {
+    edit: boolean;
+    manageGroup?: boolean;
+    delete: boolean;
+  };
 }
 
 interface AuthContextType {
@@ -37,21 +48,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  // const login = () => {
-  //   setIsAuthenticated(true);
-  //   localStorage.setItem("isAuthenticated", "true");
+  // Fetch user profile when authenticated
+  const { data: profileData, isLoading: isLoadingProfile } = useGetProfileQuery(
+    undefined,
+    {
+      skip: !isAuthenticated
+    }
+  );
 
-  //   setUser(defaultUser);
-  //   localStorage.setItem("user", JSON.stringify(defaultUser));
-  // };
+  // Update user data when profile is fetched
+  useEffect(() => {
+    if (profileData?.result && isAuthenticated) {
+      const profileUser = profileData.result;
+      const userData: User = {
+        id: profileUser.id,
+        name:
+          `${profileUser.firstName || ""} ${
+            profileUser.lastName || ""
+          }`.trim() || profileUser.username,
+        email: profileUser.email || "",
+        username: profileUser.username,
+        firstName: profileUser.firstName,
+        lastName: profileUser.lastName,
+        enabled: profileUser.enabled,
+        access: profileUser.access
+      };
+
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+    }
+  }, [profileData, isAuthenticated]);
 
   const login = (res: AuthTokenResponse) => {
     setIsAuthenticated(true);
     localStorage.setItem("isAuthenticated", "true");
     localStorage.setItem("token", res.access_token);
     localStorage.setItem("refresh_token", res.refresh_token);
-    // setUser(defaultUser);
-    localStorage.setItem("user", JSON.stringify(user));
   };
 
   const logout = () => {
