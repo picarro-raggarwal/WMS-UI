@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/ui/page-header";
-import { Droplets, FlaskConical, RotateCcw } from "lucide-react";
+import { FlaskConical, RotateCcw } from "lucide-react";
 import React, { useState } from "react";
 import { ChartProvider } from "../data-review/components/data-review-chart-context";
 import DataReviewLineChart from "../data-review/components/data-review-line-chart";
+import { ThresholdsConfig } from "../data-review/types";
 import { generateMockData, getTextColor, MockData } from "./data/mock-data";
 
 const TOTAL_PORTS = 62;
@@ -48,22 +50,31 @@ const getFontSizeClasses = (cardWidth: number) => {
 
 const Card = ({ port }: { port: MockData }) => {
   const [open, setOpen] = React.useState(false);
-  const {
-    isInActive,
-    portNum,
-    conc,
-    label,
-    status,
-    isSampling,
-    isPrime,
-    updatedAt
-  } = port;
+  const [showThreshold, setShowThreshold] = useState(false);
+  const { isInActive, portNum, conc, label, status, isSampling, updatedAt } =
+    port;
   const cardWidth = getCardWidth(TOTAL_PORTS);
   const { main: mainFontClass, label: labelFontClass } =
     getFontSizeClasses(cardWidth);
 
   const { data: timeSeriesData, categories } = generateMockTimeSeriesData(port);
   const [chartInstance, setChartInstance] = useState<any>(null);
+
+  // Create threshold configuration
+  const thresholdConfig: ThresholdsConfig | null = showThreshold
+    ? {
+        warning: {
+          value: 50, // Set your threshold value here
+          color: "#f59e0b", // amber color
+          visible: true
+        },
+        alarm: {
+          value: 80, // Set your alarm threshold value here
+          color: "#ef4444", // red color
+          visible: true
+        }
+      }
+    : null;
 
   return (
     <>
@@ -88,7 +99,7 @@ const Card = ({ port }: { port: MockData }) => {
             {conc ?? "Flow Error"}
           </span>
         </div>
-        <StatusIndicator isSampling={isSampling} isPrime={isPrime} />
+        <StatusIndicator isSampling={isSampling} />
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-5xl h-[50vh] overflow-y-auto">
@@ -138,10 +149,26 @@ const Card = ({ port }: { port: MockData }) => {
 
               {/* StatusChips */}
               <div className="flex items-center">
-                <StatusChips isSampling={isSampling} isPrime={isPrime} />
+                <StatusChips isSampling={isSampling} />
               </div>
             </div>
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center gap-4">
+              {/* Threshold Checkbox */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`threshold-${port.id}`}
+                  checked={showThreshold}
+                  onCheckedChange={(checked) =>
+                    setShowThreshold(checked as boolean)
+                  }
+                />
+                <label
+                  htmlFor={`threshold-${port.id}`}
+                  className="text-sm font-medium text-gray-700 cursor-pointer"
+                >
+                  Show Threshold
+                </label>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
@@ -173,6 +200,7 @@ const Card = ({ port }: { port: MockData }) => {
               }
               timeRange="1h"
               onInstance={setChartInstance}
+              thresholds={thresholdConfig}
             />
           </ChartProvider>
           {/* </div> */}
@@ -182,16 +210,9 @@ const Card = ({ port }: { port: MockData }) => {
   );
 };
 
-const StatusIndicator = ({
-  isSampling,
-  isPrime
-}: {
-  isSampling: boolean;
-  isPrime: boolean;
-}) => (
+const StatusIndicator = ({ isSampling }: { isSampling: boolean }) => (
   <div className="right-1 bottom-1 absolute flex gap-2">
     {isSampling && <StatusBadge type="sampling" label="S" />}
-    {isPrime && <StatusBadge type="prime" label="P" />}
   </div>
 );
 
@@ -261,28 +282,29 @@ function generateMockTimeSeriesData(port: MockData): {
   data: { timestamp: number; value: number }[];
   categories: string[];
 } {
-  // Generate 200 points of mock data for the last 200 minutes
+  // Generate 500 points of mock data for the last 50 minutes
   const now = Date.now();
+  const baseValue = port.conc ? parseFloat(port.conc) : 30; // Use port concentration as base
+
   const data = Array.from({ length: 500 }, (_, i) => {
+    const timeOffset = (50 - i) * 60 * 1000; // 50 minutes back
+    const timestamp = now - timeOffset;
+
+    // Create more realistic time series with some variation around the base value
+    const variation = (Math.random() - 0.5) * 40; // ±20 variation
+    const trend = Math.sin(i / 50) * 10; // Add some trend
+    const value = Math.max(0, baseValue + variation + trend);
+
     return {
-      timestamp: now - (50 - i) * 60 * 1000,
-      value: Math.random() * 100
-      // port.conc && !isNaN(parseFloat(port.conc))
-      //   ? parseFloat(port.conc) + Math.random() * 100
-      //   : Math.random() * 100,
+      timestamp,
+      value: Math.round(value * 10) / 10 // Round to 1 decimal place
     };
   });
   return { data, categories: [port.label] };
 }
 
-function StatusChips({
-  isSampling,
-  isPrime
-}: {
-  isSampling: boolean;
-  isPrime: boolean;
-}) {
-  if (!isSampling && !isPrime) return null;
+function StatusChips({ isSampling }: { isSampling: boolean }) {
+  if (!isSampling) return null;
   if (isSampling) {
     return (
       <span className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded-full font-semibold text-green-700 text-xs transition-colors">
@@ -291,13 +313,6 @@ function StatusChips({
       </span>
     );
   }
-  if (isPrime) {
-    return (
-      <span className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded-full font-semibold text-blue-700 text-xs transition-colors">
-        <Droplets className="w-3 h-3" />
-        Prime Active
-      </span>
-    );
-  }
+
   return null;
 }

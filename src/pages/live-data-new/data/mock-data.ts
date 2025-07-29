@@ -5,7 +5,6 @@ export type MockData = {
   conc: string | null;
   updatedAt: string; // ISO timestamp
   isSampling: boolean;
-  isPrime: boolean;
   isInActive: boolean;
   status: 0 | 1 | 2 | 3;
 };
@@ -15,12 +14,15 @@ export function generateMockData(count: number): MockData[] {
     const rand = Math.random();
     if (rand < 0.1) return null; // 10% chance of null
 
-    if (rand > 0.1 && rand < 0.15) {
-      return `${(100 + Math.random() * 20).toFixed(1)} ppb`;
-    } else if (rand >= 0.15 && rand < 0.25) {
-      return `${(50 + Math.random() * 50).toFixed(1)} ppb`;
+    // Generate more varied concentration values for better threshold demonstration
+    if (rand > 0.1 && rand < 0.2) {
+      return `${(80 + Math.random() * 40).toFixed(1)} ppb`; // 80-120 ppb (above alarm threshold)
+    } else if (rand >= 0.2 && rand < 0.4) {
+      return `${(50 + Math.random() * 30).toFixed(1)} ppb`; // 50-80 ppb (above warning threshold)
+    } else if (rand >= 0.4 && rand < 0.7) {
+      return `${(20 + Math.random() * 30).toFixed(1)} ppb`; // 20-50 ppb (normal range)
     } else {
-      return `${(Math.random() * 50).toFixed(1)} ppb`;
+      return `${(Math.random() * 20).toFixed(1)} ppb`; // 0-20 ppb (very low)
     }
   };
 
@@ -32,9 +34,9 @@ export function generateMockData(count: number): MockData[] {
     if (conc === null) return 3;
 
     const concNum = parseFloat(conc);
-    if (concNum > 100) return 2;
-    if (concNum > 50) return 1;
-    return 0;
+    if (concNum > 100) return 2; // Critical
+    if (concNum > 50) return 1; // Warning
+    return 0; // Normal
   };
 
   const data: MockData[] = [];
@@ -67,7 +69,6 @@ export function generateMockData(count: number): MockData[] {
       conc,
       updatedAt: getRandomDate(),
       isSampling: i === samplingIndex,
-      isPrime: i === pumpIndex,
       isInActive: false,
       status: getStatusFromConc(conc)
     });

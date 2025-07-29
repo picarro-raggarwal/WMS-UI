@@ -309,8 +309,14 @@ export const UsersTab = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="p-0 w-8 h-8"
+                      className={`p-0 w-8 h-8 ${
+                        !user.access.edit ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                       onClick={() => setEditingUserId(user.id)}
+                      disabled={!user.access.edit}
+                      title={
+                        !user.access.edit ? "No edit permission" : "Edit user"
+                      }
                     >
                       <Pencil size={16} />
                     </Button>
@@ -356,9 +362,18 @@ export const UsersTab = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="hover:bg-red-50 p-0 w-8 h-8 text-red-600 hover:text-red-700"
+                    className={`p-0 w-8 h-8 ${
+                      !user.access.delete
+                        ? "opacity-50 cursor-not-allowed text-gray-400"
+                        : "text-red-600 hover:text-red-700 hover:bg-red-50"
+                    }`}
                     onClick={() => setDeleteDialogUser(user)}
-                    disabled={isDeleting}
+                    disabled={!user.access.delete || isDeleting}
+                    title={
+                      !user.access.delete
+                        ? "No delete permission"
+                        : "Delete user"
+                    }
                   >
                     <Trash2 size={16} />
                   </Button>
