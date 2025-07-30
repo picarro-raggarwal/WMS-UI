@@ -44,13 +44,13 @@ function UserForm({
 }: {
   initialUser: Partial<User>;
   onSubmit: () => void;
-  submitLabel: string;
+  submitLabel: JSX.Element | string;
   onChange: (user: Partial<User>) => void;
   loading?: boolean;
   groupsOptions: Group[];
   apiError?: string;
 }) {
-  const selectedGroups = Array.isArray(initialUser.groups)
+  const selectedGroups = Array.isArray(initialUser?.groups)
     ? initialUser.groups
     : [];
   const [error, setError] = useState<string>("");
@@ -69,10 +69,10 @@ function UserForm({
 
   const handleSubmit = () => {
     if (
-      !initialUser.username ||
-      !initialUser.firstName ||
-      !initialUser.lastName ||
-      !initialUser.email ||
+      !initialUser?.username ||
+      !initialUser?.firstName ||
+      !initialUser?.lastName ||
+      !initialUser?.email ||
       selectedGroups.length === 0
     ) {
       setError("All fields are required, including at least one group.");
@@ -106,7 +106,7 @@ function UserForm({
       <div className="space-y-2">
         <label className="font-medium text-sm">Username</label>
         <Input
-          value={initialUser.username || ""}
+          value={initialUser?.username || ""}
           onChange={(e) =>
             onChange({ ...initialUser, username: e.target.value })
           }
@@ -116,7 +116,7 @@ function UserForm({
       <div className="space-y-2">
         <label className="font-medium text-sm">First Name</label>
         <Input
-          value={initialUser.firstName || ""}
+          value={initialUser?.firstName || ""}
           onChange={(e) =>
             onChange({ ...initialUser, firstName: e.target.value })
           }
@@ -126,7 +126,7 @@ function UserForm({
       <div className="space-y-2">
         <label className="font-medium text-sm">Last Name</label>
         <Input
-          value={initialUser.lastName || ""}
+          value={initialUser?.lastName || ""}
           onChange={(e) =>
             onChange({ ...initialUser, lastName: e.target.value })
           }
@@ -137,7 +137,7 @@ function UserForm({
         <label className="font-medium text-sm">Email</label>
         <Input
           type="email"
-          value={initialUser.email || ""}
+          value={initialUser?.email || ""}
           onChange={(e) => onChange({ ...initialUser, email: e.target.value })}
           placeholder="Enter email"
         />
@@ -198,7 +198,7 @@ function UserForm({
       </div>
       <div className="flex items-center gap-2 mt-2">
         <Checkbox
-          checked={initialUser.enabled ?? true}
+          checked={initialUser?.enabled ?? true}
           onCheckedChange={(checked) =>
             onChange({ ...initialUser, enabled: !!checked })
           }

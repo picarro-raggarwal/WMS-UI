@@ -8,7 +8,14 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { KeyRound, Pencil, Search, Trash2, UserPlus } from "lucide-react";
+import {
+  KeyRound,
+  Loader2,
+  Pencil,
+  Search,
+  Trash2,
+  UserPlus
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -88,15 +95,43 @@ export const UsersTab = () => {
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
 
-  const { data: editingUserData, isLoading: isEditingUserLoading } =
-    useGetUserByIdQuery(editingUserId!, { skip: !editingUserId });
+  const {
+    data: editingUserData,
+    error: editingUserError,
+    isLoading: isEditingUserLoading,
+    isFetching: isEditingUserFetching,
+    isError: isEditingUserError
+  } = useGetUserByIdQuery(editingUserId!, { skip: !editingUserId });
 
   // When editingUserData loads, set editingUserForm
   useEffect(() => {
-    if (editingUserData?.result) {
+    if (
+      editingUserData?.result &&
+      !isEditingUserFetching &&
+      !isEditingUserError &&
+      editingUserId
+    ) {
       setEditingUserForm(editingUserData.result);
+    } else if (editingUserError) {
+      // If there's an error, keep the form empty but don't clear it
+      setEditingUserForm(null);
     }
-  }, [editingUserData]);
+  }, [
+    editingUserData,
+    editingUserError,
+    isEditingUserFetching,
+    isEditingUserError
+  ]);
+
+  useEffect(() => {
+    if (editingUserError) {
+      const errorMessage =
+        (editingUserError as any).data?.error_description ||
+        (editingUserError as any).data?.message ||
+        "Failed to load user.";
+      setEditUserApiError(errorMessage);
+    }
+  }, [editingUserError]);
 
   const filteredUsers = users.filter((user) => {
     const name = `${user.firstName || ""} ${user.lastName || ""}`.trim();
@@ -145,7 +180,7 @@ export const UsersTab = () => {
       })
       .catch((err) => {
         setAddUserApiError(
-          err?.data?.error_description ||
+          err?.data?.description ||
             err?.data?.message ||
             "Failed to create user."
         );
@@ -208,6 +243,12 @@ export const UsersTab = () => {
         <Dialog
           open={isAddingUser}
           onOpenChange={(open) => {
+            if (!open) {
+              setNewUser(emptyUserState);
+            } else {
+              setEditingUserId(null);
+              setEditingUserForm(null);
+            }
             setAddUserApiError("");
             setIsAddingUser(open);
           }}
@@ -226,7 +267,8 @@ export const UsersTab = () => {
               initialUser={newUser}
               onChange={setNewUser}
               onSubmit={handleAddUser}
-              submitLabel="Add User"
+              submitLabel={isCreating ? "Adding..." : "Add User"}
+              loading={isCreating}
               groupsOptions={groupOptions}
               apiError={addUserApiError}
             />
@@ -274,23 +316,18 @@ export const UsersTab = () => {
                     >
                       {user.enabled ? "Enabled" : "Disabled"}
                     </span>
-                    {Array.isArray(user.groups) &&
+                    {Array.isArray(user.groups) && user.groups.length > 0 ? (
                       user.groups.map((g) => (
                         <span
                           key={g.id}
-                          className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full font-medium text-gray-800 dark:text-gray-200"
+                          className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded-full font-medium text-blue-800 dark:text-blue-200"
                         >
                           {g.name}
                         </span>
-                      ))}
-                    {user.access.edit && (
-                      <span className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded-full font-medium text-blue-800 dark:text-blue-200">
-                        Can Edit
-                      </span>
-                    )}
-                    {user.access.delete && (
-                      <span className="bg-red-100 dark:bg-red-900 px-2 py-1 rounded-full font-medium text-red-800 dark:text-red-200">
-                        Can Delete
+                      ))
+                    ) : (
+                      <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full font-medium text-gray-800 dark:text-gray-200">
+                        No groups
                       </span>
                     )}
                   </div>
@@ -302,8 +339,13 @@ export const UsersTab = () => {
                   <Dialog
                     open={editingUserId === user.id}
                     onOpenChange={(open) => {
-                      setEditUserApiError("");
-                      setEditingUserId(open ? user.id : null);
+                      if (!open) {
+                        setEditUserApiError("");
+                        setEditingUserForm(null);
+                        setEditingUserId(null);
+                      } else {
+                        setEditingUserId(user.id);
+                      }
                     }}
                   >
                     <Button
@@ -322,15 +364,22 @@ export const UsersTab = () => {
                     </Button>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Edit User</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                          Edit User
+                          <span className="text-muted-foreground text-xs">
+                            {isEditingUserFetching && (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            )}
+                          </span>
+                        </DialogTitle>
                       </DialogHeader>
                       {isEditingUserLoading ? (
                         <div className="py-8 text-muted-foreground text-center">
                           Loading...
                         </div>
-                      ) : editingUserForm ? (
+                      ) : (
                         <UserForm
-                          initialUser={editingUserForm}
+                          initialUser={editingUserForm || {}}
                           onChange={setEditingUserForm}
                           onSubmit={handleUpdateUser}
                           submitLabel={
@@ -340,7 +389,7 @@ export const UsersTab = () => {
                           groupsOptions={groupOptions}
                           apiError={editUserApiError}
                         />
-                      ) : null}
+                      )}
                     </DialogContent>
                   </Dialog>
                   <Button

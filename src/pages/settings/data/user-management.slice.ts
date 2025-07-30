@@ -43,6 +43,7 @@ export const userManagementApi = createApi({
   reducerPath: "userManagementApi",
   baseQuery: protectedBaseQuery("/slim100-api/v1"),
   tagTypes: ["UsersList"],
+  keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     // Prefix all queries with /admin
 

@@ -14,6 +14,10 @@ export default defineConfig({
       process.env.VITE_UI_VERSION || "dev"
     )
   },
+  optimizeDeps: {
+    exclude: ["sw"], // Exclude service worker from optimization
+    include: ["react", "react-dom"] // Explicitly include core dependencies
+  },
   server: {
     port: 3001,
     proxy: {
