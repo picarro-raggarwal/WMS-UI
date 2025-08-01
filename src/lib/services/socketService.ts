@@ -1,29 +1,29 @@
 import {
+  AlertProcessedEvent,
+  AnemometerData,
+  CatalyticConverterData,
   DriverAlert,
   FencelineJobState,
-  SubcomponentData,
-  AnemometerData,
-  TemperatureControllerData,
-  CatalyticConverterData,
-  MfcData,
-  HvacSystemData,
   GasTankData,
-  AlertProcessedEvent,
+  HvacSystemData,
+  MfcData,
+  SubcomponentData,
+  TemperatureControllerData
 } from "@/types/socket";
 import { io, Socket } from "socket.io-client";
 import {
+  socketAnemometerDataReceived,
+  socketCatalyticConverterDataReceived,
   socketConnected,
   socketDisconnected,
   socketDriverAlertsReceived,
   socketFencelineJobStateReceived,
-  socketSubcomponentDataReceived,
-  socketAnemometerDataReceived,
-  socketTemperatureControllerDataReceived,
-  socketCatalyticConverterDataReceived,
-  socketMfcDataReceived,
-  socketHvacSystemDataReceived,
   socketGasTankDataReceived,
+  socketHvacSystemDataReceived,
+  socketMfcDataReceived,
   socketProcessedAlertsReceived,
+  socketSubcomponentDataReceived,
+  socketTemperatureControllerDataReceived
 } from "../services/socketSlice";
 import { store } from "../store";
 
@@ -38,7 +38,7 @@ const ALL_NAMESPACES = [
   "mfc_data",
   "samlet_data",
   "analyzer_live_data",
-  "processed_alerts",
+  "processed_alerts"
 ];
 
 class SocketService {
@@ -57,18 +57,19 @@ class SocketService {
     mfc_data: "/mfc_data",
     samlet_data: "/samlet_data",
     analyzer_live_data: "/analyzer_live_data",
-    processed_alerts: "/processed_alerts",
+    processed_alerts: "/processed_alerts"
   };
 
   connect() {
     if (Object.keys(this.sockets).length > 0) return;
 
-    console.log("Connecting to all namespaces and listening for ALL events in each...");
+    // console.log("Connecting to all namespaces and listening for ALL events in each...");
 
     // Connect to all namespaces
     ALL_NAMESPACES.forEach((namespace) => {
-      const namespacePath = this.namespaces[namespace as keyof typeof this.namespaces];
-      console.log(`Connecting to ${this.serverUrl}${namespacePath}`);
+      const namespacePath =
+        this.namespaces[namespace as keyof typeof this.namespaces];
+      // console.log(`Connecting to ${this.serverUrl}${namespacePath}`);
 
       this.sockets[namespace] = io(`${this.serverUrl}${namespacePath}`, {
         transports: ["websocket"],
@@ -76,17 +77,17 @@ class SocketService {
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
+        reconnectionDelay: 1000
       });
     });
 
     this.setupEventListeners();
-    console.log("All socket connections initialized");
+    // console.log("All socket connections initialized");
   }
 
   // Method to set namespace (keeping for compatibility)
   setNamespace(namespace: string) {
-    console.log(`Setting namespace to: ${namespace}`);
+    // console.log(`Setting namespace to: ${namespace}`);
     if (Object.keys(this.sockets).length > 0) {
       this.disconnect();
       this.connect();
@@ -94,11 +95,11 @@ class SocketService {
   }
 
   disconnect() {
-    console.log("Disconnecting all sockets...");
+    // console.log("Disconnecting all sockets...");
 
     Object.entries(this.sockets).forEach(([namespace, socket]) => {
       if (socket) {
-        console.log(`Disconnecting ${namespace} socket...`);
+        // console.log(`Disconnecting ${namespace} socket...`);
         socket.offAny(); // Remove all listeners
         socket.disconnect();
       }
@@ -106,7 +107,7 @@ class SocketService {
 
     this.sockets = {};
     store.dispatch(socketDisconnected());
-    console.log("All sockets disconnected");
+    // console.log("All sockets disconnected");
   }
 
   private setupEventListeners() {
@@ -116,18 +117,19 @@ class SocketService {
     Object.entries(this.sockets).forEach(([namespace, socket]) => {
       if (!socket) return;
 
-      const namespacePath = this.namespaces[namespace as keyof typeof this.namespaces];
+      const namespacePath =
+        this.namespaces[namespace as keyof typeof this.namespaces];
 
       // Connection/disconnection events
       socket.on("connect", () => {
-        console.log(`${namespace} socket connected to: ${this.serverUrl}${namespacePath}`);
+        // console.log(`${namespace} socket connected to: ${this.serverUrl}${namespacePath}`);
         if (namespace === "fenceline_job_state_machine") {
           store.dispatch(socketConnected());
         }
       });
 
       socket.on("disconnect", (reason) => {
-        console.log(`${namespace} socket disconnected: ${reason}`);
+        // console.log(`${namespace} socket disconnected: ${reason}`);
         if (namespace === "fenceline_job_state_machine") {
           store.dispatch(socketDisconnected());
         }
@@ -145,42 +147,63 @@ class SocketService {
         // console.log(`🔄 Received event '${eventName}' from ${namespace} namespace:`, data);
 
         // Handle specific known events for Redux store updates
-        if (eventName === "fenceline_job_state" || eventName === "current_state") {
-          store.dispatch(socketFencelineJobStateReceived(data as FencelineJobState));
+        if (
+          eventName === "fenceline_job_state" ||
+          eventName === "current_state"
+        ) {
+          store.dispatch(
+            socketFencelineJobStateReceived(data as FencelineJobState)
+          );
         } else if (eventName === "subcomponent_data") {
-          store.dispatch(socketSubcomponentDataReceived(data as SubcomponentData));
+          store.dispatch(
+            socketSubcomponentDataReceived(data as SubcomponentData)
+          );
         } else if (eventName === "DriverAlerts") {
           store.dispatch(socketDriverAlertsReceived(data as DriverAlert));
         } else if (eventName === "alert_processed") {
-          store.dispatch(socketProcessedAlertsReceived(data as AlertProcessedEvent));
+          store.dispatch(
+            socketProcessedAlertsReceived(data as AlertProcessedEvent)
+          );
         } else if (eventName === "data_update") {
           // Handle namespace-specific data_update events
           const updateData = data as { object?: string };
           switch (updateData?.object) {
             case "anemometer_data":
-              store.dispatch(socketAnemometerDataReceived(updateData as AnemometerData));
+              store.dispatch(
+                socketAnemometerDataReceived(updateData as AnemometerData)
+              );
               break;
             case "temperature_controller_data":
               store.dispatch(
-                socketTemperatureControllerDataReceived(updateData as TemperatureControllerData)
+                socketTemperatureControllerDataReceived(
+                  updateData as TemperatureControllerData
+                )
               );
               break;
             case "catalytic_converter_data":
               store.dispatch(
-                socketCatalyticConverterDataReceived(updateData as CatalyticConverterData)
+                socketCatalyticConverterDataReceived(
+                  updateData as CatalyticConverterData
+                )
               );
               break;
             case "mfc_data":
               store.dispatch(socketMfcDataReceived(updateData as MfcData));
               break;
             case "hvac_system_data":
-              store.dispatch(socketHvacSystemDataReceived(updateData as HvacSystemData));
+              store.dispatch(
+                socketHvacSystemDataReceived(updateData as HvacSystemData)
+              );
               break;
             case "gas_tank_data":
-              store.dispatch(socketGasTankDataReceived(updateData as GasTankData));
+              store.dispatch(
+                socketGasTankDataReceived(updateData as GasTankData)
+              );
               break;
             default:
-              console.log(`Unhandled data_update object type: ${updateData?.object}`);
+              console.log(
+                `Unhandled data_update object type: ${updateData?.object}`
+              );
           }
         }
       });
@@ -201,7 +224,10 @@ class SocketService {
   }
 
   // Add methods to listen to all events from specific namespaces
-  onNamespaceAnyEvent(namespace: string, callback: (eventName: string, data: unknown) => void) {
+  onNamespaceAnyEvent(
+    namespace: string,
+    callback: (eventName: string, data: unknown) => void
+  ) {
     const socket = this.sockets[namespace];
     if (!socket) return;
 
@@ -212,7 +238,9 @@ class SocketService {
   }
 
   // Compatibility method - listen to all events from fenceline namespace
-  onRunningStatusAnyEvent(callback: (eventName: string, data: unknown) => void) {
+  onRunningStatusAnyEvent(
+    callback: (eventName: string, data: unknown) => void
+  ) {
     return this.onNamespaceAnyEvent("fenceline_job_state_machine", callback);
   }
 }

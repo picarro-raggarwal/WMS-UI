@@ -12,6 +12,7 @@ interface User {
   firstName?: string;
   lastName?: string;
   enabled?: boolean;
+  isPasswordUpdated?: boolean;
   access?: {
     edit: boolean;
     manageGroup?: boolean;
@@ -22,8 +23,10 @@ interface User {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
+  needsPasswordChange: boolean;
   login: (res: AuthTokenResponse) => void;
   logout: () => void;
+  setPasswordChanged: () => void;
 }
 
 const defaultUser = {
@@ -48,6 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  const [needsPasswordChange, setNeedsPasswordChange] = useState(() => {
+    return localStorage.getItem("needsPasswordChange") === "true";
+  });
+
   // Fetch user profile when authenticated
   const { data: profileData, isLoading: isLoadingProfile } = useGetProfileQuery(
     undefined,
@@ -60,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (profileData?.result && isAuthenticated) {
       const profileUser = profileData.result;
+
       const userData: User = {
         id: profileUser.id,
         name:
@@ -71,11 +79,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         firstName: profileUser.firstName,
         lastName: profileUser.lastName,
         enabled: profileUser.enabled,
+        isPasswordUpdated: profileUser.isPasswordUpdated,
         access: profileUser.access
       };
 
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
+
+      // Check if user needs to change password based on backend flag
+      if (profileUser.isPasswordUpdated === false) {
+        setNeedsPasswordChange(true);
+        localStorage.setItem("needsPasswordChange", "true");
+      } else {
+        setNeedsPasswordChange(false);
+        localStorage.removeItem("needsPasswordChange");
+      }
     }
   }, [profileData, isAuthenticated]);
 
@@ -88,15 +106,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     setIsAuthenticated(false);
+    setNeedsPasswordChange(false);
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("token");
     localStorage.removeItem("refresh_token");
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("needsPasswordChange");
+    localStorage.removeItem("devIsPasswordUpdated");
+  };
+
+  const setPasswordChanged = () => {
+    setNeedsPasswordChange(false);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        user,
+        needsPasswordChange,
+        login,
+        logout,
+        setPasswordChanged
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -124,10 +158,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 // PublicRoute.tsx
 export function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, needsPasswordChange, user } = useAuth();
   const location = useLocation();
 
-  if (isAuthenticated) {
+  // Wait for profile to be loaded before making redirect decision
+  if (isAuthenticated && user && !needsPasswordChange) {
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 
