@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { Spinner } from "@/components/spinner";
 import { PageHeader } from "@/components/ui/page-header";
-import { useGetHealthCheckQuery } from "./data/fencelineScheduler.slice";
-import { useGetAllRecipesQuery, Recipe as ApiRecipe } from "./data/recipes.slice";
-import ScheduleComponent from "./scheduler";
-import RecipeList from "./recipe-list";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import MeasurementState from "../dashboard/components/measurement-state";
 import SchedulerActions from "../dashboard/components/scheduler-actions";
-import { toast } from "sonner";
-import { Spinner } from "@/components/spinner";
+import { useGetHealthCheckQuery } from "./data/fencelineScheduler.slice";
+import { useGetAllRecipesQuery } from "./data/recipes.slice";
+import RecipeList from "./recipe-list";
+import ScheduleComponent from "./scheduler";
 
 interface Recipe {
   id: string;
@@ -81,10 +82,14 @@ const MethodPage = () => {
     // Add daily spike tasks
     let spikeTime = new Date(now.getTime() + 5 * 15 * 60 * 1000);
     while (spikeTime <= sevenDaysFromNow) {
-      if (!scheduledIn7Days.some((task) => task.startTime.getTime() === spikeTime.getTime())) {
+      if (
+        !scheduledIn7Days.some(
+          (task) => task.startTime.getTime() === spikeTime.getTime()
+        )
+      ) {
         scheduledIn7Days.push({
           type: "spike",
-          startTime: new Date(spikeTime),
+          startTime: new Date(spikeTime)
         });
       }
       spikeTime = new Date(spikeTime.getTime() + 24 * 60 * 60 * 1000);
@@ -94,10 +99,14 @@ const MethodPage = () => {
     let blendTime = new Date(now);
     blendTime.setMinutes(0, 0, 0); // Start at the beginning of the hour
     while (blendTime <= sevenDaysFromNow) {
-      if (!scheduledIn7Days.some((task) => task.startTime.getTime() === blendTime.getTime())) {
+      if (
+        !scheduledIn7Days.some(
+          (task) => task.startTime.getTime() === blendTime.getTime()
+        )
+      ) {
         scheduledIn7Days.push({
           type: "5-blend",
-          startTime: new Date(blendTime),
+          startTime: new Date(blendTime)
         });
       }
       blendTime = new Date(blendTime.getTime() + 4 * 60 * 60 * 1000);
@@ -108,7 +117,9 @@ const MethodPage = () => {
 
   // Generate scheduled tasks
   const generateScheduledTasks = () => {
-    const endTime = new Date(currentTime.getTime() + getViewDuration(timeScale));
+    const endTime = new Date(
+      currentTime.getTime() + getViewDuration(timeScale)
+    );
     const tasks: Task[] = [];
 
     // Add scheduled tasks that fall within the current view
@@ -126,10 +137,14 @@ const MethodPage = () => {
       while (spikeTime < endTime) {
         // Changed to < to avoid edge case
         // Only add spike if slot is available
-        if (!tasks.some((task) => task.startTime.getTime() === spikeTime.getTime())) {
+        if (
+          !tasks.some(
+            (task) => task.startTime.getTime() === spikeTime.getTime()
+          )
+        ) {
           tasks.push({
             type: "spike",
-            startTime: new Date(spikeTime),
+            startTime: new Date(spikeTime)
           });
         }
         spikeTime = new Date(spikeTime.getTime() + DAY_MS);
@@ -148,10 +163,12 @@ const MethodPage = () => {
     while (blendTime < endTime) {
       // Changed to < to avoid edge case
       // Only add 5-blend if slot is available
-      if (!tasks.some((task) => task.startTime.getTime() === blendTime.getTime())) {
+      if (
+        !tasks.some((task) => task.startTime.getTime() === blendTime.getTime())
+      ) {
         tasks.push({
           type: "5-blend",
-          startTime: new Date(blendTime),
+          startTime: new Date(blendTime)
         });
       }
       blendTime = new Date(blendTime.getTime() + FOUR_HOURS);
@@ -167,7 +184,9 @@ const MethodPage = () => {
 
     // Add comp tasks in empty slots
     let currentSlot = new Date(currentTime);
-    const endTime = new Date(currentTime.getTime() + getViewDuration(timeScale));
+    const endTime = new Date(
+      currentTime.getTime() + getViewDuration(timeScale)
+    );
 
     while (currentSlot < endTime) {
       // Changed to < to avoid edge case
@@ -178,14 +197,16 @@ const MethodPage = () => {
       if (!slotTaken) {
         allTasks.push({
           type: "comp",
-          startTime: new Date(currentSlot),
+          startTime: new Date(currentSlot)
         });
       }
       currentSlot = new Date(currentSlot.getTime() + 15 * 60 * 1000);
     }
 
     // Sort tasks by start time
-    return allTasks.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    return allTasks.sort(
+      (a, b) => a.startTime.getTime() - b.startTime.getTime()
+    );
   };
 
   const [tasks, setTasks] = useState<Task[]>(generateAllTasks());
@@ -230,7 +251,8 @@ const MethodPage = () => {
     const isSlotAvailable = (time: Date) => {
       // Check if there's any non-comp task at this time
       const existingTask = scheduledTasks.find(
-        (task) => task.startTime.getTime() === time.getTime() && task.type !== "comp"
+        (task) =>
+          task.startTime.getTime() === time.getTime() && task.type !== "comp"
       );
       return !existingTask;
     };
@@ -239,17 +261,21 @@ const MethodPage = () => {
     if (isSlotAvailable(startDate)) {
       newTasks.push({
         type: selectedRecipe.name.toLowerCase(),
-        startTime: startDate,
+        startTime: startDate
       });
     } else {
-      alert("Selected time slot is not available - another task is already scheduled");
+      alert(
+        "Selected time slot is not available - another task is already scheduled"
+      );
       return;
     }
 
     // Add recurring tasks if frequency is set
     if (data.frequency.value && data.frequency.unit) {
       const frequencyValue = parseInt(data.frequency.value);
-      const endTime = new Date(currentTime.getTime() + getViewDuration(timeScale));
+      const endTime = new Date(
+        currentTime.getTime() + getViewDuration(timeScale)
+      );
       let nextTime = new Date(startDate);
 
       while (nextTime <= endTime) {
@@ -258,13 +284,19 @@ const MethodPage = () => {
         // Calculate next occurrence based on frequency unit
         switch (data.frequency.unit) {
           case "hours":
-            newTime = new Date(nextTime.getTime() + frequencyValue * 60 * 60 * 1000);
+            newTime = new Date(
+              nextTime.getTime() + frequencyValue * 60 * 60 * 1000
+            );
             break;
           case "days":
-            newTime = new Date(nextTime.getTime() + frequencyValue * 24 * 60 * 60 * 1000);
+            newTime = new Date(
+              nextTime.getTime() + frequencyValue * 24 * 60 * 60 * 1000
+            );
             break;
           case "weeks":
-            newTime = new Date(nextTime.getTime() + frequencyValue * 7 * 24 * 60 * 60 * 1000);
+            newTime = new Date(
+              nextTime.getTime() + frequencyValue * 7 * 24 * 60 * 60 * 1000
+            );
             break;
           case "months": {
             const newDate = new Date(nextTime);
@@ -282,7 +314,7 @@ const MethodPage = () => {
         if (nextTime <= endTime && isSlotAvailable(nextTime)) {
           newTasks.push({
             type: selectedRecipe.name.toLowerCase(),
-            startTime: new Date(nextTime),
+            startTime: new Date(nextTime)
           });
         }
       }
@@ -300,7 +332,7 @@ const MethodPage = () => {
     return (
       <div className="flex flex-col h-full overflow-hidden">
         <PageHeader pageName="Method" />
-        <main className="flex flex-col gap-6 mx-auto px-8 md:px-12 py-8 w-full max-w-8xl h-full overflow-y-auto">
+        <main className="flex flex-col gap-6 mx-auto px-8 md:px-12 py-3 w-full max-w-8xl h-full overflow-y-auto">
           <div className="flex justify-center items-center p-40">
             <Spinner size="8" />
           </div>
@@ -312,19 +344,31 @@ const MethodPage = () => {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <PageHeader pageName="Method" />
-      <main className="flex flex-col gap-6 mx-auto px-8 md:px-12 py-8 w-full max-w-8xl h-full overflow-y-auto">
-        <div className="gap-4 grid grid-cols-4">
-          <div className="col-span-3">
-            <MeasurementState />
-          </div>
-          <div className="col-span-1">
-            <SchedulerActions allRecipes={manualRecipes} />
-          </div>
-        </div>
+      <main className="flex flex-col gap-6 mx-auto px-8 md:px-12 py-3 w-full max-w-8xl h-full">
+        <Tabs defaultValue="schedule" className="h-full">
+          <TabsList className="grid w-full grid-cols-2 mb-2">
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="recipes">Recipes</TabsTrigger>
+          </TabsList>
 
-        <ScheduleComponent />
+          <TabsContent value="schedule" className="h-full">
+            <div className="space-y-6">
+              <div className="gap-4 grid grid-cols-4">
+                <div className="col-span-3">
+                  <MeasurementState />
+                </div>
+                <div className="col-span-1">
+                  <SchedulerActions allRecipes={manualRecipes} />
+                </div>
+              </div>
+              <ScheduleComponent />
+            </div>
+          </TabsContent>
 
-        <RecipeList />
+          <TabsContent value="recipes" className="h-full overflow-hidden">
+            <RecipeList />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

@@ -1,27 +1,19 @@
-import { useState, useMemo, useCallback } from "react";
-import {
-  useGetCurrentScheduleQuery,
-  useScheduleMeasureJobMutation,
-  useScheduleCalibrationJobMutation,
-} from "@/pages/method/data/fencelineScheduler.slice";
-import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
-import {
-  format,
-  addMinutes,
-  addHours,
-  addDays,
-  addWeeks,
-  isAfter,
-  isBefore,
-  compareAsc,
-} from "date-fns";
 import ScheduledTimeline from "@/components/scheduler/scheduled-timeline";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router";
-import { ListFilter, CalendarRange } from "lucide-react";
-import { useGetJobHistoryQuery } from "./data/fencelineJob.slice";
 import { Card, CardTitle } from "@/components/ui/card";
+import { useGetCurrentScheduleQuery } from "@/pages/method/data/fencelineScheduler.slice";
 import { formatDateTime, formatUnixTimestamp } from "@/utils";
+import {
+  addDays,
+  addHours,
+  addMinutes,
+  addWeeks,
+  compareAsc,
+  isAfter,
+  isBefore
+} from "date-fns";
+import { CalendarRange, ListFilter } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { useGetJobHistoryQuery } from "./data/fencelineJob.slice";
 
 // Type for job history items
 interface JobHistoryItem {
@@ -83,14 +75,18 @@ function ScheduleComponent() {
   const {
     data: jobHistoryData,
     isLoading: isLoadingJobHistory,
-    isError: isErrorJobHistory,
+    isError: isErrorJobHistory
   } = useGetJobHistoryQuery(undefined, {
-    pollingInterval: 5000,
+    pollingInterval: 5000
   });
 
   const [activeTab, setActiveTab] = useState<"table" | "gantt">("gantt");
-  const [timeRange, setTimeRange] = useState<"12hr" | "24hr" | "72hr" | "168hr">("168hr");
-  const [timeScale, setTimeScale] = useState<"1min" | "1h" | "12h" | "24h" | "7d">("24h");
+  const [timeRange, setTimeRange] = useState<
+    "12hr" | "24hr" | "72hr" | "168hr"
+  >("168hr");
+  const [timeScale, setTimeScale] = useState<
+    "1min" | "1h" | "12h" | "24h" | "7d"
+  >("24h");
   const [isGrouped, setIsGrouped] = useState(true);
 
   // Convert timeRange to milliseconds
@@ -125,7 +121,9 @@ function ScheduleComponent() {
       const calibrationJobs = jobs.filter(
         (job) => job.job_type === "calibration"
       ) as CalibrationJob[];
-      const measurementJobs = jobs.filter((job) => job.job_type === "measure") as MeasurementJob[];
+      const measurementJobs = jobs.filter(
+        (job) => job.job_type === "measure"
+      ) as MeasurementJob[];
 
       // Phase 1: Schedule all calibration jobs first (they have priority)
       const calibrationInstances: JobInstance[] = [];
@@ -143,7 +141,7 @@ function ScheduleComponent() {
             startTime: currentStart,
             endTime: currentEnd,
             recipe: job.recipe,
-            originalJob: job,
+            originalJob: job
           });
 
           // Calculate next occurrence after this one completes
@@ -189,7 +187,9 @@ function ScheduleComponent() {
 
         // Add all future calibration instances
         while (currentStart < endTime) {
-          const currentEnd = new Date(currentStart.getTime() + job.job_duration_seconds * 1000);
+          const currentEnd = new Date(
+            currentStart.getTime() + job.job_duration_seconds * 1000
+          );
 
           calibrationInstances.push({
             id: `calib_${job.schedule_id}_${currentStart.getTime()}`,
@@ -197,7 +197,7 @@ function ScheduleComponent() {
             startTime: currentStart,
             endTime: currentEnd,
             recipe: job.recipe,
-            originalJob: job,
+            originalJob: job
           });
 
           // Calculate next occurrence
@@ -245,7 +245,7 @@ function ScheduleComponent() {
             resolvedCalibrations.push({
               ...calib,
               startTime: adjustedStart,
-              endTime: adjustedEnd,
+              endTime: adjustedEnd
             });
             lastCalibEnd = adjustedEnd;
           }
@@ -262,16 +262,23 @@ function ScheduleComponent() {
 
         // Check for currently running jobs from job history
         const runningMeasurement = jobHistory?.find(
-          (job) => job.job_status === "in_progress" && job.job_type === "measure"
+          (job) =>
+            job.job_status === "in_progress" && job.job_type === "measure"
         );
         const runningCalibration = jobHistory?.find(
-          (job) => job.job_status === "in_progress" && job.job_type === "calibration"
+          (job) =>
+            job.job_status === "in_progress" && job.job_type === "calibration"
         );
 
         // Check for queued jobs (created but not started)
-        const queuedJobs = jobHistory?.filter((job) => job.job_status === "created") || [];
-        const queuedMeasurement = queuedJobs.find((job) => job.job_type === "measure");
-        const queuedCalibration = queuedJobs.find((job) => job.job_type === "calibration");
+        const queuedJobs =
+          jobHistory?.filter((job) => job.job_status === "created") || [];
+        const queuedMeasurement = queuedJobs.find(
+          (job) => job.job_type === "measure"
+        );
+        const queuedCalibration = queuedJobs.find(
+          (job) => job.job_type === "calibration"
+        );
 
         let currentMeasurementStart: Date;
         let currentMeasurementEnd: Date;
@@ -279,9 +286,12 @@ function ScheduleComponent() {
         if (runningMeasurement && runningMeasurement.start_time) {
           // Use actual start time from job history
           hasCurrentMeasurement = true;
-          currentMeasurementStart = new Date(runningMeasurement.start_time * 1000); // Convert from Unix timestamp
+          currentMeasurementStart = new Date(
+            runningMeasurement.start_time * 1000
+          ); // Convert from Unix timestamp
           currentMeasurementEnd = new Date(
-            currentMeasurementStart.getTime() + runningMeasurement.duration * 1000
+            currentMeasurementStart.getTime() +
+              runningMeasurement.duration * 1000
           );
 
           // Include the currently running measurement
@@ -290,7 +300,7 @@ function ScheduleComponent() {
             jobType: "measure",
             startTime: currentMeasurementStart,
             endTime: currentMeasurementEnd,
-            originalJob: measurementJob,
+            originalJob: measurementJob
           });
 
           // Shift any calibrations that would conflict with this currently running measurement
@@ -300,7 +310,8 @@ function ScheduleComponent() {
               calib.endTime > currentMeasurementStart
             ) {
               // Calibration conflicts with currently running measurement - delay it until measurement ends
-              const delay = currentMeasurementEnd.getTime() - calib.startTime.getTime();
+              const delay =
+                currentMeasurementEnd.getTime() - calib.startTime.getTime();
               calib.startTime = new Date(currentMeasurementEnd);
               calib.endTime = new Date(calib.endTime.getTime() + delay);
             }
@@ -312,7 +323,9 @@ function ScheduleComponent() {
 
         // Include currently running calibration if it exists
         if (runningCalibration && runningCalibration.start_time) {
-          const runningCalibStart = new Date(runningCalibration.start_time * 1000);
+          const runningCalibStart = new Date(
+            runningCalibration.start_time * 1000
+          );
           const runningCalibEnd = new Date(
             runningCalibStart.getTime() + runningCalibration.duration * 1000
           );
@@ -331,8 +344,8 @@ function ScheduleComponent() {
               frequency_amount: 1,
               start_epoch: runningCalibration.start_time,
               job_duration_seconds: runningCalibration.duration,
-              recipe: runningCalibration.recipe_id,
-            },
+              recipe: runningCalibration.recipe_id
+            }
           });
         }
 
@@ -344,7 +357,9 @@ function ScheduleComponent() {
           // Queue prioritization: When both measurement and calibration are queued, calibration wins
           if (queuedCalibration && queuedMeasurement) {
             // Both are queued - calibration has priority, so measurement waits
-            const nextCalibration = resolvedCalibrations.find((calib) => calib.startTime >= now);
+            const nextCalibration = resolvedCalibrations.find(
+              (calib) => calib.startTime >= now
+            );
             if (nextCalibration) {
               fillStart = nextCalibration.endTime;
             } else {
@@ -361,7 +376,9 @@ function ScheduleComponent() {
             } else {
               const elapsedTime = now.getTime() - originalStart.getTime();
               const intervals = Math.ceil(elapsedTime / measurementDuration);
-              fillStart = new Date(originalStart.getTime() + intervals * measurementDuration);
+              fillStart = new Date(
+                originalStart.getTime() + intervals * measurementDuration
+              );
             }
           }
         }
@@ -369,7 +386,9 @@ function ScheduleComponent() {
         resolvedCalibrations.forEach((calib, index) => {
           // Fill gap before this calibration
           while (fillStart < calib.startTime) {
-            const measurementEnd = new Date(fillStart.getTime() + measurementDuration);
+            const measurementEnd = new Date(
+              fillStart.getTime() + measurementDuration
+            );
 
             // If measurement would overlap with calibration, let measurement finish and shift calibration
             if (measurementEnd > calib.startTime) {
@@ -379,11 +398,12 @@ function ScheduleComponent() {
                 jobType: "measure",
                 startTime: fillStart,
                 endTime: measurementEnd,
-                originalJob: measurementJob,
+                originalJob: measurementJob
               });
 
               // Shift the calibration to start after this measurement
-              const delay = measurementEnd.getTime() - calib.startTime.getTime();
+              const delay =
+                measurementEnd.getTime() - calib.startTime.getTime();
               calib.startTime = new Date(measurementEnd);
               calib.endTime = new Date(calib.endTime.getTime() + delay);
 
@@ -396,7 +416,7 @@ function ScheduleComponent() {
                 jobType: "measure",
                 startTime: fillStart,
                 endTime: measurementEnd,
-                originalJob: measurementJob,
+                originalJob: measurementJob
               });
               fillStart = measurementEnd;
             }
@@ -408,7 +428,9 @@ function ScheduleComponent() {
 
         // Fill remaining time after last calibration
         while (fillStart < endTime) {
-          const measurementEnd = new Date(fillStart.getTime() + measurementDuration);
+          const measurementEnd = new Date(
+            fillStart.getTime() + measurementDuration
+          );
 
           if (measurementEnd > endTime) {
             // Truncate to fit in time window
@@ -420,7 +442,7 @@ function ScheduleComponent() {
                 jobType: "measure",
                 startTime: fillStart,
                 endTime: endTime,
-                originalJob: measurementJob,
+                originalJob: measurementJob
               });
             }
             break;
@@ -430,7 +452,7 @@ function ScheduleComponent() {
               jobType: "measure",
               startTime: fillStart,
               endTime: measurementEnd,
-              originalJob: measurementJob,
+              originalJob: measurementJob
             });
             fillStart = measurementEnd;
           }
@@ -466,7 +488,7 @@ function ScheduleComponent() {
               finalSchedule.push({
                 ...job,
                 startTime: adjustedStart,
-                endTime: adjustedEnd,
+                endTime: adjustedEnd
               });
               lastEndTime = adjustedEnd;
             }
@@ -479,14 +501,17 @@ function ScheduleComponent() {
             } else {
               // Delay measurement normally
               const adjustedStart = new Date(lastEndTime);
-              const jobDuration = job.endTime.getTime() - job.startTime.getTime();
-              const adjustedEnd = new Date(adjustedStart.getTime() + jobDuration);
+              const jobDuration =
+                job.endTime.getTime() - job.startTime.getTime();
+              const adjustedEnd = new Date(
+                adjustedStart.getTime() + jobDuration
+              );
 
               if (isBefore(adjustedEnd, endTime)) {
                 finalSchedule.push({
                   ...job,
                   startTime: adjustedStart,
-                  endTime: adjustedEnd,
+                  endTime: adjustedEnd
                 });
                 lastEndTime = adjustedEnd;
               }
@@ -507,11 +532,18 @@ function ScheduleComponent() {
     const cleanCurrentTime = new Date();
     cleanCurrentTime.setSeconds(0, 0); // Remove seconds and milliseconds
 
-    return extrapolateSchedule(schedule, timeRange, cleanCurrentTime, jobHistoryData);
+    return extrapolateSchedule(
+      schedule,
+      timeRange,
+      cleanCurrentTime,
+      jobHistoryData
+    );
   }, [schedule, timeRange, jobHistoryData, extrapolateSchedule]);
 
   // Map our timeRange to timeScale for the Gantt chart
-  const mapTimeRangeToTimeScale = (timeRange: string): "1min" | "1h" | "12h" | "24h" | "7d" => {
+  const mapTimeRangeToTimeScale = (
+    timeRange: string
+  ): "1min" | "1h" | "12h" | "24h" | "7d" => {
     switch (timeRange) {
       case "12hr":
         return "12h";
@@ -545,7 +577,8 @@ function ScheduleComponent() {
               ? "border-b-2 border-primary-500 text-primary-500"
               : "text-gray-500"
           }`}
-          onClick={() => setActiveTab("gantt")}>
+          onClick={() => setActiveTab("gantt")}
+        >
           <CalendarRange className="inline-block mr-1 w-4 h-4" />
           Timeline View
         </button>
@@ -555,7 +588,8 @@ function ScheduleComponent() {
               ? "border-b-2 border-primary-500 text-primary-500"
               : "text-gray-500"
           }`}
-          onClick={() => setActiveTab("table")}>
+          onClick={() => setActiveTab("table")}
+        >
           <ListFilter className="inline-block mr-1 w-4 h-4" />
           Table View
         </button>
@@ -599,16 +633,28 @@ function ScheduleComponent() {
               </thead>
               <tbody>
                 {scheduledJobs.map((job, index) => (
-                  <tr key={job.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                  <tr
+                    key={job.id}
+                    className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                  >
                     <td className="py-2 text-sm">
                       <span className={` `}>
-                        {job.jobType === "measure" ? "Measurement" : "Calibration"}
+                        {job.jobType === "measure"
+                          ? "Measurement"
+                          : "Calibration"}
                       </span>
                     </td>
-                    <td className="py-2 text-sm">{formatDateTime(job.startTime)}</td>
-                    <td className="py-2 text-sm">{formatDateTime(job.endTime)}</td>
                     <td className="py-2 text-sm">
-                      {Math.round((job.endTime.getTime() - job.startTime.getTime()) / 60000)}{" "}
+                      {formatDateTime(job.startTime)}
+                    </td>
+                    <td className="py-2 text-sm">
+                      {formatDateTime(job.endTime)}
+                    </td>
+                    <td className="py-2 text-sm">
+                      {Math.round(
+                        (job.endTime.getTime() - job.startTime.getTime()) /
+                          60000
+                      )}{" "}
                       minutes
                     </td>
                     <td className="py-2 text-sm">
@@ -631,7 +677,9 @@ function ScheduleComponent() {
         <div>Error loading schedule</div>
       ) : scheduledJobs.length === 0 ? (
         <div className="bg-white p-8 border border-gray-200 rounded-lg text-gray-500 text-center">
-          <div className="mb-2">No jobs scheduled in the selected time range</div>
+          <div className="mb-2">
+            No jobs scheduled in the selected time range
+          </div>
         </div>
       ) : (
         <ScheduledTimeline
@@ -655,14 +703,21 @@ function ScheduleComponent() {
         ) : (
           <ul className="space-y-4 max-w-md">
             {schedule?.map((job, index) => (
-              <li key={index} className="bg-white shadow-sm p-4 border border-gray-200 rounded-lg">
+              <li
+                key={index}
+                className="bg-white shadow-sm p-4 border border-gray-200 rounded-lg"
+              >
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center">
                     <span className="inline-block bg-white mr-2 px-3 py-1 rounded-full ring-1 ring-primary-500/20 font-medium text-primary-500 text-sm">
-                      {job.job_type === "measure" ? "Measurement" : "Calibration"}
+                      {job.job_type === "measure"
+                        ? "Measurement"
+                        : "Calibration"}
                     </span>
                     {job.job_type === "calibration" && (
-                      <span className="text-gray-500 text-sm">ID: {job.schedule_id}</span>
+                      <span className="text-gray-500 text-sm">
+                        ID: {job.schedule_id}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -670,7 +725,9 @@ function ScheduleComponent() {
                 <div className="gap-2 grid grid-cols-2 text-sm">
                   <div className="flex flex-col">
                     <span className="text-gray-500">Start Time:</span>
-                    <span className="font-medium">{formatUnixTimestamp(job.start_epoch)}</span>
+                    <span className="font-medium">
+                      {formatUnixTimestamp(job.start_epoch)}
+                    </span>
                   </div>
 
                   <div className="flex flex-col">
