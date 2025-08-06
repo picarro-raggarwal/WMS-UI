@@ -1,7 +1,6 @@
 import { useLoginMutation } from "@/common/authAPI";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
@@ -14,7 +13,6 @@ export default function AuthLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [devIsPasswordUpdated, setDevIsPasswordUpdated] = useState(false);
 
   const [loginMutation] = useLoginMutation();
 
@@ -30,15 +28,7 @@ export default function AuthLogin() {
       }).unwrap();
 
       if (response && response.access_token) {
-        // Set development flag for testing
-        localStorage.setItem(
-          "devIsPasswordUpdated",
-          devIsPasswordUpdated.toString()
-        );
-
         login(response);
-        // Don't redirect here - let the parent component handle it
-        // The login page will check if password change is needed
       } else {
         setError("Invalid username or password");
       }
@@ -64,24 +54,6 @@ export default function AuthLogin() {
         <p className="text-neutral-600 text-sm text-center">
           Sign in to your account to continue
         </p>
-      </div>
-
-      {/* Development Checkbox */}
-      <div className="flex items-center space-x-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <Checkbox
-          id="devIsPasswordUpdated"
-          checked={devIsPasswordUpdated}
-          onCheckedChange={(checked) =>
-            setDevIsPasswordUpdated(checked as boolean)
-          }
-        />
-        <label
-          htmlFor="devIsPasswordUpdated"
-          className="text-sm font-medium text-yellow-800"
-        >
-          DEV: Simulate isPasswordUpdated ={" "}
-          {devIsPasswordUpdated ? "true" : "false"}
-        </label>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">

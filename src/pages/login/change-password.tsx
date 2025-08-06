@@ -1,3 +1,4 @@
+import { clearAuthData } from "@/common/ProtectedBaseQuery";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,14 +70,15 @@ export default function ChangePasswordForm() {
 
   const handleCancel = () => {
     // Logout the user if they cancel
-    navigate("/login");
+    clearAuthData();
+    window.location.href = "/";
   };
 
   if (success) {
     return (
       <div className="flex flex-col gap-6 bg-white shadow-lg p-8 rounded-2xl w-full max-w-md">
         <div className="flex flex-col items-center gap-2 mb-2">
-          <div className="mx-auto h-12 w-12 text-green-600">
+          <div className="mx-auto w-12 h-12 text-green-600">
             <CheckCircle size={48} />
           </div>
           <h2 className="mt-2 font-semibold text-neutral-800 text-xl">
@@ -105,7 +107,7 @@ export default function ChangePasswordForm() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
         {error && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="w-4 h-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -209,7 +211,7 @@ export default function ChangePasswordForm() {
             type="button"
             variant="outline"
             onClick={handleCancel}
-            className="flex-1 border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+            className="flex-1 hover:bg-neutral-50 border-neutral-200 text-neutral-700"
           >
             Cancel
           </Button>

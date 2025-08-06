@@ -31,7 +31,6 @@ import LiveDataPage from "./pages/live-data-new";
 import LoginPage from "./pages/login";
 import MapDisplay from "./pages/map-display";
 import MethodPage from "./pages/method";
-import CreateRecipePage from "./pages/method/create-recipe";
 import NotFoundPage from "./pages/NotFoundPage";
 import QAQCPage from "./pages/qa-qc";
 import ReportsPage from "./pages/reports";
@@ -66,7 +65,6 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="live-data" element={<LiveDataPage />} />
                 <Route path="data-review" element={<DataReviewPage />} />
                 <Route path="method" element={<MethodPage />} />
-                <Route path="method/create" element={<CreateRecipePage />} />
                 <Route path="qa-qc" element={<QAQCPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="reports" element={<ReportsPage />} />

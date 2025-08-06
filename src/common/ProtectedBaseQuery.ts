@@ -24,16 +24,14 @@ export const protectedBaseQuery = (
     }
   });
 
-  const realms = import.meta.env.VITE_KEYCLOAK_REALMS as string;
-  const client_id = import.meta.env.VITE_KEYCLOAK_CLIENTID as string;
-  const client_secret = import.meta.env.VITE_AUTH_CLIENT_SECRET as string;
-
-  const authURL = `/realms/${realms}/protocol/openid-connect`;
+  // const realms = import.meta.env.VITE_KEYCLOAK_REALMS as string;
+  // const client_id = import.meta.env.VITE_KEYCLOAK_CLIENTID as string;
+  // const client_secret = import.meta.env.VITE_AUTH_CLIENT_SECRET as string;
 
   const refreshRawBaseQuery = fetchBaseQuery({
-    baseUrl: authURL,
+    baseUrl: "/wms-api/v1/auth",
     prepareHeaders: (headers) => {
-      headers.set("Content-Type", "application/x-www-form-urlencoded");
+      // headers.set("Content-Type", "application/x-www-form-urlencoded");
       return headers;
     }
   });
@@ -60,17 +58,17 @@ export const protectedBaseQuery = (
       if (refreshToken) {
         try {
           const refreshArgs = {
-            url: "/token",
+            url: "/refresh-token", // /wms-api/v1/auth/refresh-token
             method: "POST",
             headers: {
               "Content-Type": "application/x-www-form-urlencoded"
             },
             body: new URLSearchParams({
-              client_id: client_id,
-              scope: "openid",
-              client_secret: client_secret,
-              grant_type: "refresh_token",
-              refresh_token: refreshToken
+              // client_id: client_id,
+              // scope: "openid",
+              // client_secret: client_secret,
+              // grant_type: "refresh_token",
+              __sec_auth_rt__: refreshToken
             }).toString()
           };
 
@@ -78,12 +76,12 @@ export const protectedBaseQuery = (
             refreshArgs,
             api,
             {}
-          )) as { data: AuthTokenResponse; error: any };
+          )) as { data: { result: AuthTokenResponse }; error: any };
 
           // Check if the response has data and is not an error
           if ("data" in refreshResponse && refreshResponse.data) {
-            const { access_token, refresh_token } =
-              refreshResponse.data as AuthTokenResponse;
+            const { access_token, refresh_token } = refreshResponse.data
+              .result as AuthTokenResponse;
 
             // Store the new tokens
             localStorage.setItem("token", access_token);
@@ -106,9 +104,11 @@ export const protectedBaseQuery = (
   };
 };
 
-const clearAuthData = () => {
+export const clearAuthData = () => {
   window.location.href = "/";
   localStorage.removeItem("token");
   localStorage.removeItem("refresh_token");
   localStorage.removeItem("isAuthenticated");
+  localStorage.removeItem("user");
+  localStorage.removeItem("needsPasswordChange");
 };

@@ -21,11 +21,11 @@ export default defineConfig({
   server: {
     port: 3001,
     proxy: {
-      "/slim100-api": {
+      "/wms-api": {
         target: "http://slim100-beta.corp.picarro.com:8000",
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace("/slim100-api", "api")
+        rewrite: (path) => path.replace("/wms-api", "api")
       },
       "/api": {
         target: "http://fenceline-dell1.corp.picarro.com:8000",

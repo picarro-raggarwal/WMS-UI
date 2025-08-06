@@ -1,6 +1,6 @@
 import { ChevronsUpDown, LogOut, User2 } from "lucide-react";
 
-import { useLogoutMutation } from "@/common/authAPI";
+import { useLogoutQuery } from "@/common/authAPI";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 
 export function NavUser({
   user
@@ -31,14 +32,15 @@ export function NavUser({
   const { logout } = useAuth();
   const expanded = state === "expanded";
 
-  const [logoutApi] = useLogoutMutation();
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
+
+  const { data: logoutData } = useLogoutQuery(undefined, {
+    skip: !isLoggedOut
+  });
 
   const handleLogout = async () => {
     try {
-      const refreshToken = localStorage.getItem("refresh_token");
-      if (refreshToken) {
-        await logoutApi({ refresh_token: refreshToken });
-      }
+      setIsLoggedOut(true);
     } catch (error) {
       console.error("Logout failed:", error);
     }

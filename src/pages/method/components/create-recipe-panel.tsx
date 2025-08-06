@@ -320,11 +320,11 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   const PortItem = useCallback(
     ({ port }: { port: Port }) => {
       return (
-        <div className="bg-white border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors">
+        <div className="bg-white p-3 border border-gray-200 hover:border-gray-300 rounded-lg transition-colors">
           <div className="flex justify-between items-center">
             <div className="flex-1">
               <div className="font-medium text-gray-900 text-sm">
-                #{port.portNumber}
+                Port #{port.portNumber}
               </div>
               <div className="text-gray-500 text-xs">{port.name}</div>
             </div>
@@ -332,7 +332,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
               variant="ghost"
               size="sm"
               onClick={() => handleAddPortToRecipe(port)}
-              className="p-1 w-8 h-8 rounded-full hover:bg-gray-100"
+              className="hover:bg-gray-100 p-1 rounded-full w-8 h-8"
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -404,7 +404,9 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
             {index + 1}
           </div>
           <div className="flex-grow">
-            <div className="font-medium text-gray-900">#{step.step_id}</div>
+            <div className="font-medium text-gray-900">
+              Port #{step.step_id}
+            </div>
             <div className="text-gray-500 text-sm">{step.name}</div>
           </div>
           <div className="flex items-center gap-2">
@@ -472,7 +474,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
       <div className="flex flex-1 gap-6 h-full min-h-0">
         {/* Left Panel - Ports */}
         <div className="bg-gray-50 p-6 rounded-lg w-1/2 overflow-y-auto">
-          <h2 className="mb-4 font-semibold text-lg">Available Ports</h2>
+          {/* <h2 className="mb-4 font-semibold text-lg">Available Ports</h2> */}
 
           {isLoading ? (
             <div className="flex justify-center items-center p-8">
@@ -482,14 +484,14 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
             <div className="space-y-6">
               {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
                 <div key={bankNumber} className="space-y-3">
-                  <h3 className="font-semibold text-gray-700 text-sm">
+                  <h3 className="font-semibold text-gray-700">
                     {Number(bankNumber) <= 8
-                      ? `Part ${bankNumber}`
+                      ? `Bank ${bankNumber}`
                       : Number(bankNumber) === 9
                       ? "Special Ports"
                       : "Clean Ports"}
                   </h3>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="gap-3 grid grid-cols-2">
                     {bankPorts.map((port) => (
                       <PortItem key={port.id} port={port} />
                     ))}
