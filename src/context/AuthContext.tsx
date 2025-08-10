@@ -1,4 +1,7 @@
-import { AuthTokenResponse } from "@/common/authAPI";
+import {
+  AuthTokenResponse,
+  PasswordUpdateRequiredResponse
+} from "@/common/authAPI";
 import { useGetProfileQuery } from "@/pages/settings/data/user-management.slice";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router";
@@ -24,7 +27,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   needsPasswordChange: boolean;
-  login: (res: AuthTokenResponse) => void;
+  pendingPasswordChangeUserId?: string;
+  login: (res: AuthTokenResponse | PasswordUpdateRequiredResponse) => void;
   logout: () => void;
   setPasswordChanged: () => void;
 }
@@ -55,11 +59,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return localStorage.getItem("needsPasswordChange") === "true";
   });
 
+  const [pendingPasswordChangeUserId, setPendingPasswordChangeUserId] =
+    useState<string | undefined>(() => {
+      return localStorage.getItem("pendingPasswordChangeUserId") || undefined;
+    });
+
   // Fetch user profile when authenticated
   const { data: profileData, isLoading: isLoadingProfile } = useGetProfileQuery(
     undefined,
     {
-      skip: !isAuthenticated
+      skip: !isAuthenticated || !localStorage.getItem("token")
     }
   );
 
@@ -97,27 +106,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [profileData, isAuthenticated]);
 
-  const login = (res: AuthTokenResponse) => {
-    setIsAuthenticated(true);
-    localStorage.setItem("isAuthenticated", "true");
-    localStorage.setItem("token", res.access_token);
-    localStorage.setItem("refresh_token", res.refresh_token);
+  const login = (res: AuthTokenResponse | PasswordUpdateRequiredResponse) => {
+    // Check if this is a password update required response
+    if (
+      "code" in res &&
+      res.code === "required_update_password" &&
+      res.userid
+    ) {
+      setIsAuthenticated(true);
+      setNeedsPasswordChange(true);
+      setPendingPasswordChangeUserId(res.userid);
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("needsPasswordChange", "true");
+      localStorage.setItem("pendingPasswordChangeUserId", res.userid);
+    } else if ("access_token" in res && res.access_token) {
+      // Normal login flow - cast to AuthTokenResponse since we know it has access_token
+      const tokenResponse = res as AuthTokenResponse;
+      setIsAuthenticated(true);
+      setNeedsPasswordChange(false);
+      setPendingPasswordChangeUserId(undefined);
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("token", tokenResponse.access_token);
+      localStorage.setItem("refresh_token", tokenResponse.refresh_token);
+      localStorage.removeItem("needsPasswordChange");
+      localStorage.removeItem("pendingPasswordChangeUserId");
+    }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
     setNeedsPasswordChange(false);
+    setPendingPasswordChangeUserId(undefined);
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("token");
     localStorage.removeItem("refresh_token");
     setUser(null);
     localStorage.removeItem("user");
     localStorage.removeItem("needsPasswordChange");
-    localStorage.removeItem("devIsPasswordUpdated");
+    localStorage.removeItem("pendingPasswordChangeUserId");
   };
 
   const setPasswordChanged = () => {
     setNeedsPasswordChange(false);
+    setPendingPasswordChangeUserId(undefined);
+    localStorage.removeItem("needsPasswordChange");
+    localStorage.removeItem("pendingPasswordChangeUserId");
   };
 
   return (
@@ -126,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated,
         user,
         needsPasswordChange,
+        pendingPasswordChangeUserId,
         login,
         logout,
         setPasswordChanged
@@ -161,7 +195,12 @@ export function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, needsPasswordChange, user } = useAuth();
   const location = useLocation();
 
-  // Wait for profile to be loaded before making redirect decision
+  // If authenticated and needs password change, stay on login page to show change password form
+  if (isAuthenticated && needsPasswordChange) {
+    return <>{children}</>;
+  }
+
+  // If authenticated, user profile loaded, and doesn't need password change, redirect to dashboard
   if (isAuthenticated && user && !needsPasswordChange) {
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }

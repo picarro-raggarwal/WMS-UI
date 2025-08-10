@@ -12,18 +12,21 @@ const LoginPage = () => {
 
   // Check if user needs to change password after authentication
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // User is authenticated and profile loaded
+    if (isAuthenticated) {
       if (needsPasswordChange) {
+        // Show change password form immediately if password change is required
         setShowChangePassword(true);
-      } else {
+      } else if (user) {
+        // User is authenticated, profile loaded, and doesn't need password change
         navigate("/dashboard");
       }
+      // If authenticated but no user profile yet and no password change needed,
+      // wait for profile to load (shows loading state)
     }
   }, [isAuthenticated, needsPasswordChange, user, navigate]);
 
-  // Render null or a loading spinner while waiting for user profile
-  if (isAuthenticated && !user) {
+  // Show loading only if authenticated, no password change needed, and profile not loaded yet
+  if (isAuthenticated && !needsPasswordChange && !user) {
     return (
       <AuthLayout>
         <div className="flex flex-col gap-6 bg-white shadow-lg p-8 rounded-2xl w-full max-w-md">

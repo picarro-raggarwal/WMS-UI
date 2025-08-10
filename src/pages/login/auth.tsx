@@ -19,7 +19,7 @@ export default function AuthLogin() {
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError("");
 
     try {
       const response = await loginMutation({
@@ -27,18 +27,22 @@ export default function AuthLogin() {
         password
       }).unwrap();
 
-      if (response && response.access_token) {
+      if (response) {
         login(response);
+        // Don't redirect here - let the parent component handle it
+        // The login page will check if password change is needed
       } else {
-        setError("Invalid username or password");
+        setError("Error logging in");
       }
     } catch (err: any) {
+      console.log("Login failed:", err);
       setError(
         err?.data?.error_description ||
           err?.data?.message ||
+          err?.data?.error?.description ||
+          err?.data?.result?.code ||
           "Invalid username or password"
       );
-      console.error("Login failed:", err);
     } finally {
       setLoading(false);
     }
@@ -77,6 +81,7 @@ export default function AuthLogin() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Enter your username"
+            autoComplete="username"
             required
             className="border-neutral-200 focus:border-primary-500 focus:ring-primary-500"
           />
@@ -96,6 +101,7 @@ export default function AuthLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
+              autoComplete="current-password"
               required
               className="border-neutral-200 focus:border-primary-500 focus:ring-primary-500 pr-10"
             />

@@ -19,15 +19,11 @@ export type AuthTokenResponse = {
   scope: string;
 };
 
-interface UserIdentity {
-  sub: string;
-  email_verified: boolean;
-  name: string;
-  preferred_username: string;
-  given_name: string;
-  family_name: string;
-  email: string;
-}
+export type PasswordUpdateRequiredResponse = {
+  access_token: null;
+  code: "required_update_password";
+  userid: string;
+};
 
 const realms = import.meta.env.VITE_KEYCLOAK_REALMS as string;
 const client_id = import.meta.env.VITE_KEYCLOAK_CLIENTID as string;
@@ -39,7 +35,10 @@ export const authApi = createApi({
   keepUnusedDataFor: 0,
 
   endpoints: (builder) => ({
-    login: builder.mutation<AuthTokenResponse, LoginCredentials>({
+    login: builder.mutation<
+      AuthTokenResponse | PasswordUpdateRequiredResponse,
+      LoginCredentials
+    >({
       query: (credentials) => ({
         url: "/token?realm=picarro",
         method: "POST",
@@ -55,62 +54,39 @@ export const authApi = createApi({
           client_secret: client_secret
         })
       }),
-      transformResponse: (response: { result: AuthTokenResponse }) => {
+      transformResponse: (response: {
+        result: AuthTokenResponse | PasswordUpdateRequiredResponse;
+      }) => {
         return response.result;
       }
     }),
 
-    // logout: builder.mutation<void, { refresh_token: string }>({
-    //   query: ({ refresh_token }) => ({
-    //     url: "/logout",
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/x-www-form-urlencoded"
-    //     },
-    //     body: new URLSearchParams({
-    //       client_id: client_id,
-    //       client_secret: client_secret,
-    //       refresh_token
-    //     }).toString()
-    //   })
-    // }),
-
-    logout: builder.query({
-      query: () => "/logout",
-      transformResponse: (response: UserIdentity) => {
-        return response;
-      }
-    }),
-
-    getUserInfo: builder.query({
-      query: () => "/userinfo",
-      transformResponse: (response: UserIdentity) => {
-        return response;
-      }
-    }),
-
-    getUsers: builder.query<any[], void>({
-      query: () => ({
-        url: `/admin/realms/${realms}/users`,
-        method: "GET"
-      })
-    }),
-
-    deleteUser: builder.mutation<void, { userId: string }>({
-      query: ({ userId }) => ({
-        url: `/admin/realms/${realms}/users/${userId}`,
-        method: "DELETE"
-      })
-    }),
-
-    updateUser: builder.mutation<void, { userId: string; data: any }>({
-      query: ({ userId, data }) => ({
-        url: `/admin/realms/${realms}/users/${userId}`,
-        method: "PUT",
+    logout: builder.mutation<void, { refresh_token: string }>({
+      query: ({ refresh_token }) => ({
+        url: "/end-session-token",
+        method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: JSON.stringify(data)
+        body: new URLSearchParams({
+          __sec_auth_rt__: refresh_token
+        }).toString()
+      })
+    }),
+
+    requiredUpdatePassword: builder.mutation<
+      void,
+      { userId: string; newPassword: string }
+    >({
+      query: ({ userId, newPassword }) => ({
+        url: `/required-update-password?realm=${realms}&userid=${userId}`,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          value: newPassword
+        }).toString()
       })
     })
   })
@@ -118,10 +94,6 @@ export const authApi = createApi({
 
 export const {
   useLoginMutation,
-  useLogoutQuery,
-  // useLogoutMutation,
-  useGetUserInfoQuery,
-  useGetUsersQuery,
-  useDeleteUserMutation,
-  useUpdateUserMutation
+  useLogoutMutation,
+  useRequiredUpdatePasswordMutation
 } = authApi;

@@ -103,22 +103,7 @@ export const userManagementApi = createApi({
 
     // Prefix all queries with /profile
     getProfile: builder.query<{ result: User }, void>({
-      query: () => "/profile",
-      // Override the response for development testing
-      transformResponse: (response: { result: User }) => {
-        const devIsPasswordUpdated = localStorage.getItem(
-          "devIsPasswordUpdated"
-        );
-        if (devIsPasswordUpdated !== null) {
-          return {
-            result: {
-              ...response.result,
-              isPasswordUpdated: devIsPasswordUpdated === "true"
-            }
-          };
-        }
-        return response;
-      }
+      query: () => "/profile"
       // providesTags: ["UsersList"]
     })
   })

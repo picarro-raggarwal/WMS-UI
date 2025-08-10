@@ -44,9 +44,9 @@ export const protectedBaseQuery = (
       // If this is a login attempt (/token), do not reload the browser
       let isLoginAttempt = false;
       if (typeof args === "string") {
-        isLoginAttempt = args === "/token";
+        isLoginAttempt = args.startsWith("/token");
       } else if (typeof args === "object" && args.url) {
-        isLoginAttempt = args.url === "/token";
+        isLoginAttempt = args.url.startsWith("/token");
       }
       if (isLoginAttempt) {
         // Do not clear auth data or reload
@@ -111,4 +111,5 @@ export const clearAuthData = () => {
   localStorage.removeItem("isAuthenticated");
   localStorage.removeItem("user");
   localStorage.removeItem("needsPasswordChange");
+  localStorage.removeItem("pendingPasswordChangeUserId");
 };

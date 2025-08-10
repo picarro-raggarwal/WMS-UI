@@ -162,7 +162,7 @@ export const UsersTab = () => {
       })),
       credentials: {
         type: "password",
-        temporary: false,
+        temporary: true,
         value: "admin"
       },
       emailVerified: true
