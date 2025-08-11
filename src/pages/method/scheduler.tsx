@@ -1,3 +1,4 @@
+import RecipeTimeline from "@/components/scheduler/recipe-timeline";
 import ScheduledTimeline from "@/components/scheduler/scheduled-timeline";
 import { Card, CardTitle } from "@/components/ui/card";
 import { useGetCurrentScheduleQuery } from "@/pages/method/data/fencelineScheduler.slice";
@@ -11,9 +12,10 @@ import {
   isAfter,
   isBefore
 } from "date-fns";
-import { CalendarRange, ListFilter } from "lucide-react";
+import { CalendarRange, Clock, ListFilter } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useGetJobHistoryQuery } from "./data/fencelineJob.slice";
+import { generateMockRecipeTimeline } from "./data/mock-recipe-timeline";
 
 // Type for job history items
 interface JobHistoryItem {
@@ -80,14 +82,19 @@ function ScheduleComponent() {
     pollingInterval: 5000
   });
 
-  const [activeTab, setActiveTab] = useState<"table" | "gantt">("gantt");
+  const [activeTab, setActiveTab] = useState<"table" | "gantt" | "recipes">(
+    "gantt"
+  );
   const [timeRange, setTimeRange] = useState<
     "12hr" | "24hr" | "72hr" | "168hr"
   >("168hr");
-  const [timeScale, setTimeScale] = useState<
-    "1min" | "1h" | "12h" | "24h" | "7d"
-  >("24h");
+  const [timeScale, setTimeScale] = useState<"1h" | "12h" | "24h" | "7d">(
+    "24h"
+  );
   const [isGrouped, setIsGrouped] = useState(true);
+
+  // Generate mock recipe timeline data
+  const recipeTimelineData = useMemo(() => generateMockRecipeTimeline(), []);
 
   // Convert timeRange to milliseconds
   const getTimeRangeInMs = (range: string): number => {
@@ -593,6 +600,17 @@ function ScheduleComponent() {
           <ListFilter className="inline-block mr-1 w-4 h-4" />
           Table View
         </button>
+        <button
+          className={`px-4 py-2 text-sm font-medium ${
+            activeTab === "recipes"
+              ? "border-b-2 border-primary-500 text-primary-500"
+              : "text-gray-500"
+          }`}
+          onClick={() => setActiveTab("recipes")}
+        >
+          <Clock className="inline-block mr-1 w-4 h-4" />
+          Recipe Timeline
+        </button>
       </div>
 
       {/* Table View */}
@@ -670,96 +688,112 @@ function ScheduleComponent() {
             </table>
           </div>
         )
-      ) : /* Gantt Chart View */
-      isLoading ? (
-        <div>Loading schedule...</div>
-      ) : error ? (
-        <div>Error loading schedule</div>
-      ) : scheduledJobs.length === 0 ? (
-        <div className="bg-white p-8 border border-gray-200 rounded-lg text-gray-500 text-center">
-          <div className="mb-2">
-            No jobs scheduled in the selected time range
-          </div>
-        </div>
       ) : (
-        <ScheduledTimeline
-          currentTime={new Date()}
-          jobs={scheduledJobs}
-          timeScale={timeScale}
-          setTimeScale={setTimeScale}
-          isGrouped={isGrouped}
-          setIsGrouped={setIsGrouped}
-        />
-      )}
-
-      <div className="hidden mt-8">
-        <h3 className="mb-2 font-medium text-lg">Active Schedule</h3>
-        {isLoading ? (
+        /* Gantt Chart View - only show when not in recipe timeline tab */
+        activeTab !== "recipes" &&
+        (isLoading ? (
           <div>Loading schedule...</div>
         ) : error ? (
           <div>Error loading schedule</div>
-        ) : schedule?.length === 0 ? (
-          <div className="text-gray-500">No items on schedule</div>
+        ) : scheduledJobs.length === 0 ? (
+          <div className="bg-white p-8 border border-gray-200 rounded-lg text-gray-500 text-center">
+            <div className="mb-2">
+              No jobs scheduled in the selected time range
+            </div>
+          </div>
         ) : (
-          <ul className="space-y-4 max-w-md">
-            {schedule?.map((job, index) => (
-              <li
-                key={index}
-                className="bg-white shadow-sm p-4 border border-gray-200 rounded-lg"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center">
-                    <span className="inline-block bg-white mr-2 px-3 py-1 rounded-full ring-1 ring-primary-500/20 font-medium text-primary-500 text-sm">
-                      {job.job_type === "measure"
-                        ? "Measurement"
-                        : "Calibration"}
-                    </span>
-                    {job.job_type === "calibration" && (
-                      <span className="text-gray-500 text-sm">
-                        ID: {job.schedule_id}
+          <ScheduledTimeline
+            currentTime={new Date()}
+            jobs={scheduledJobs}
+            timeScale={timeScale}
+            setTimeScale={setTimeScale}
+            isGrouped={isGrouped}
+            setIsGrouped={setIsGrouped}
+          />
+        ))
+      )}
+
+      {/* Recipe Timeline View */}
+      {activeTab === "recipes" && (
+        <RecipeTimeline
+          currentTime={new Date()}
+          recipes={recipeTimelineData}
+          timeScale={timeScale}
+          setTimeScale={setTimeScale}
+        />
+      )}
+
+      {/* Hidden section - only show when not in recipe timeline tab */}
+      {activeTab !== "recipes" && (
+        <div className="hidden mt-8">
+          <h3 className="mb-2 font-medium text-lg">Active Schedule</h3>
+          {isLoading ? (
+            <div>Loading schedule...</div>
+          ) : error ? (
+            <div>Error loading schedule</div>
+          ) : schedule?.length === 0 ? (
+            <div className="text-gray-500">No items on schedule</div>
+          ) : (
+            <ul className="space-y-4 max-w-md">
+              {schedule?.map((job, index) => (
+                <li
+                  key={index}
+                  className="bg-white shadow-sm p-4 border border-gray-200 rounded-lg"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center">
+                      <span className="inline-block bg-white mr-2 px-3 py-1 rounded-full ring-1 ring-primary-500/20 font-medium text-primary-500 text-sm">
+                        {job.job_type === "measure"
+                          ? "Measurement"
+                          : "Calibration"}
                       </span>
+                      {job.job_type === "calibration" && (
+                        <span className="text-gray-500 text-sm">
+                          ID: {job.schedule_id}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="gap-2 grid grid-cols-2 text-sm">
+                    <div className="flex flex-col">
+                      <span className="text-gray-500">Start Time:</span>
+                      <span className="font-medium">
+                        {formatUnixTimestamp(job.start_epoch)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col">
+                      <span className="text-gray-500">Duration:</span>
+                      <span className="font-medium">
+                        {job.job_type === "measure"
+                          ? `${job.duration_seconds / 60} minutes`
+                          : `${job.job_duration_seconds / 60} minutes`}
+                      </span>
+                    </div>
+
+                    {job.job_type === "calibration" && (
+                      <>
+                        <div className="flex flex-col">
+                          <span className="text-gray-500">Recipe:</span>
+                          <span className="font-medium">{job.recipe}</span>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <span className="text-gray-500">Frequency:</span>
+                          <span className="font-medium">
+                            Every {job.frequency_amount} {job.frequency_unit}
+                          </span>
+                        </div>
+                      </>
                     )}
                   </div>
-                </div>
-
-                <div className="gap-2 grid grid-cols-2 text-sm">
-                  <div className="flex flex-col">
-                    <span className="text-gray-500">Start Time:</span>
-                    <span className="font-medium">
-                      {formatUnixTimestamp(job.start_epoch)}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col">
-                    <span className="text-gray-500">Duration:</span>
-                    <span className="font-medium">
-                      {job.job_type === "measure"
-                        ? `${job.duration_seconds / 60} minutes`
-                        : `${job.job_duration_seconds / 60} minutes`}
-                    </span>
-                  </div>
-
-                  {job.job_type === "calibration" && (
-                    <>
-                      <div className="flex flex-col">
-                        <span className="text-gray-500">Recipe:</span>
-                        <span className="font-medium">{job.recipe}</span>
-                      </div>
-
-                      <div className="flex flex-col">
-                        <span className="text-gray-500">Frequency:</span>
-                        <span className="font-medium">
-                          Every {job.frequency_amount} {job.frequency_unit}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
