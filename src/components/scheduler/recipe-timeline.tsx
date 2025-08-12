@@ -492,28 +492,59 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
             </div>
           </div>
 
-          {/* Recipes Row - All recipes merged */}
+          {/* Recipes Row */}
           <div className="relative flex border-gray-100 border-b h-32">
             {/* Left column with recipes info */}
             <div className="relative flex-shrink-0 bg-gray-50/50 p-3 border-gray-100 border-r w-48">
               <div className="mb-2 font-medium text-sm">Recipes</div>
               <div className="space-y-1 text-gray-600 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Count:</span>
+                  <span className="text-gray-500">Iteration:</span>
                   <span className="font-medium">{visibleRecipes.length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Running:</span>
                   <span className="font-medium text-green-600">
-                    {
-                      visibleRecipes.filter((r) => r.status === "running")
-                        .length
-                    }
+                    {(() => {
+                      const runningRecipe = visibleRecipes.find(
+                        (r) => r.status === "running"
+                      );
+                      if (runningRecipe) {
+                        // Calculate iteration number based on how many times this recipe has run
+                        const now = new Date();
+
+                        // Find which port is currently active
+                        const activePort = runningRecipe.ports.find(
+                          (port) => port.startTime <= now && port.endTime >= now
+                        );
+
+                        let portInfo = "";
+                        if (activePort) {
+                          if (runningRecipe.isSmartRecipeActive) {
+                            // Smart recipe: show port 1 with instance number
+                            portInfo = `Port 1 (${activePort.instance || 1})`;
+                          } else {
+                            // Normal recipe: show port number
+                            portInfo = `Port ${activePort.portNumber}`;
+                          }
+                        }
+
+                        return (
+                          <div className="text-left">
+                            <div>{runningRecipe.name}</div>
+                            <div className=" opacity-80">
+                              {portInfo || "No Port"}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return "None";
+                    })()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Duration:</span>
-                  <span className="font-medium">60min base</span>
+                  <span className="font-medium">60min</span>
                 </div>
               </div>
             </div>
@@ -571,7 +602,7 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                     <div
                       key={recipe.id}
                       className={`absolute top-0 h-full cursor-pointer border rounded-lg transition-all group ${
-                        isRunning ? "bg-blue-500" : "bg-gray-200"
+                        isRunning ? "bg-blue-200" : "bg-gray-100"
                       }`}
                       style={recipePosition}
                     />
@@ -588,18 +619,15 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
               <div className="mb-2 font-medium text-sm">Smart Recipes</div>
               <div className="space-y-1 text-gray-600 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Active:</span>
+                  <span className="text-gray-500">Count:</span>
                   <span className="font-medium text-orange-600">
                     {visibleRecipes.filter((r) => r.isSmartRecipeActive).length}
                   </span>
                 </div>
+
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Types:</span>
-                  <span className="font-medium">Calib/Valid/Maint</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Duration:</span>
-                  <span className="font-medium">10-30min</span>
+                  <span className="text-gray-500">Last Port:</span>
+                  <span className="font-medium">Port 4 (5)</span>
                 </div>
               </div>
             </div>

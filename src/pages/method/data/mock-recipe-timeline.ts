@@ -170,7 +170,7 @@ export const generateMockRecipeTimeline = (): RecipeTimelineItem[] => {
 
     recipes.push({
       id: `recipe-${i}`,
-      name: `Recipe ${i + 1}`,
+      name: `Recipe Name`,
       startTime: recipeStartTime,
       endTime: recipeEndTime,
       duration: baseDuration,

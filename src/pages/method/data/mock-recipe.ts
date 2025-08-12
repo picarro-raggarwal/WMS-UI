@@ -124,6 +124,20 @@ export const mockRecipes: MockRecipe[] = [
       { step_id: 29, duration: 600, step_sequence: 3 },
       { step_id: 30, duration: 300, step_sequence: 4 }
     ]
+  },
+  {
+    recipe_row_id: 9,
+    recipe_id: "REC009",
+    recipe_name: "Calibration Protocol",
+    version_id: 1,
+    duration: 1800, // 30 minutes
+    created_at: Math.floor(Date.now() / 1000) - 86400 * 1, // 1 day ago
+    steps: [
+      { step_id: 7, duration: 300, step_sequence: 0 }, // Zero Port
+      { step_id: 23, duration: 600, step_sequence: 1 }, // Span Port
+      { step_id: 1, duration: 300, step_sequence: 2 }, // Regular Port 1
+      { step_id: 2, duration: 600, step_sequence: 3 } // Regular Port 2
+    ]
   }
 ];
 
@@ -132,10 +146,10 @@ export const mockStepNames: Record<number, string> = {
   1: "Initialization",
   2: "Calibration",
   3: "Verification",
-  4: " Final Check",
+  4: "Final Check",
   5: "System Check",
   6: "Maintenance",
-  7: "Testing",
+  7: "Zero Port",
   8: "Purge",
   9: "Gas Analysis",
   10: "Sample Collection",
@@ -151,7 +165,7 @@ export const mockStepNames: Record<number, string> = {
   20: "Verification",
   21: "Validation",
   22: "Final Review",
-  23: "Safety Check",
+  23: "Span Port",
   24: "Protocol Verification",
   25: "System Status",
   26: "Data Init",
@@ -162,7 +176,7 @@ export const mockStepNames: Record<number, string> = {
   31: "Initialization",
   32: "Calibration",
   33: "Verification",
-  34: " Final Check",
+  34: "Final Check",
   35: "System Check",
   36: "Maintenance",
   37: "Testing",
@@ -192,13 +206,5 @@ export const mockStepNames: Record<number, string> = {
   61: "Initialization",
   62: "Calibration",
   63: "Verification",
-  64: " Final Check",
-  65: "Special Port 1 - System Check",
-  66: "Special Port 2 - Maintenance",
-  67: "Special Port 3 - Testing",
-  68: "Special Port 4 - Testing",
-  69: "Clean Port 1 - Purge",
-  70: "Clean Port 2 - Gas Analysis",
-  71: "Clean Port 3 - Sample Collection",
-  72: "Clean Port 4 - Processing"
+  64: "Final Check"
 };

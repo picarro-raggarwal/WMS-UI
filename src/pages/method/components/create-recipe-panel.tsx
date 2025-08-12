@@ -49,7 +49,7 @@ interface Port {
   id: string;
   portNumber: number;
   name: string;
-  type: "regular" | "special" | "clean";
+  type: "regular" | "zero" | "span";
   bankNumber: number;
 }
 
@@ -109,42 +109,27 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   const generatePorts = useMemo((): Port[] => {
     const ports: Port[] = [];
 
-    // Generate 64 regular ports (8 banks of 8 ports each)
-    for (let bank = 1; bank <= 8; bank++) {
-      for (let portInBank = 1; portInBank <= 8; portInBank++) {
-        const portNumber = (bank - 1) * 8 + portInBank;
+    // Generate 64 regular ports (4 banks of 16 ports each)
+    for (let bank = 1; bank <= 4; bank++) {
+      for (let portInBank = 1; portInBank <= 16; portInBank++) {
+        const portNumber = (bank - 1) * 16 + portInBank;
+
+        // Randomly designate some ports as zero and span
+        let portType: "regular" | "zero" | "span" = "regular";
+        if (portNumber === 7) {
+          portType = "zero"; // Random port designated as zero port
+        } else if (portNumber === 23) {
+          portType = "span"; // Random port designated as span port
+        }
+
         ports.push({
           id: `port-${portNumber}`,
           portNumber,
           name: mockStepNames[portNumber] || `Port ${portNumber}`,
-          type: "regular",
+          type: portType,
           bankNumber: bank
         });
       }
-    }
-
-    // Add 4 special ports
-    for (let i = 1; i <= 4; i++) {
-      const portNumber = 64 + i;
-      ports.push({
-        id: `special-${i}`,
-        portNumber,
-        name: mockStepNames[portNumber] || `Special Port ${i}`,
-        type: "special",
-        bankNumber: 9
-      });
-    }
-
-    // Add 4 clean ports
-    for (let i = 1; i <= 4; i++) {
-      const portNumber = 68 + i;
-      ports.push({
-        id: `clean-${i}`,
-        portNumber,
-        name: mockStepNames[portNumber] || `Clean Port ${i}`,
-        type: "clean",
-        bankNumber: 10
-      });
     }
 
     return ports;
@@ -319,14 +304,38 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
 
   const PortItem = useCallback(
     ({ port }: { port: Port }) => {
+      // Special styling for zero and span ports
+      const getPortStyling = () => {
+        switch (port.type) {
+          case "zero":
+            return "bg-blue-50 border-blue-200 hover:border-blue-300";
+          case "span":
+            return "bg-primary-50 border-primary-200 hover:border-primary-300";
+          default:
+            return "bg-white border-gray-200 hover:border-gray-300";
+        }
+      };
+
       return (
-        <div className="bg-white p-3 border border-gray-200 hover:border-gray-300 rounded-lg transition-colors">
+        <div
+          className={`p-3 border rounded-lg transition-colors ${getPortStyling()}`}
+        >
           <div className="flex justify-between items-center">
             <div className="flex-1">
               <div className="font-medium text-gray-900 text-sm">
                 Port #{port.portNumber}
               </div>
-              <div className="text-gray-500 text-xs">{port.name}</div>
+              <div
+                className={`text-xs ${
+                  port.type === "zero"
+                    ? "text-blue-600 font-medium"
+                    : port.type === "span"
+                    ? "text-primary-600 font-medium"
+                    : "text-gray-500"
+                }`}
+              >
+                {port.name}
+              </div>
             </div>
             <Button
               variant="ghost"
@@ -373,7 +382,6 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         transition,
         opacity: isDragging ? 0.8 : 1,
         cursor: isDragging ? "grabbing" : "grab",
-        backgroundColor: isDragging ? "#eee" : "white",
         ...(overlay
           ? {
               transform: CSS.Transform.toString({
@@ -392,7 +400,13 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         <div
           ref={setNodeRef}
           style={style}
-          className="flex items-center gap-4 bg-white shadow-sm p-2 rounded-lg ring-1 ring-black/5"
+          className={`flex items-center gap-4 shadow-sm p-2 rounded-lg ring-1 ring-black/5 !border ${
+            step.name === "Zero Port"
+              ? "!bg-blue-50 !border-blue-200  hover:!border-blue-300"
+              : step.name === "Span Port"
+              ? "!bg-primary-50 !border-primary-200 hover:!border-primary-300"
+              : "!bg-white !border-gray-200 hover:!border-gray-300"
+          }`}
         >
           <div
             {...(!overlay ? { ...attributes, ...listeners } : {})}
@@ -407,7 +421,17 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
             <div className="font-medium text-gray-900">
               Port #{step.step_id}
             </div>
-            <div className="text-gray-500 text-sm">{step.name}</div>
+            <div
+              className={`text-sm ${
+                step.name === "Zero Port"
+                  ? "text-blue-600 font-medium"
+                  : step.name === "Span Port"
+                  ? "text-primary-600 font-medium"
+                  : "text-gray-500"
+              }`}
+            >
+              {step.name}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <DurationInput
@@ -485,11 +509,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
               {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
                 <div key={bankNumber} className="space-y-3">
                   <h3 className="font-semibold text-gray-700">
-                    {Number(bankNumber) <= 8
-                      ? `Bank ${bankNumber}`
-                      : Number(bankNumber) === 9
-                      ? "Special Ports"
-                      : "Clean Ports"}
+                    Bank {bankNumber}
                   </h3>
                   <div className="gap-3 grid grid-cols-2">
                     {bankPorts.map((port) => (

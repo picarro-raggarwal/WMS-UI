@@ -97,8 +97,14 @@ const RecipeStepsModal = ({
               return (
                 <div
                   key={step.step_id}
-                  className={`border border-gray-200 rounded-lg p-4 bg-white hover:border-gray-300 transition-colors ${
-                    isExpanded ? "border-primary-200 bg-primary-50" : ""
+                  className={`border rounded-lg p-4 transition-colors ${
+                    getStepName(step.step_id) === "Zero Port"
+                      ? "!bg-blue-50 !border-blue-200 hover:!border-blue-300"
+                      : getStepName(step.step_id) === "Span Port"
+                      ? "!bg-primary-50 !border-primary-200 hover:!border-primary-300"
+                      : isExpanded
+                      ? "border-primary-200 bg-primary-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
                   }`}
                 >
                   <div className="flex justify-between items-center">
@@ -106,7 +112,15 @@ const RecipeStepsModal = ({
                       <div className="flex justify-center items-center bg-neutral-100 rounded-full w-6 h-6 font-medium text-black text-sm">
                         {step.step_sequence + 1}
                       </div>
-                      <h3 className="font-medium">
+                      <h3
+                        className={`font-medium ${
+                          getStepName(step.step_id) === "Zero Port"
+                            ? "text-blue-600"
+                            : getStepName(step.step_id) === "Span Port"
+                            ? "text-primary-600"
+                            : "text-gray-900"
+                        }`}
+                      >
                         {getStepName(step.step_id)}
                       </h3>
 
