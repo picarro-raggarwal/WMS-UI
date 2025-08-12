@@ -15,7 +15,6 @@ interface User {
   firstName?: string;
   lastName?: string;
   enabled?: boolean;
-  isPasswordUpdated?: boolean;
   access?: {
     edit: boolean;
     manageGroup?: boolean;
@@ -88,21 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         firstName: profileUser.firstName,
         lastName: profileUser.lastName,
         enabled: profileUser.enabled,
-        isPasswordUpdated: profileUser.isPasswordUpdated,
         access: profileUser.access
       };
 
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
-
-      // Check if user needs to change password based on backend flag
-      if (profileUser.isPasswordUpdated === false) {
-        setNeedsPasswordChange(true);
-        localStorage.setItem("needsPasswordChange", "true");
-      } else {
-        setNeedsPasswordChange(false);
-        localStorage.removeItem("needsPasswordChange");
-      }
     }
   }, [profileData, isAuthenticated]);
 

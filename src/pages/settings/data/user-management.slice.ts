@@ -8,7 +8,6 @@ type User = {
   firstName?: string;
   lastName?: string;
   email?: string;
-  isPasswordUpdated?: boolean;
   access: {
     edit: boolean;
     manageGroup?: boolean;
