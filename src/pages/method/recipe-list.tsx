@@ -1,8 +1,5 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DateTimePicker24h } from "@/components/ui/date-time-picker-24hr";
-
 import {
   Dialog,
   DialogContent,
@@ -16,14 +13,6 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -40,7 +29,6 @@ import {
 import { formatDateTime, formatLabel } from "@/utils";
 import { formatDistanceToNow } from "date-fns";
 import {
-  AlertCircle,
   Beaker,
   Clock,
   List,
@@ -56,11 +44,7 @@ import { toast } from "sonner";
 import CreateRecipePanel from "./components/create-recipe-panel";
 import DeleteRecipeModal from "./components/delete-recipe-modal";
 import RecipeStepsModal from "./components/recipe-steps-modal";
-import {
-  useGetCurrentScheduleQuery,
-  useScheduleCalibrationJobMutation,
-  useScheduleMeasureJobMutation
-} from "./data/fencelineScheduler.slice";
+import { useGetCurrentScheduleQuery } from "./data/fencelineScheduler.slice";
 import { MockRecipe, mockRecipes, mockStepNames } from "./data/mock-recipe";
 
 interface EditingRecipe {
@@ -76,48 +60,34 @@ interface EditingRecipe {
   }[];
 }
 
-interface ServerError {
-  error?: {
-    name?: string;
-    message?: string;
-    description?: string;
-  };
-}
-
 const RecipeList = () => {
+  // Helper function to format duration from seconds to mm:ss
+  const formatDuration = (seconds: number): string => {
+    if (!seconds || seconds <= 0) return "0:00";
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<number | null>(null);
   const [stepsModalOpen, setStepsModalOpen] = useState(false);
-  const [formModalOpen, setFormModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<EditingRecipe | null>(
     null
   );
   const [showCreateRecipe, setShowCreateRecipe] = useState(false);
 
-  // Schedule modal state
-  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  // Schedule confirmation modal state
+  const [scheduleConfirmModalOpen, setScheduleConfirmModalOpen] =
+    useState(false);
   const [schedulingRecipe, setSchedulingRecipe] = useState<MockRecipe | null>(
     null
   );
-  const [jobType, setJobType] = useState<"measure" | "calibration">("measure");
-  const [scheduleFormData, setScheduleFormData] = useState({
-    start_dt: "",
-    end_dt: "",
-    frequency_unit: "days",
-    frequency: 1
-  });
-  const [scheduleFormError, setScheduleFormError] = useState<{
-    msg: string;
-    desc: string;
-  } | null>(null);
-  const [scheduleFormSuccess, setScheduleFormSuccess] = useState("");
-  const [isScheduling, setIsScheduling] = useState(false);
 
   const { data: currentSchedule } = useGetCurrentScheduleQuery();
-  const [scheduleMeasureJob] = useScheduleMeasureJobMutation();
-  const [scheduleCalibrationJob] = useScheduleCalibrationJobMutation();
 
   // Use mock data instead of API
   const recipes = mockRecipes;
@@ -164,13 +134,6 @@ const RecipeList = () => {
     setStepsModalOpen(true);
   };
 
-  const copyIdToClipboard = (e: React.MouseEvent, id: number) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(id.toString());
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
   const handleCreateRecipe = () => {
     setEditingRecipe(null);
     setShowCreateRecipe(true);
@@ -183,160 +146,34 @@ const RecipeList = () => {
 
   const handleScheduleRecipe = (recipe: MockRecipe) => {
     setSchedulingRecipe(recipe);
-    setScheduleFormData({
-      start_dt: "",
-      end_dt: "",
-      frequency_unit: "days",
-      frequency: 1
-    });
-    setScheduleFormError(null);
-    setScheduleFormSuccess("");
-    setScheduleModalOpen(true);
+    setScheduleConfirmModalOpen(true);
   };
 
-  const handleScheduleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
+  const handleScheduleConfirm = () => {
+    if (schedulingRecipe) {
+      // TODO: Replace this with actual API call in the future
+      // This handler contains all the recipe information you need:
+      const recipeInfo = {
+        recipe_row_id: schedulingRecipe.recipe_row_id,
+        recipe_id: schedulingRecipe.recipe_id,
+        recipe_name: schedulingRecipe.recipe_name,
+        version_id: schedulingRecipe.version_id,
+        duration: schedulingRecipe.duration,
+        steps: schedulingRecipe.steps,
+        created_at: schedulingRecipe.created_at
+        // Add any other fields you need for the API
+      };
 
-    if (name === "frequency") {
-      setScheduleFormData({
-        ...scheduleFormData,
-        [name]: parseInt(value, 10) || 0
-      });
-    } else {
-      setScheduleFormData({
-        ...scheduleFormData,
-        [name]: value
-      });
-    }
-  };
+      console.log("Recipe scheduled with info:", recipeInfo);
 
-  const formatDateForApi = (dateString: string): number | null => {
-    if (!dateString) return null;
-    const date = new Date(dateString);
-    return Math.floor(date.getTime() / 1000);
-  };
+      // Show success toast
+      toast.success(
+        `Recipe "${schedulingRecipe.recipe_name}" started successfully!`
+      );
 
-  const handleScheduleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setScheduleFormError(null);
-    setScheduleFormSuccess("");
-    setIsScheduling(true);
-
-    if (!scheduleFormData.start_dt) {
-      setScheduleFormError({
-        msg: "Error",
-        desc: "Start date and time is required"
-      });
-      setIsScheduling(false);
-      return;
-    }
-
-    if (jobType === "calibration" && !scheduleFormData.end_dt) {
-      setScheduleFormError({
-        msg: "Error",
-        desc: "End date and time is required for calibration jobs"
-      });
-      setIsScheduling(false);
-      return;
-    }
-
-    if (jobType === "calibration" && scheduleFormData.frequency < 1) {
-      setScheduleFormError({
-        msg: "Error",
-        desc: "Frequency must be at least 1"
-      });
-      setIsScheduling(false);
-      return;
-    }
-
-    try {
-      if (jobType === "measure") {
-        const startDt = formatDateForApi(scheduleFormData.start_dt);
-        if (startDt === null) {
-          setScheduleFormError({
-            msg: "Error",
-            desc: "Invalid start date and time"
-          });
-          setIsScheduling(false);
-          return;
-        }
-
-        const measureData = {
-          start_epoch: startDt,
-          recipe_row_id: schedulingRecipe?.recipe_row_id || 0
-        };
-
-        await scheduleMeasureJob(measureData).unwrap();
-        toast.success("Measurement job scheduled successfully!");
-        setScheduleFormSuccess("Measurement job scheduled successfully!");
-        setScheduleFormError(null);
-      } else {
-        const startDt = formatDateForApi(scheduleFormData.start_dt);
-        const endDt = formatDateForApi(scheduleFormData.end_dt);
-
-        if (startDt === null) {
-          setScheduleFormError({
-            msg: "Error",
-            desc: "Invalid start date and time"
-          });
-          setIsScheduling(false);
-          return;
-        }
-
-        if (endDt === null) {
-          setScheduleFormError({
-            msg: "Error",
-            desc: "Invalid end date and time"
-          });
-          setIsScheduling(false);
-          return;
-        }
-
-        const calibrationData = {
-          start_epoch: startDt,
-          end_epoch: endDt,
-          frequency_unit: scheduleFormData.frequency_unit,
-          frequency: scheduleFormData.frequency,
-          recipe_row_id: schedulingRecipe?.recipe_row_id || 0
-        };
-
-        await scheduleCalibrationJob(calibrationData).unwrap();
-        toast.success("Calibration job scheduled successfully!");
-        setScheduleFormSuccess("Calibration job scheduled successfully!");
-        setScheduleFormError(null);
-      }
-
-      setScheduleModalOpen(false);
-      setScheduleFormSuccess("");
+      // Close modal and reset state
+      setScheduleConfirmModalOpen(false);
       setSchedulingRecipe(null);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err: unknown) {
-      if (err && typeof err === "object" && "data" in err) {
-        const serverData = (err as { data: unknown }).data as ServerError;
-        if (serverData?.error) {
-          setScheduleFormError({
-            msg: serverData?.error?.message || "Error",
-            desc:
-              serverData?.error?.description ||
-              `Failed to schedule ${jobType} job. Please try again.`
-          });
-        } else {
-          setScheduleFormError({
-            msg: "Error",
-            desc: `Failed to schedule ${jobType} job. Please try again.`
-          });
-        }
-      } else {
-        setScheduleFormError({
-          msg: "Error",
-          desc: `Failed to schedule ${jobType} job. Please try again.`
-        });
-      }
-      console.error(`Error scheduling ${jobType} job:`, err);
-    } finally {
-      setIsScheduling(false);
     }
   };
 
@@ -497,13 +334,7 @@ const RecipeList = () => {
 
                             <Tooltip delayDuration={100}>
                               <TooltipTrigger>
-                                {Math.floor(recipe.duration / 60)
-                                  .toString()
-                                  .padStart(2, "0")}
-                                :
-                                {(recipe.duration % 60)
-                                  .toString()
-                                  .padStart(2, "0")}
+                                {formatDuration(recipe.duration)}
                               </TooltipTrigger>
                               <TooltipContent
                                 side="bottom"
@@ -648,150 +479,49 @@ const RecipeList = () => {
         />
       )}
 
-      {/* Schedule Modal */}
-      <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
-        <DialogContent className="max-w-lg">
+      {/* Schedule Confirmation Modal */}
+      <Dialog
+        open={scheduleConfirmModalOpen}
+        onOpenChange={setScheduleConfirmModalOpen}
+      >
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              Schedule Recipe
-              <br />
-              <span className="text-primary-500">
-                {schedulingRecipe?.recipe_name} - {schedulingRecipe?.recipe_id}
-              </span>
+            <DialogTitle className="text-center">
+              Confirm Recipe Schedule
             </DialogTitle>
           </DialogHeader>
-          {schedulingRecipe?.duration < 0 && (
-            <Alert variant="default">
-              <AlertTitle>Recipe Duration</AlertTitle>
-              <AlertDescription>
-                This recipe has a duration of less than 0 minute.
-              </AlertDescription>
-            </Alert>
-          )}
 
-          {scheduleFormError && (
-            <Alert variant="destructive">
-              <AlertCircle className="w-4 h-4 text-white" />
-              <AlertTitle>{scheduleFormError.msg}</AlertTitle>
-              <AlertDescription>{scheduleFormError.desc}</AlertDescription>
-            </Alert>
-          )}
-          {scheduleFormSuccess && (
-            <div className="bg-green-50 mb-4 p-2 rounded-md text-green-600 text-sm">
-              {scheduleFormSuccess}
+          <div className="text-center space-y-4">
+            <div className="text-gray-600">
+              <p className="mb-2">
+                <strong>{schedulingRecipe?.recipe_name}</strong> will run
+                indefinitely until manually interrupted.
+              </p>
+              <p className="text-sm text-gray-500">
+                Recipe ID: {schedulingRecipe?.recipe_id} • Duration:{" "}
+                {formatDuration(schedulingRecipe?.duration || 0)}
+              </p>
             </div>
-          )}
-          <form onSubmit={handleScheduleSubmit}>
-            <div className="gap-5 grid grid-cols-1 mt-1 mb-5">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="job-type">Job Type</Label>
-                <Select
-                  value={jobType}
-                  onValueChange={(value) =>
-                    setJobType(value as "measure" | "calibration")
-                  }
-                >
-                  <SelectTrigger id="job-type">
-                    <SelectValue placeholder="Select job type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="measure">Measurement</SelectItem>
-                    <SelectItem value="calibration">Calibration</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="start-date">Start Date and Time</Label>
-                <DateTimePicker24h
-                  id="start-date"
-                  type="datetime-local"
-                  name="start_dt"
-                  value={scheduleFormData.start_dt}
-                  onChange={handleScheduleInputChange}
-                  futureOnly={true}
-                  required
-                />
-              </div>
-
-              {jobType === "calibration" && (
-                <>
-                  <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="end-date">End Date and Time</Label>
-                    <DateTimePicker24h
-                      id="end-date"
-                      type="datetime-local"
-                      name="end_dt"
-                      value={scheduleFormData.end_dt}
-                      onChange={handleScheduleInputChange}
-                      futureOnly={true}
-                      required
-                    />
-                  </div>
-
-                  <div className="gap-3 grid grid-cols-2">
-                    <div className="flex flex-col space-y-1.5">
-                      <Label htmlFor="frequency">Frequency</Label>
-                      <Input
-                        id="frequency"
-                        type="number"
-                        name="frequency"
-                        value={scheduleFormData.frequency}
-                        onChange={handleScheduleInputChange}
-                        min="1"
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col space-y-1.5">
-                      <Label htmlFor="frequency-unit">Unit</Label>
-                      <Select
-                        name="frequency_unit"
-                        value={scheduleFormData.frequency_unit}
-                        onValueChange={(value) =>
-                          setScheduleFormData({
-                            ...scheduleFormData,
-                            frequency_unit: value
-                          })
-                        }
-                      >
-                        <SelectTrigger id="frequency-unit">
-                          <SelectValue placeholder="Select unit" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="hours">Hours</SelectItem>
-                          <SelectItem value="days">Days</SelectItem>
-                          <SelectItem value="weeks">Weeks</SelectItem>
-                          <SelectItem value="months">Months</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="flex gap-3 w-full">
+            <div className="flex gap-3">
               <Button
                 type="button"
                 variant="outline"
                 className="flex-1"
-                onClick={() => setScheduleModalOpen(false)}
+                onClick={() => setScheduleConfirmModalOpen(false)}
               >
                 Cancel
               </Button>
               <Button
-                type="submit"
+                type="button"
                 variant="primary"
-                disabled={isScheduling}
                 className="flex-1"
-                loading={isScheduling}
+                onClick={handleScheduleConfirm}
               >
-                {`Schedule ${
-                  jobType === "measure" ? "Measurement" : "Calibration"
-                }`}
+                Confirm & Start
               </Button>
             </div>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
     </Card>

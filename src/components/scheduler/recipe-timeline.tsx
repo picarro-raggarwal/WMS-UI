@@ -306,13 +306,30 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
               ? formatTime(markerTime)
               : `${markerTime.getHours()}:00`;
 
+          // Adjust positioning to prevent overflow at edges
+          let labelPosition = position;
+          let transformClass = "-translate-x-1/2"; // Default center alignment
+
+          // For left edge markers, align to the right to prevent overflow
+          if (position < 10) {
+            labelPosition = Math.max(0, position);
+            transformClass = "translate-x-0";
+          }
+          // For right edge markers, align to the left to prevent overflow
+          else if (position > 90) {
+            labelPosition = Math.min(100, position);
+            transformClass = "-translate-x-full";
+          }
+
           markers.push(
             <div
               key={i}
               className="top-0 absolute border-gray-100 border-l h-full"
               style={{ left: `${position}%` }}
             >
-              <span className="top-0 absolute text-gray-500 text-xs whitespace-nowrap -translate-x-1/2">
+              <span
+                className={`top-0 absolute text-gray-500 text-xs whitespace-nowrap ${transformClass}`}
+              >
                 {label}
               </span>
             </div>
@@ -432,7 +449,7 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
         >
           {/* Time markers header */}
           <div className="relative pl-48 border-gray-200 border-b h-8">
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full px-2">
               {renderTimeMarkers()}
 
               {/* "Now" indicator line */}
@@ -587,7 +604,7 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                   ></div>
                 )}
 
-              {/* All recipes merged into one row */}
+              {/* All recipes merged into one row - show past, current, and future */}
               <div className="absolute top-[5%] h-[90%] w-full">
                 {visibleRecipes.map((recipe) => {
                   const recipePosition = getPosition(
@@ -597,13 +614,19 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                   const isRunning =
                     recipe.startTime <= currentTime &&
                     recipe.endTime >= currentTime;
+                  const isFuture = recipe.startTime > currentTime;
+
+                  let recipeColor = "bg-blue-100"; // Default for past (light green)
+                  if (isRunning) {
+                    recipeColor = "bg-primary-200"; // Currently running
+                  } else if (isFuture) {
+                    recipeColor = "bg-gray-100"; // Future (expected path) - gray
+                  }
 
                   return (
                     <div
                       key={recipe.id}
-                      className={`absolute top-0 h-full cursor-pointer border rounded-lg transition-all group ${
-                        isRunning ? "bg-blue-200" : "bg-gray-100"
-                      }`}
+                      className={`absolute top-0 h-full cursor-pointer border rounded-lg transition-all group ${recipeColor}`}
                       style={recipePosition}
                     />
                   );
@@ -670,29 +693,41 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                   ></div>
                 )}
 
-              {/* All smart recipe steps merged into one row */}
+              {/* All smart recipe steps merged into one row - show only past and current */}
               <div className="absolute top-[5%] h-[90%] w-full">
                 {visibleRecipes.flatMap((recipe) =>
-                  recipe.smartRecipeSteps.map((step) => {
-                    const stepPosition = getPosition(
-                      step.startTime,
-                      step.endTime
-                    );
-                    const stepColor =
-                      step.type === "calibration"
-                        ? "bg-purple-500"
-                        : step.type === "validation"
-                        ? "bg-orange-500"
-                        : "bg-yellow-500";
+                  recipe.smartRecipeSteps
+                    .filter((step) => {
+                      // Only show smart recipe steps that have started (past or current)
+                      return step.startTime <= currentTime;
+                    })
+                    .map((step) => {
+                      const stepPosition = getPosition(
+                        step.startTime,
+                        step.endTime
+                      );
+                      const isRunning =
+                        step.startTime <= currentTime &&
+                        step.endTime >= currentTime;
 
-                    return (
-                      <div
-                        key={step.id}
-                        className={`absolute top-0 h-full cursor-pointer border rounded transition-all ${stepColor}`}
-                        style={stepPosition}
-                      />
-                    );
-                  })
+                      let stepColor = "bg-orange-300"; // Default for past smart recipes (orange)
+                      if (isRunning) {
+                        stepColor =
+                          step.type === "maintenance"
+                            ? "bg-yellow-500"
+                            : step.type === "adjustment"
+                            ? "bg-blue-500"
+                            : "bg-green-500"; // optimization
+                      }
+
+                      return (
+                        <div
+                          key={step.id}
+                          className={`absolute top-0 h-full cursor-pointer border rounded transition-all ${stepColor}`}
+                          style={stepPosition}
+                        />
+                      );
+                    })
                 )}
               </div>
             </div>
