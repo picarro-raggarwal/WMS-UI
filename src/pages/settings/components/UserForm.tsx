@@ -40,7 +40,8 @@ function UserForm({
   onChange,
   loading = false,
   groupsOptions,
-  apiError
+  apiError,
+  existingUsers = []
 }: {
   initialUser: Partial<User>;
   onSubmit: () => void;
@@ -49,11 +50,40 @@ function UserForm({
   loading?: boolean;
   groupsOptions: Group[];
   apiError?: string;
+  existingUsers?: User[];
 }) {
   const selectedGroups = Array.isArray(initialUser?.groups)
     ? initialUser.groups
     : [];
   const [error, setError] = useState<string>("");
+
+  // Email validation function
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Check for duplicate username or email
+  const checkDuplicates = (username: string, email: string) => {
+    const isDuplicateUsername = existingUsers.some(
+      (user) =>
+        user.username.toLowerCase() === username.toLowerCase() &&
+        user.id !== initialUser.id
+    );
+    const isDuplicateEmail = existingUsers.some(
+      (user) =>
+        user.email?.toLowerCase() === email.toLowerCase() &&
+        user.id !== initialUser.id
+    );
+
+    if (isDuplicateUsername) {
+      return "Username already exists";
+    }
+    if (isDuplicateEmail) {
+      return "Email already exists";
+    }
+    return null;
+  };
 
   const handleGroupChange = (group: Group) => {
     const exists = selectedGroups.some((g) => g.id === group.id);
@@ -68,6 +98,10 @@ function UserForm({
   };
 
   const handleSubmit = () => {
+    // Clear previous errors
+    setError("");
+
+    // Check required fields
     if (
       !initialUser?.username ||
       !initialUser?.firstName ||
@@ -78,7 +112,24 @@ function UserForm({
       setError("All fields are required, including at least one group.");
       return;
     }
-    setError("");
+
+    // Validate email format
+    if (!isValidEmail(initialUser.email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    // Check for duplicates
+    const duplicateError = checkDuplicates(
+      initialUser.username,
+      initialUser.email
+    );
+    if (duplicateError) {
+      setError(duplicateError);
+      return;
+    }
+
+    // All validations passed
     onSubmit();
   };
 
@@ -89,7 +140,7 @@ function UserForm({
 
   return (
     <form
-      className="flex flex-col gap-2"
+      className="flex flex-col gap-3"
       onSubmit={(e) => {
         e.preventDefault();
         handleSubmit();
@@ -103,46 +154,90 @@ function UserForm({
         </Alert>
       )}
 
-      <div className="space-y-2">
-        <label className="font-medium text-sm">Username</label>
+      <div className="space-y-1">
+        <div className="flex justify-between items-center">
+          <label className="font-medium text-sm">Username</label>
+          <div
+            className={`text-xs ${
+              (initialUser?.username?.length || 0) >= 20
+                ? "text-red-500"
+                : (initialUser?.username?.length || 0) >= 18
+                ? "text-yellow-500"
+                : "text-muted-foreground"
+            }`}
+          >
+            {initialUser?.username?.length || 0}/20
+          </div>
+        </div>
         <Input
           value={initialUser?.username || ""}
           onChange={(e) =>
             onChange({ ...initialUser, username: e.target.value })
           }
           placeholder="Enter username"
+          maxLength={20}
+          disabled={!!initialUser?.id}
+          className={initialUser?.id ? "bg-gray-100 cursor-not-allowed" : ""}
         />
       </div>
-      <div className="space-y-2">
-        <label className="font-medium text-sm">First Name</label>
+      <div className="space-y-1">
+        <div className="flex justify-between items-center">
+          <label className="font-medium text-sm">First Name</label>
+          <div
+            className={`text-xs ${
+              (initialUser?.firstName?.length || 0) >= 20
+                ? "text-red-500"
+                : (initialUser?.firstName?.length || 0) >= 18
+                ? "text-yellow-500"
+                : "text-muted-foreground"
+            }`}
+          >
+            {initialUser?.firstName?.length || 0}/20
+          </div>
+        </div>
         <Input
           value={initialUser?.firstName || ""}
           onChange={(e) =>
             onChange({ ...initialUser, firstName: e.target.value })
           }
           placeholder="Enter first name"
+          maxLength={20}
         />
       </div>
-      <div className="space-y-2">
-        <label className="font-medium text-sm">Last Name</label>
+      <div className="space-y-1">
+        <div className="flex justify-between items-center">
+          <label className="font-medium text-sm">Last Name</label>
+          <div
+            className={`text-xs ${
+              (initialUser?.lastName?.length || 0) >= 20
+                ? "text-red-500"
+                : (initialUser?.lastName?.length || 0) >= 18
+                ? "text-yellow-500"
+                : "text-muted-foreground"
+            }`}
+          >
+            {initialUser?.lastName?.length || 0}/20
+          </div>
+        </div>
         <Input
           value={initialUser?.lastName || ""}
           onChange={(e) =>
             onChange({ ...initialUser, lastName: e.target.value })
           }
           placeholder="Enter last name"
+          maxLength={20}
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <label className="font-medium text-sm">Email</label>
         <Input
-          type="email"
+          // type="email"
           value={initialUser?.email || ""}
           onChange={(e) => onChange({ ...initialUser, email: e.target.value })}
           placeholder="Enter email"
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <label className="font-medium text-sm">Groups</label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

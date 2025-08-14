@@ -3,10 +3,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { AlertCircle, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
-export default function AuthLogin() {
+export default function AuthLogin({
+  showSuccessMessage = false
+}: {
+  showSuccessMessage?: boolean;
+}) {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +34,10 @@ export default function AuthLogin() {
 
       if (response) {
         login(response);
+        // Show success toast if this was after password change
+        if (showSuccessMessage) {
+          toast.success("Login successful! Welcome back.");
+        }
         // Don't redirect here - let the parent component handle it
         // The login page will check if password change is needed
       } else {
@@ -61,6 +70,16 @@ export default function AuthLogin() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+        {showSuccessMessage && (
+          <Alert className="border-green-200 bg-green-50 text-green-800">
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>
+              Password updated successfully! Please login with your new
+              credentials.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />

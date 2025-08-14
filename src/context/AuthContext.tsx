@@ -136,8 +136,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setPasswordChanged = () => {
+    // Reset authentication state so user can login again with new credentials
+    setIsAuthenticated(false);
     setNeedsPasswordChange(false);
     setPendingPasswordChangeUserId(undefined);
+    setUser(null);
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user");
     localStorage.removeItem("needsPasswordChange");
     localStorage.removeItem("pendingPasswordChangeUserId");
   };

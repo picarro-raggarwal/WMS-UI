@@ -271,6 +271,7 @@ export const UsersTab = () => {
               loading={isCreating}
               groupsOptions={groupOptions}
               apiError={addUserApiError}
+              existingUsers={users}
             />
           </DialogContent>
         </Dialog>
@@ -304,7 +305,7 @@ export const UsersTab = () => {
                       : user.username}
                   </div>
                   <div className="text-muted-foreground text-sm">
-                    {user.email || user.username}
+                    @{user.username} • {user.email || "No email"}
                   </div>
                   <div className="flex flex-wrap gap-2 mt-1 text-xs">
                     <span
@@ -388,6 +389,7 @@ export const UsersTab = () => {
                           loading={isUpdating}
                           groupsOptions={groupOptions}
                           apiError={editUserApiError}
+                          existingUsers={users}
                         />
                       )}
                     </DialogContent>

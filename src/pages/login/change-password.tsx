@@ -4,19 +4,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import AuthLogin from "./auth";
 
 export default function ChangePasswordForm() {
-  const navigate = useNavigate();
   const { user, setPasswordChanged, pendingPasswordChangeUserId } = useAuth();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [showLoginForm, setShowLoginForm] = useState(false);
 
   const [requiredUpdatePassword, { isLoading }] =
     useRequiredUpdatePasswordMutation();
@@ -51,19 +51,22 @@ export default function ChangePasswordForm() {
       }
 
       await requiredUpdatePassword({ userId, newPassword }).unwrap();
-      setSuccess(true);
 
       // Mark password as changed
       setPasswordChanged();
 
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 2000);
-    } catch (err: any) {
-      setError(
-        err?.data?.message || "Failed to update password. Please try again."
+      // Show success toast
+      toast.success(
+        "Password updated successfully! Please login with your new credentials."
       );
+
+      // Show login form
+      setShowLoginForm(true);
+    } catch (err: any) {
+      const errorMessage =
+        err?.data?.message || "Failed to update password. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -73,22 +76,9 @@ export default function ChangePasswordForm() {
     window.location.href = "/";
   };
 
-  if (success) {
-    return (
-      <div className="flex flex-col gap-6 bg-white shadow-lg p-8 rounded-2xl w-full max-w-md">
-        <div className="flex flex-col items-center gap-2 mb-2">
-          <div className="mx-auto w-12 h-12 text-green-600">
-            <CheckCircle size={48} />
-          </div>
-          <h2 className="mt-2 font-semibold text-neutral-800 text-xl">
-            Password Updated Successfully
-          </h2>
-          <p className="text-neutral-600 text-sm text-center">
-            Your password has been changed. Redirecting to dashboard...
-          </p>
-        </div>
-      </div>
-    );
+  // Show login form after successful password change
+  if (showLoginForm) {
+    return <AuthLogin showSuccessMessage={true} />;
   }
 
   return (
