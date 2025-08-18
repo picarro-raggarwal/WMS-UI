@@ -218,7 +218,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
       step_id: port.portNumber,
       type: port.type,
       name: port.name,
-      duration: 300 // Default 5 minutes (300 seconds)
+      duration: 120 // Default 2 minutes (120 seconds)
     };
     setRecipeSteps((prev) => [...prev, newStep]);
   }, []);
@@ -437,7 +437,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
             <DurationInput
               value={step.duration}
               onChange={(seconds) => onDurationChange(step.id, seconds)}
-              maxSeconds={3600}
+              maxSeconds={600}
               minSeconds={1}
             />
           </div>

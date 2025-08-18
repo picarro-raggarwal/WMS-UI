@@ -212,7 +212,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       : "opacity-0 pointer-events-none"
                   }`}
                 >
-                  Fenceline
+                  WMS
                   <p className="-mt-0.5 text-neutral-400 text-xs text-nowrap">
                     {isLoadingSystemInfo ? (
                       <div className="bg-neutral-500 rounded-full w-full h-4 animate-pulse"></div>
@@ -344,7 +344,7 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
     <div className="space-y-4 px-2 py-4 border-neutral-800 border-t border-b text-xs">
       <div className={`space-y-0.5`}>
         <h2 className="font-medium text-white text-nowrap wrap-nowrap">
-          {systemInfo?.model || "Fenceline System"}
+          {systemInfo?.model || "WMS"}
         </h2>
         <p className="text-neutral-400 text-nowrap">
           {systemInfo?.serial_number}

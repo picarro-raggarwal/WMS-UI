@@ -13,13 +13,13 @@ import {
   TouchSensor,
   closestCenter,
   useSensor,
-  useSensors,
+  useSensors
 } from "@dnd-kit/core";
 import {
   SortableContext,
   arrayMove,
   useSortable,
-  verticalListSortingStrategy,
+  verticalListSortingStrategy
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AlertCircle, GripVertical, Plus, Trash2 } from "lucide-react";
@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import {
   useCreateRecipeMutation,
   useGetAllStepsQuery,
-  useUpdateRecipeMutation,
+  useUpdateRecipeMutation
 } from "../data/recipes.slice";
 
 interface RecipeStep {
@@ -53,14 +53,21 @@ interface RecipeFormModalProps {
 function StepItem({
   step,
   onAddToRecipe,
-  overlay,
+  overlay
 }: {
   step: { id: string; name: string; step_id: number };
   onAddToRecipe?: (stepId: number) => void;
   overlay?: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: step.id,
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({
+    id: step.id
   });
 
   // For available steps with add button
@@ -73,7 +80,8 @@ function StepItem({
             size="sm"
             variant="outline"
             onClick={() => onAddToRecipe(step.step_id)}
-            className="ml-2 px-2 py-1.5 rounded-full h-auto font-medium text-sm tracking-tight">
+            className="ml-2 px-2 py-1.5 rounded-full h-auto font-medium text-sm tracking-tight"
+          >
             <Plus className="!mr-0 !w-3 !h-3" />
             Add to Recipe
           </Button>
@@ -92,13 +100,13 @@ function StepItem({
           transform: CSS.Transform.toString({
             ...transform,
             scaleX: 1.02,
-            scaleY: 1.02,
+            scaleY: 1.02
           }),
           boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
           width: "600px", // Fixed width for overlay to match recipe step width
-          zIndex: 1000,
+          zIndex: 1000
         }
-      : {}),
+      : {})
   };
 
   return (
@@ -106,7 +114,8 @@ function StepItem({
       ref={setNodeRef}
       style={style}
       className="bg-white hover:bg-gray-50 p-3 border border-gray-200 rounded-lg transition-colors cursor-move"
-      {...(!overlay ? { ...attributes, ...listeners } : {})}>
+      {...(!overlay ? { ...attributes, ...listeners } : {})}
+    >
       {step.name}
     </div>
   );
@@ -117,7 +126,7 @@ function RecipeStep({
   index,
   onRemove,
   onDurationChange,
-  overlay,
+  overlay
 }: {
   step: RecipeStep;
   index: number;
@@ -125,8 +134,15 @@ function RecipeStep({
   onDurationChange: (id: string, duration: number) => void;
   overlay?: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: step.id,
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({
+    id: step.id
   });
 
   const style = {
@@ -140,23 +156,25 @@ function RecipeStep({
           transform: CSS.Transform.toString({
             ...transform,
             scaleX: 1.02,
-            scaleY: 1.02,
+            scaleY: 1.02
           }),
           boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
           width: "600px", // Fixed width for overlay to match recipe step width
-          zIndex: 1000,
+          zIndex: 1000
         }
-      : {}),
+      : {})
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-4 bg-white shadow-sm p-2 rounded-lg ring-1 ring-black/5">
+      className="flex items-center gap-4 bg-white shadow-sm p-2 rounded-lg ring-1 ring-black/5"
+    >
       <div
         {...(!overlay ? { ...attributes, ...listeners } : {})}
-        className="flex justify-center items-center text-neutral-400 hover:text-neutral-600 cursor-move">
+        className="flex justify-center items-center text-neutral-400 hover:text-neutral-600 cursor-move"
+      >
         <GripVertical className="w-4 h-4" />
       </div>
       <div className="flex justify-center items-center bg-gray-100 rounded-full w-6 h-6 text-sm">
@@ -167,7 +185,7 @@ function RecipeStep({
         <DurationInput
           value={step.duration}
           onChange={(seconds) => onDurationChange(step.id, seconds)}
-          maxSeconds={3600}
+          maxSeconds={600}
           minSeconds={1}
         />
       </div>
@@ -175,7 +193,8 @@ function RecipeStep({
         variant="ghost"
         size="icon"
         onClick={() => onRemove(step.id)}
-        className="text-gray-400 hover:text-red-500">
+        className="text-gray-400 hover:text-red-500"
+      >
         <Trash2 className="w-4 h-4" />
       </Button>
     </div>
@@ -186,10 +205,12 @@ const RecipeFormModal = ({
   isOpen,
   onClose,
   editingRecipeId,
-  initialData,
+  initialData
 }: RecipeFormModalProps) => {
   const [recipeName, setRecipeName] = useState(initialData?.name || "");
-  const [recipeSteps, setRecipeSteps] = useState<RecipeStep[]>(initialData?.steps || []);
+  const [recipeSteps, setRecipeSteps] = useState<RecipeStep[]>(
+    initialData?.steps || []
+  );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [totalDuration, setTotalDuration] = useState("00:00");
   const [versionId, setVersionId] = useState(initialData?.version_id || 0);
@@ -224,25 +245,30 @@ const RecipeFormModal = ({
       return;
     }
 
-    const totalSeconds = recipeSteps.reduce((total, step) => total + step.duration, 0);
+    const totalSeconds = recipeSteps.reduce(
+      (total, step) => total + step.duration,
+      0
+    );
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     setTotalDuration(
-      `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+      `${minutes.toString().padStart(2, "0")}:${seconds
+        .toString()
+        .padStart(2, "0")}`
     );
   }, [recipeSteps]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 8,
-      },
+        distance: 8
+      }
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
         delay: 200,
-        tolerance: 8,
-      },
+        tolerance: 8
+      }
     })
   );
 
@@ -250,7 +276,7 @@ const RecipeFormModal = ({
   const restrictToVerticalAxis: Modifier = ({ transform }) => {
     return {
       ...transform,
-      x: 0, // Lock horizontal movement
+      x: 0 // Lock horizontal movement
     };
   };
 
@@ -286,7 +312,7 @@ const RecipeFormModal = ({
       step_id: apiStep.step_id,
       type: apiStep.name.toLowerCase(),
       name: apiStep.name,
-      duration: 300, // Default 5 minutes (300 seconds)
+      duration: 300 // Default 5 minutes (300 seconds)
     };
     setRecipeSteps((prev) => [...prev, newStep]);
   }
@@ -296,7 +322,9 @@ const RecipeFormModal = ({
   }
 
   function handleDurationChange(id: string, duration: number) {
-    setRecipeSteps((prev) => prev.map((step) => (step.id === id ? { ...step, duration } : step)));
+    setRecipeSteps((prev) =>
+      prev.map((step) => (step.id === id ? { ...step, duration } : step))
+    );
   }
 
   const handleSave = async () => {
@@ -313,11 +341,14 @@ const RecipeFormModal = ({
     }
 
     try {
-      const totalDurationSeconds = recipeSteps.reduce((total, step) => total + step.duration, 0);
+      const totalDurationSeconds = recipeSteps.reduce(
+        (total, step) => total + step.duration,
+        0
+      );
       const formattedSteps = recipeSteps.map((step, index) => ({
         step_id: step.step_id,
         step_duration: step.duration,
-        step_sequence: index,
+        step_sequence: index
       }));
 
       if (editingRecipeId) {
@@ -326,7 +357,7 @@ const RecipeFormModal = ({
           recipe_name: recipeName,
           version_id: versionId,
           recipe_duration: totalDurationSeconds,
-          steps: formattedSteps,
+          steps: formattedSteps
         }).unwrap();
         toast.success("Recipe updated successfully");
       } else {
@@ -334,7 +365,7 @@ const RecipeFormModal = ({
           recipe_name: recipeName,
           version_id: versionId,
           recipe_duration: totalDurationSeconds,
-          steps: formattedSteps,
+          steps: formattedSteps
         }).unwrap();
         toast.success("Recipe created successfully");
       }
@@ -344,7 +375,7 @@ const RecipeFormModal = ({
       console.error("Error saving recipe:", error);
       let errorMessage = {
         message: "Operation failed",
-        description: "Operation failed",
+        description: "Operation failed"
       };
 
       if (error && typeof error === "object" && "data" in error) {
@@ -355,7 +386,7 @@ const RecipeFormModal = ({
         if (typeof errorData === "object" && errorData?.error) {
           errorMessage = {
             message: errorData.error.message,
-            description: errorData.error.description,
+            description: errorData.error.description
           };
         } else if (typeof errorData === "string") {
           errorMessage = { message: errorData, description: errorData };
@@ -372,7 +403,8 @@ const RecipeFormModal = ({
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
-      }}>
+      }}
+    >
       <DialogContent className="!gap-0 bg-neutral-50 p-0 max-w-5xl">
         {/* <DialogHeader className="bg-white p-6 rounded-t-lg">
           <DialogTitle>{editingRecipeId ? "Edit Recipe" : "Create New Recipe"}</DialogTitle>
@@ -401,7 +433,7 @@ const RecipeFormModal = ({
                       step={{
                         id: `step-${step.step_id}`,
                         name: step.name,
-                        step_id: step.step_id,
+                        step_id: step.step_id
                       }}
                       onAddToRecipe={handleAddStepToRecipe}
                     />
@@ -425,7 +457,9 @@ const RecipeFormModal = ({
                     </AlertDescription>
                   </Alert>
                 )}
-                <DialogTitle>{editingRecipeId ? "Edit Recipe" : "Create New Recipe"}</DialogTitle>
+                <DialogTitle>
+                  {editingRecipeId ? "Edit Recipe" : "Create New Recipe"}
+                </DialogTitle>
                 <div>
                   <label className="block mb-1 font-medium text-gray-700 text-sm">
                     Recipe Name
@@ -439,12 +473,16 @@ const RecipeFormModal = ({
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <div className="text-gray-500 text-sm">
-                      <span className="mr-1 font-medium text-black">{recipeSteps.length}</span>
+                      <span className="mr-1 font-medium text-black">
+                        {recipeSteps.length}
+                      </span>
                       Recipe Steps
                     </div>
                     <div className="text-gray-500 text-sm">
                       Total Duration
-                      <span className="ml-1 font-medium text-black">{totalDuration}</span>
+                      <span className="ml-1 font-medium text-black">
+                        {totalDuration}
+                      </span>
                     </div>
                   </div>
 
@@ -459,10 +497,12 @@ const RecipeFormModal = ({
                         collisionDetection={closestCenter}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
-                        modifiers={[restrictToVerticalAxis]}>
+                        modifiers={[restrictToVerticalAxis]}
+                      >
                         <SortableContext
                           items={recipeSteps.map((s) => s.id)}
-                          strategy={verticalListSortingStrategy}>
+                          strategy={verticalListSortingStrategy}
+                        >
                           <div className="space-y-2">
                             {recipeSteps.map((step, index) => (
                               <RecipeStep
@@ -486,7 +526,8 @@ const RecipeFormModal = ({
                   onClick={() => {
                     onClose();
                     setApiError(null);
-                  }}>
+                  }}
+                >
                   Cancel
                 </Button>
                 <Button
@@ -499,7 +540,8 @@ const RecipeFormModal = ({
                     !recipeName ||
                     recipeSteps.length === 0 ||
                     recipeSteps?.some((step) => step.duration > 3600)
-                  }>
+                  }
+                >
                   {isCreating || isUpdating ? (
                     <>{editingRecipeId ? "Updating..." : "Creating..."}</>
                   ) : editingRecipeId ? (

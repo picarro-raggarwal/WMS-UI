@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { FC, ReactElement, useState, useEffect, useRef } from "react";
+import { FC, ReactElement, useEffect, useRef, useState } from "react";
 
 interface DurationInputProps {
   value: number; // Duration in seconds
@@ -14,8 +14,8 @@ export const DurationInput: FC<DurationInputProps> = ({
   value,
   onChange,
   className,
-  maxSeconds = 3600, // Default 60 minutes
-  minSeconds = 0,
+  maxSeconds = 600, // Default 10 minutes
+  minSeconds = 0
 }): ReactElement => {
   const [minutes, setMinutes] = useState<string>("");
   const [seconds, setSeconds] = useState<string>("");
@@ -49,14 +49,14 @@ export const DurationInput: FC<DurationInputProps> = ({
     if (mins > 60) {
       setError({
         isError: true,
-        msg: "Minutes cannot be greater than 60",
+        msg: "Minutes cannot be greater than 60"
       });
     }
 
     if (secs > 59) {
       setError({
         isError: true,
-        msg: "Seconds cannot be greater than 59",
+        msg: "Seconds cannot be greater than 59"
       });
     }
 
@@ -65,14 +65,18 @@ export const DurationInput: FC<DurationInputProps> = ({
     if (totalVal > maxSeconds) {
       setError({
         isError: true,
-        msg: `Duration cannot be greater than ${Math.floor(maxSeconds / 60)} minutes`,
+        msg: `Duration cannot be greater than ${Math.floor(
+          maxSeconds / 60
+        )} minutes`
       });
     }
 
     if (totalVal < minSeconds && totalVal !== 0) {
       setError({
         isError: true,
-        msg: `Duration cannot be less than ${Math.floor(minSeconds / 60)} minute`,
+        msg: `Duration cannot be less than ${Math.floor(
+          minSeconds / 60
+        )} minute`
       });
     }
 
@@ -101,7 +105,10 @@ export const DurationInput: FC<DurationInputProps> = ({
     }
 
     // Auto-focus to seconds when 2 digits entered or when they type a valid single digit > 6
-    if (inputValue.length === 2 || (inputValue.length === 1 && parseInt(inputValue) > 6)) {
+    if (
+      inputValue.length === 2 ||
+      (inputValue.length === 1 && parseInt(inputValue) > 6)
+    ) {
       setTimeout(() => secondsRef.current?.focus(), 0);
     }
   };
@@ -110,7 +117,11 @@ export const DurationInput: FC<DurationInputProps> = ({
     let inputValue = e.target.value.replace(/\D/g, ""); // Only digits
 
     // Remove leading zeros while typing (except for single "0")
-    if (inputValue.length > 1 && inputValue.startsWith("0") && inputValue !== "00") {
+    if (
+      inputValue.length > 1 &&
+      inputValue.startsWith("0") &&
+      inputValue !== "00"
+    ) {
       inputValue = inputValue.replace(/^0+/, "");
     }
 
@@ -152,7 +163,12 @@ export const DurationInput: FC<DurationInputProps> = ({
   };
 
   const handleMinutesKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Tab" || e.key === "ArrowRight" || e.key === ":" || e.key === ".") {
+    if (
+      e.key === "Tab" ||
+      e.key === "ArrowRight" ||
+      e.key === ":" ||
+      e.key === "."
+    ) {
       e.preventDefault();
       secondsRef.current?.focus();
     }
@@ -185,7 +201,8 @@ export const DurationInput: FC<DurationInputProps> = ({
     <div
       className={cn("relative flex flex-col items-end", className)}
       role="group"
-      aria-label="Duration input">
+      aria-label="Duration input"
+    >
       <div className="flex items-center gap-1">
         <div className="relative">
           <Input
@@ -225,7 +242,8 @@ export const DurationInput: FC<DurationInputProps> = ({
             aria-label="Seconds"
             className={cn(
               "w-12 h-9 text-center px-0.5 py-1 transition-all text-sm   !min-w-0 [&>input]:px-2",
-              error.isError && "border-red-500 focus:border-red-500 focus:ring-red-500",
+              error.isError &&
+                "border-red-500 focus:border-red-500 focus:ring-red-500",
               isSecondsFocused && "ring-1 ring-primary-500 border-primary-500"
             )}
             maxLength={2}
