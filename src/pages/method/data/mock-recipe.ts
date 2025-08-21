@@ -133,10 +133,8 @@ export const mockRecipes: MockRecipe[] = [
     duration: 1800, // 30 minutes
     created_at: Math.floor(Date.now() / 1000) - 86400 * 1, // 1 day ago
     steps: [
-      { step_id: 7, duration: 300, step_sequence: 0 }, // Zero Port
-      { step_id: 23, duration: 600, step_sequence: 1 }, // Span Port
-      { step_id: 1, duration: 300, step_sequence: 2 }, // Regular Port 1
-      { step_id: 2, duration: 600, step_sequence: 3 } // Regular Port 2
+      { step_id: 1, duration: 300, step_sequence: 0 }, // Regular Port 1
+      { step_id: 2, duration: 600, step_sequence: 1 } // Regular Port 2
     ]
   }
 ];
@@ -149,7 +147,7 @@ export const mockStepNames: Record<number, string> = {
   4: "Final Check",
   5: "System Check",
   6: "Maintenance",
-  7: "Zero Port",
+  7: "Testing",
   8: "Purge",
   9: "Gas Analysis",
   10: "Sample Collection",
@@ -165,7 +163,7 @@ export const mockStepNames: Record<number, string> = {
   20: "Verification",
   21: "Validation",
   22: "Final Review",
-  23: "Span Port",
+  23: "Safety Check",
   24: "Protocol Verification",
   25: "System Status",
   26: "Data Init",

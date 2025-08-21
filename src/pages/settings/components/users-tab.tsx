@@ -229,56 +229,59 @@ export const UsersTab = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="top-2.5 left-2 absolute w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
-          />
+      <Card className="p-6">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          User Management
+        </CardTitle>
+
+        <div className="flex items-center gap-4 my-4">
+          <div className="relative flex-1">
+            <Search className="top-[calc(50%-9px)] left-3 z-10 absolute w-4 h-4 text-neutral-500" />
+            <Input
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+
+          <Dialog
+            open={isAddingUser}
+            onOpenChange={(open) => {
+              if (!open) {
+                setNewUser(emptyUserState);
+              } else {
+                setEditingUserId(null);
+                setEditingUserForm(null);
+              }
+              setAddUserApiError("");
+              setIsAddingUser(open);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 shadow focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2">
+                <UserPlus size={16} />
+                Add User
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New User</DialogTitle>
+              </DialogHeader>
+              <UserForm
+                initialUser={newUser}
+                onChange={setNewUser}
+                onSubmit={handleAddUser}
+                submitLabel={isCreating ? "Adding..." : "Add User"}
+                loading={isCreating}
+                groupsOptions={groupOptions}
+                apiError={addUserApiError}
+                existingUsers={users}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <Dialog
-          open={isAddingUser}
-          onOpenChange={(open) => {
-            if (!open) {
-              setNewUser(emptyUserState);
-            } else {
-              setEditingUserId(null);
-              setEditingUserForm(null);
-            }
-            setAddUserApiError("");
-            setIsAddingUser(open);
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 shadow focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2">
-              <UserPlus size={16} />
-              Add User
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-            </DialogHeader>
-            <UserForm
-              initialUser={newUser}
-              onChange={setNewUser}
-              onSubmit={handleAddUser}
-              submitLabel={isCreating ? "Adding..." : "Add User"}
-              loading={isCreating}
-              groupsOptions={groupOptions}
-              apiError={addUserApiError}
-              existingUsers={users}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Card className="p-6">
-        <CardTitle className="mb-6">User Management</CardTitle>
         <div className="space-y-4">
           {isUsersLoading ? (
             <div className="py-12 text-muted-foreground text-base text-center">

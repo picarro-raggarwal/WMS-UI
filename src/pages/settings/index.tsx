@@ -24,6 +24,7 @@ import {
 import { useEffect, useState } from "react";
 import { GasCylinders } from "../qa-qc/components/gas-cylinders";
 import { GeneralTab } from "./components/general-tab";
+import { PortConfigurationTab } from "./components/port-configuration-tab";
 import { ThresholdsTab } from "./components/thresholds-tab";
 import { UsersTab } from "./components/users-tab";
 
@@ -182,6 +183,10 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
               <Cylinder size={16} />
               <span>Gas Tanks</span>
             </TabsTrigger>
+            <TabsTrigger value="port-config" className={tabClasnames}>
+              <Settings2 size={16} />
+              <span>Port Configuration</span>
+            </TabsTrigger>
             <TabsTrigger value="user-management" className={tabClasnames}>
               <User2 size={16} />
               <span>User Management</span>
@@ -200,6 +205,13 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
             className="flex-1 space-y-6 mt-0 w-full"
           >
             <GasCylinders />
+          </TabsContent>
+
+          <TabsContent
+            value="port-config"
+            className="flex-1 space-y-6 mt-0 w-full"
+          >
+            <PortConfigurationTab />
           </TabsContent>
 
           <TabsContent value="info" className="flex-1 space-y-6 mt-0 w-full">

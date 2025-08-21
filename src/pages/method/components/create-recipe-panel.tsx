@@ -49,7 +49,7 @@ interface Port {
   id: string;
   portNumber: number;
   name: string;
-  type: "regular" | "zero" | "span";
+  type: "regular";
   bankNumber: number;
 }
 
@@ -114,19 +114,11 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
       for (let portInBank = 1; portInBank <= 16; portInBank++) {
         const portNumber = (bank - 1) * 16 + portInBank;
 
-        // Randomly designate some ports as zero and span
-        let portType: "regular" | "zero" | "span" = "regular";
-        if (portNumber === 7) {
-          portType = "zero"; // Random port designated as zero port
-        } else if (portNumber === 23) {
-          portType = "span"; // Random port designated as span port
-        }
-
         ports.push({
           id: `port-${portNumber}`,
           portNumber,
           name: mockStepNames[portNumber] || `Port ${portNumber}`,
-          type: portType,
+          type: "regular",
           bankNumber: bank
         });
       }
@@ -304,38 +296,14 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
 
   const PortItem = useCallback(
     ({ port }: { port: Port }) => {
-      // Special styling for zero and span ports
-      const getPortStyling = () => {
-        switch (port.type) {
-          case "zero":
-            return "bg-blue-50 border-blue-200 hover:border-blue-300";
-          case "span":
-            return "bg-primary-50 border-primary-200 hover:border-primary-300";
-          default:
-            return "bg-white border-gray-200 hover:border-gray-300";
-        }
-      };
-
       return (
-        <div
-          className={`p-3 border rounded-lg transition-colors ${getPortStyling()}`}
-        >
+        <div className="p-3 border border-gray-200 rounded-lg transition-colors bg-white hover:border-gray-300">
           <div className="flex justify-between items-center">
             <div className="flex-1">
               <div className="font-medium text-gray-900 text-sm">
                 Port #{port.portNumber}
               </div>
-              <div
-                className={`text-xs ${
-                  port.type === "zero"
-                    ? "text-blue-600 font-medium"
-                    : port.type === "span"
-                    ? "text-primary-600 font-medium"
-                    : "text-gray-500"
-                }`}
-              >
-                {port.name}
-              </div>
+              <div className="text-gray-500 text-xs">{port.name}</div>
             </div>
             <Button
               variant="ghost"
@@ -400,13 +368,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         <div
           ref={setNodeRef}
           style={style}
-          className={`flex items-center gap-4 shadow-sm p-2 rounded-lg ring-1 ring-black/5 !border ${
-            step.name === "Zero Port"
-              ? "!bg-blue-50 !border-blue-200  hover:!border-blue-300"
-              : step.name === "Span Port"
-              ? "!bg-primary-50 !border-primary-200 hover:!border-primary-300"
-              : "!bg-white !border-gray-200 hover:!border-gray-300"
-          }`}
+          className="flex items-center gap-4 shadow-sm p-2 rounded-lg ring-1 ring-black/5 bg-white"
         >
           <div
             {...(!overlay ? { ...attributes, ...listeners } : {})}
@@ -421,17 +383,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
             <div className="font-medium text-gray-900">
               Port #{step.step_id}
             </div>
-            <div
-              className={`text-sm ${
-                step.name === "Zero Port"
-                  ? "text-blue-600 font-medium"
-                  : step.name === "Span Port"
-                  ? "text-primary-600 font-medium"
-                  : "text-gray-500"
-              }`}
-            >
-              {step.name}
-            </div>
+            <div className="text-gray-500 text-sm">{step.name}</div>
           </div>
           <div className="flex items-center gap-2">
             <DurationInput
