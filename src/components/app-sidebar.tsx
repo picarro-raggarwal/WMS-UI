@@ -9,7 +9,7 @@ import {
   Table2,
   Terminal
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -28,12 +28,7 @@ import {
   SystemInfoResponse,
   useGetSystemInfoQuery
 } from "@/lib/services/systemInfo.slice";
-import { useGetTimeQuery } from "@/lib/services/timesync.slice";
-import {
-  normalizeSeverity,
-  severityMap,
-  useGetActiveAlertsQuery
-} from "@/pages/alerts/data/alerts.slice";
+// import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { useGetSystemMetricsQuery } from "@/pages/dashboard/data/systemMetrics.slice";
 import { WebSocketJobStateData } from "@/types/socket";
 import { formatTime } from "@/utils";
@@ -53,67 +48,67 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
 
   // Get active alerts and WebSocket data for real-time critical alert count
-  const { data: activeAlertsData } = useGetActiveAlertsQuery(undefined, {
-    pollingInterval: 10000 // Poll every 10 seconds for accurate count
-  });
+  // const { data: activeAlertsData } = useGetActiveAlertsQuery(undefined, {
+  //   pollingInterval: 10000 // Poll every 10 seconds for accurate count
+  // });
   const { processedAlerts } = useSocket();
 
   // Calculate critical alerts in last hour
-  const criticalAlertsCount = useMemo(() => {
-    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+  // const criticalAlertsCount = useMemo(() => {
+  //   const oneHourAgo = Date.now() - 60 * 60 * 1000;
 
-    // Combine API and WebSocket alerts
-    const allActiveAlerts = [...(activeAlertsData?.active_alerts || [])];
+  //   // Combine API and WebSocket alerts
+  //   // const allActiveAlerts = [...(activeAlertsData?.active_alerts || [])];
 
-    // Add WebSocket alerts that are active and critical
-    processedAlerts.forEach((wsAlert) => {
-      const alertState = wsAlert.data.processed_alert.alert_state;
-      const normalizedSeverity = normalizeSeverity(
-        wsAlert.data.processed_alert.severity
-      );
-      const severityString = severityMap[normalizedSeverity];
-      const alertTime = wsAlert.data.processed_alert.last_timestamp * 1000;
+  //   // Add WebSocket alerts that are active and critical
+  //   processedAlerts.forEach((wsAlert) => {
+  //     const alertState = wsAlert.data.processed_alert.alert_state;
+  //     const normalizedSeverity = normalizeSeverity(
+  //       wsAlert.data.processed_alert.severity
+  //     );
+  //     const severityString = severityMap[normalizedSeverity];
+  //     const alertTime = wsAlert.data.processed_alert.last_timestamp * 1000;
 
-      if (
-        alertState === "Active" &&
-        severityString === "CRITICAL" &&
-        alertTime >= oneHourAgo
-      ) {
-        // Check if this alert already exists in API data to avoid duplicates
-        const exists = allActiveAlerts.some(
-          (apiAlert) =>
-            apiAlert.driver_name === wsAlert.data.processed_alert.driver_name &&
-            apiAlert.alarm_name === wsAlert.data.processed_alert.alarm_name &&
-            apiAlert.error === wsAlert.data.processed_alert.error
-        );
+  //     if (
+  //       alertState === "Active" &&
+  //       severityString === "CRITICAL" &&
+  //       alertTime >= oneHourAgo
+  //     ) {
+  //       // Check if this alert already exists in API data to avoid duplicates
+  //       const exists = allActiveAlerts.some(
+  //         (apiAlert) =>
+  //           apiAlert.driver_name === wsAlert.data.processed_alert.driver_name &&
+  //           apiAlert.alarm_name === wsAlert.data.processed_alert.alarm_name &&
+  //           apiAlert.error === wsAlert.data.processed_alert.error
+  //       );
 
-        if (!exists) {
-          allActiveAlerts.push({
-            driver_name: wsAlert.data.processed_alert.driver_name,
-            alarm_name: wsAlert.data.processed_alert.alarm_name,
-            severity: wsAlert.data.processed_alert.severity,
-            first_timestamp: wsAlert.data.processed_alert.first_timestamp,
-            last_timestamp: wsAlert.data.processed_alert.last_timestamp,
-            alert_state: wsAlert.data.processed_alert.alert_state as "Active",
-            repeat_count: wsAlert.data.processed_alert.repeat_count,
-            published_count: wsAlert.data.processed_alert.published_count || 0,
-            consecutive_count: 0,
-            error: wsAlert.data.processed_alert.error,
-            redis_key: `ws-${wsAlert.data.processed_alert.driver_name}-${wsAlert.data.processed_alert.alarm_name}`
-          });
-        }
-      }
-    });
+  //       if (!exists) {
+  //         allActiveAlerts.push({
+  //           driver_name: wsAlert.data.processed_alert.driver_name,
+  //           alarm_name: wsAlert.data.processed_alert.alarm_name,
+  //           severity: wsAlert.data.processed_alert.severity,
+  //           first_timestamp: wsAlert.data.processed_alert.first_timestamp,
+  //           last_timestamp: wsAlert.data.processed_alert.last_timestamp,
+  //           alert_state: wsAlert.data.processed_alert.alert_state as "Active",
+  //           repeat_count: wsAlert.data.processed_alert.repeat_count,
+  //           published_count: wsAlert.data.processed_alert.published_count || 0,
+  //           consecutive_count: 0,
+  //           error: wsAlert.data.processed_alert.error,
+  //           redis_key: `ws-${wsAlert.data.processed_alert.driver_name}-${wsAlert.data.processed_alert.alarm_name}`
+  //         });
+  //       }
+  //     }
+  //   });
 
-    // Count critical alerts in the last hour
-    return allActiveAlerts.filter((alert) => {
-      const normalizedSeverity = normalizeSeverity(alert.severity);
-      const severityString = severityMap[normalizedSeverity];
-      const alertTime = alert.last_timestamp * 1000;
-      // return alertTime >= oneHourAgo;
-      return severityString === "CRITICAL" && alertTime >= oneHourAgo;
-    }).length;
-  }, [activeAlertsData, processedAlerts]);
+  //   // Count critical alerts in the last hour
+  //   return allActiveAlerts.filter((alert) => {
+  //     const normalizedSeverity = normalizeSeverity(alert.severity);
+  //     const severityString = severityMap[normalizedSeverity];
+  //     const alertTime = alert.last_timestamp * 1000;
+  //     // return alertTime >= oneHourAgo;
+  //     return severityString === "CRITICAL" && alertTime >= oneHourAgo;
+  //   }).length;
+  // }, [activeAlertsData, processedAlerts]);
 
   const data = {
     user: user || {
@@ -171,14 +166,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         title: "Alerts",
         url: "/dashboard/alerts",
-        icon: Bell,
-        notification: criticalAlertsCount,
-        tooltip:
-          criticalAlertsCount > 0
-            ? `${criticalAlertsCount} active critical alert${
-                criticalAlertsCount === 1 ? "" : "s"
-              } within the last hour`
-            : "No critical alerts in the last hour"
+        icon: Bell
+        // notification: criticalAlertsCount,
+        // tooltip:
+        //   criticalAlertsCount > 0
+        //     ? `${criticalAlertsCount} active critical alert${
+        //         criticalAlertsCount === 1 ? "" : "s"
+        //       } within the last hour`
+        //     : "No critical alerts in the last hour"
       },
       {
         title: "History",
@@ -242,7 +237,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
 const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
   const { fencelineJobState, connected } = useSocket();
-  const { data: timeData } = useGetTimeQuery();
+  // const { data: timeData } = useGetTimeQuery();
 
   const [currentTime, setCurrentTime] = useState<{
     epoch: number;
@@ -252,14 +247,14 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
   const [browserTime, setBrowserTime] = useState(new Date());
 
   // Update local time when server data changes
-  useEffect(() => {
-    if (timeData?.epoch && timeData?.timezone) {
-      setCurrentTime({
-        epoch: timeData.epoch,
-        timezone: timeData.timezone
-      });
-    }
-  }, [timeData]);
+  // useEffect(() => {
+  //   if (timeData?.epoch && timeData?.timezone) {
+  //     setCurrentTime({
+  //       epoch: timeData.epoch,
+  //       timezone: timeData.timezone
+  //     });
+  //   }
+  // }, [timeData]);
 
   // increment local time every second in between polling
   useEffect(() => {

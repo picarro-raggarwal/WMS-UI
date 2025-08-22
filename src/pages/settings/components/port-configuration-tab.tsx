@@ -235,17 +235,16 @@ export const PortConfigurationTab = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
+          <div className=" justify-between items-start gap-4 grid grid-cols-4">
+            <div className="flex flex-col grid-flow-col col-span-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                {/* <Settings2 className="w-5 h-5" /> */}
                 Port Configuration
               </CardTitle>
               <p className="mt-1 text-gray-600 text-sm">
                 Edit port labels and toggle port status.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 grid-flow-col col-span-1 justify-end">
               {hasUnsavedChanges && (
                 <Button
                   variant="outline"
@@ -255,7 +254,6 @@ export const PortConfigurationTab = () => {
                     setPortEnabled(lastSavedEnabled);
                   }}
                   disabled={isSaving}
-                  className="border-gray-300 text-gray-600 hover:bg-gray-50"
                 >
                   Cancel
                 </Button>
@@ -264,11 +262,6 @@ export const PortConfigurationTab = () => {
                 onClick={handleSaveAllChanges}
                 disabled={!hasUnsavedChanges || isSaving}
                 variant="primary"
-                className={`${
-                  hasUnsavedChanges
-                    ? " text-white"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
                 size="sm"
               >
                 {isSaving ? "Saving..." : "Save"}
@@ -281,11 +274,10 @@ export const PortConfigurationTab = () => {
             {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
               <div
                 key={bankNumber}
-                className="bg-gradient-to-br from-gray-50 to-white p-6 border-2 border-gray-200 rounded-xl"
+                className=" p-6 border border-gray-200 rounded-xl"
               >
                 <div className="flex justify-between items-center mb-4 pb-3 border-gray-200 border-b">
                   <h3 className="flex items-center gap-2 font-semibold text-gray-700">
-                    <div className="bg-blue-500 shadow-sm rounded-full w-4 h-4"></div>
                     Bank {bankNumber}
                   </h3>
                   <div className="bg-white px-2 py-1 border border-gray-200 rounded-full text-gray-500 text-xs">
@@ -299,7 +291,7 @@ export const PortConfigurationTab = () => {
                       className={`border rounded-lg p-3 transition-all duration-200 ${
                         editingPort === port.portNumber
                           ? "border-blue-300 bg-blue-50 shadow-md"
-                          : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                          : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:shadow-sm"
                       } ${!port.enabled ? "opacity-60 bg-gray-50" : ""}`}
                     >
                       <div className="flex justify-between items-start">

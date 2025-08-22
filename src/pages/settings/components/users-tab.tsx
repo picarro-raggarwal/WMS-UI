@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -229,213 +229,233 @@ export const UsersTab = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          User Management
-        </CardTitle>
+      <Card>
+        <CardHeader>
+          <div className=" justify-between items-start gap-4 grid grid-cols-4">
+            <div className="flex flex-col grid-flow-col col-span-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                User Management
+              </CardTitle>
+              <p className="mt-1 text-gray-600 text-sm">
+                Manage users and their permissions.
+              </p>
+            </div>
+            <div className="flex gap-2 grid-flow-col col-span-1 justify-end">
+              <Dialog
+                open={isAddingUser}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setNewUser(emptyUserState);
+                  } else {
+                    setEditingUserId(null);
+                    setEditingUserForm(null);
+                  }
+                  setAddUserApiError("");
+                  setIsAddingUser(open);
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    variant="primary"
+                    className="flex items-center gap-2"
+                    size="sm"
+                  >
+                    <UserPlus size={16} />
+                    Add User
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New User</DialogTitle>
+                  </DialogHeader>
+                  <UserForm
+                    initialUser={newUser}
+                    onChange={setNewUser}
+                    onSubmit={handleAddUser}
+                    submitLabel={isCreating ? "Adding..." : "Add User"}
+                    loading={isCreating}
+                    groupsOptions={groupOptions}
+                    apiError={addUserApiError}
+                    existingUsers={users}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        </CardHeader>
 
-        <div className="flex items-center gap-4 my-4">
-          <div className="relative flex-1">
-            <Search className="top-[calc(50%-9px)] left-3 z-10 absolute w-4 h-4 text-neutral-500" />
-            <Input
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
-            />
+        <CardContent>
+          <div className="flex items-center gap-4 pb-4">
+            <div className="relative flex-1">
+              <Search className="top-[calc(50%-9px)] left-3 z-10 absolute w-4 h-4 text-neutral-500" />
+              <Input
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+            </div>
           </div>
 
-          <Dialog
-            open={isAddingUser}
-            onOpenChange={(open) => {
-              if (!open) {
-                setNewUser(emptyUserState);
-              } else {
-                setEditingUserId(null);
-                setEditingUserForm(null);
-              }
-              setAddUserApiError("");
-              setIsAddingUser(open);
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 shadow focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2">
-                <UserPlus size={16} />
-                Add User
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New User</DialogTitle>
-              </DialogHeader>
-              <UserForm
-                initialUser={newUser}
-                onChange={setNewUser}
-                onSubmit={handleAddUser}
-                submitLabel={isCreating ? "Adding..." : "Add User"}
-                loading={isCreating}
-                groupsOptions={groupOptions}
-                apiError={addUserApiError}
-                existingUsers={users}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="space-y-4">
-          {isUsersLoading ? (
-            <div className="py-12 text-muted-foreground text-base text-center">
-              Loading users...
-            </div>
-          ) : isUsersError ? (
-            <div className="py-12 text-red-500 text-base text-center">
-              Failed to load users.
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="py-12 text-muted-foreground text-base text-center">
-              No users found.
-            </div>
-          ) : (
-            filteredUsers.map((user) => (
-              <div
-                key={user.id}
-                className="items-center gap-4 grid grid-cols-[1fr,auto,auto] bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg"
-              >
-                <div>
-                  <div className="font-medium">
-                    {user.firstName || user.lastName
-                      ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-                      : user.username}
-                  </div>
-                  <div className="text-muted-foreground text-sm">
-                    @{user.username} • {user.email || "No email"}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-1 text-xs">
-                    <span
-                      className={`px-2 py-1 rounded-full font-medium ${
-                        user.enabled
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : "bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                      }`}
-                    >
-                      {user.enabled ? "Enabled" : "Disabled"}
-                    </span>
-                    {Array.isArray(user.groups) && user.groups.length > 0 ? (
-                      user.groups.map((g) => (
-                        <span
-                          key={g.id}
-                          className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded-full font-medium text-blue-800 dark:text-blue-200"
-                        >
-                          {g.name}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full font-medium text-gray-800 dark:text-gray-200">
-                        No groups
+          <div className="space-y-4">
+            {isUsersLoading ? (
+              <div className="py-12 text-muted-foreground text-base text-center">
+                Loading users...
+              </div>
+            ) : isUsersError ? (
+              <div className="py-12 text-red-500 text-base text-center">
+                Failed to load users.
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="py-12 text-muted-foreground text-base text-center">
+                No users found.
+              </div>
+            ) : (
+              filteredUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="items-center gap-4 grid grid-cols-[1fr,auto,auto] bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg"
+                >
+                  <div>
+                    <div className="font-medium">
+                      {user.firstName || user.lastName
+                        ? `${user.firstName || ""} ${
+                            user.lastName || ""
+                          }`.trim()
+                        : user.username}
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      @{user.username} • {user.email || "No email"}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-1 text-xs">
+                      <span
+                        className={`px-2 py-1 rounded-full font-medium ${
+                          user.enabled
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                            : "bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                        }`}
+                      >
+                        {user.enabled ? "Enabled" : "Disabled"}
                       </span>
-                    )}
+                      {Array.isArray(user.groups) && user.groups.length > 0 ? (
+                        user.groups.map((g) => (
+                          <span
+                            key={g.id}
+                            className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded-full font-medium text-blue-800 dark:text-blue-200"
+                          >
+                            {g.name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full font-medium text-gray-800 dark:text-gray-200">
+                          No groups
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {/* No roles, so nothing here */}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Dialog
-                    open={editingUserId === user.id}
-                    onOpenChange={(open) => {
-                      if (!open) {
-                        setEditUserApiError("");
-                        setEditingUserForm(null);
-                        setEditingUserId(null);
-                      } else {
-                        setEditingUserId(user.id);
+                  <div className="flex flex-wrap gap-1">
+                    {/* No roles, so nothing here */}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Dialog
+                      open={editingUserId === user.id}
+                      onOpenChange={(open) => {
+                        if (!open) {
+                          setEditUserApiError("");
+                          setEditingUserForm(null);
+                          setEditingUserId(null);
+                        } else {
+                          setEditingUserId(user.id);
+                        }
+                      }}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`p-0 w-8 h-8 ${
+                          !user.access.edit
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                        onClick={() => setEditingUserId(user.id)}
+                        disabled={!user.access.edit}
+                        title={
+                          !user.access.edit ? "No edit permission" : "Edit user"
+                        }
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            Edit User
+                            <span className="text-muted-foreground text-xs">
+                              {isEditingUserFetching && (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              )}
+                            </span>
+                          </DialogTitle>
+                        </DialogHeader>
+                        {isEditingUserLoading ? (
+                          <div className="py-8 text-muted-foreground text-center">
+                            Loading...
+                          </div>
+                        ) : (
+                          <UserForm
+                            initialUser={editingUserForm || {}}
+                            onChange={setEditingUserForm}
+                            onSubmit={handleUpdateUser}
+                            submitLabel={
+                              isUpdating ? "Updating..." : "Update User"
+                            }
+                            loading={isUpdating}
+                            groupsOptions={groupOptions}
+                            apiError={editUserApiError}
+                            existingUsers={users}
+                          />
+                        )}
+                      </DialogContent>
+                    </Dialog>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0 w-8 h-8"
+                      onClick={() => setPasswordDialogUser(user)}
+                      title="Update Password"
+                    >
+                      <KeyRound size={16} />
+                    </Button>
+                    <UpdatePasswordDialog
+                      open={passwordDialogUser?.id === user.id}
+                      user={passwordDialogUser}
+                      onOpenChange={(open) =>
+                        setPasswordDialogUser(open ? user : null)
                       }
-                    }}
-                  >
+                    />
                     <Button
                       variant="ghost"
                       size="sm"
                       className={`p-0 w-8 h-8 ${
-                        !user.access.edit ? "opacity-50 cursor-not-allowed" : ""
+                        !user.access.delete
+                          ? "opacity-50 cursor-not-allowed text-gray-400"
+                          : "text-red-600 hover:text-red-700 hover:bg-red-50"
                       }`}
-                      onClick={() => setEditingUserId(user.id)}
-                      disabled={!user.access.edit}
+                      onClick={() => setDeleteDialogUser(user)}
+                      disabled={!user.access.delete || isDeleting}
                       title={
-                        !user.access.edit ? "No edit permission" : "Edit user"
+                        !user.access.delete
+                          ? "No delete permission"
+                          : "Delete user"
                       }
                     >
-                      <Pencil size={16} />
+                      <Trash2 size={16} />
                     </Button>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                          Edit User
-                          <span className="text-muted-foreground text-xs">
-                            {isEditingUserFetching && (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            )}
-                          </span>
-                        </DialogTitle>
-                      </DialogHeader>
-                      {isEditingUserLoading ? (
-                        <div className="py-8 text-muted-foreground text-center">
-                          Loading...
-                        </div>
-                      ) : (
-                        <UserForm
-                          initialUser={editingUserForm || {}}
-                          onChange={setEditingUserForm}
-                          onSubmit={handleUpdateUser}
-                          submitLabel={
-                            isUpdating ? "Updating..." : "Update User"
-                          }
-                          loading={isUpdating}
-                          groupsOptions={groupOptions}
-                          apiError={editUserApiError}
-                          existingUsers={users}
-                        />
-                      )}
-                    </DialogContent>
-                  </Dialog>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-0 w-8 h-8"
-                    onClick={() => setPasswordDialogUser(user)}
-                    title="Update Password"
-                  >
-                    <KeyRound size={16} />
-                  </Button>
-                  <UpdatePasswordDialog
-                    open={passwordDialogUser?.id === user.id}
-                    user={passwordDialogUser}
-                    onOpenChange={(open) =>
-                      setPasswordDialogUser(open ? user : null)
-                    }
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`p-0 w-8 h-8 ${
-                      !user.access.delete
-                        ? "opacity-50 cursor-not-allowed text-gray-400"
-                        : "text-red-600 hover:text-red-700 hover:bg-red-50"
-                    }`}
-                    onClick={() => setDeleteDialogUser(user)}
-                    disabled={!user.access.delete || isDeleting}
-                    title={
-                      !user.access.delete
-                        ? "No delete permission"
-                        : "Delete user"
-                    }
-                  >
-                    <Trash2 size={16} />
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        </CardContent>
       </Card>
 
       {/* Delete Confirmation Dialog */}

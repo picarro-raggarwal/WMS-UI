@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetSystemInfoQuery } from "@/lib/services/systemInfo.slice";
-import { useGetTimeQuery } from "@/lib/services/timesync.slice";
+// import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { convertTimestampToTimezone } from "@/lib/utils";
 import { formatDateTime } from "@/utils";
 import { useLocalStorage } from "@mantine/hooks";
@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import { GasCylinders } from "../qa-qc/components/gas-cylinders";
 import { GeneralTab } from "./components/general-tab";
 import { PortConfigurationTab } from "./components/port-configuration-tab";
+import { SpeciesThresholdTab } from "./components/species-threshold-tab";
 import { ThresholdsTab } from "./components/thresholds-tab";
 import { UsersTab } from "./components/users-tab";
 
@@ -58,7 +59,7 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
   const { data: systemInfo, isLoading: isSystemInfoLoading } =
     useGetSystemInfoQuery();
 
-  const { data: timeData } = useGetTimeQuery();
+  // const { data: timeData } = useGetTimeQuery();
 
   const [currentTime, setCurrentTime] = useState<{
     epoch: number;
@@ -67,16 +68,16 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
 
   const [browserTime, setBrowserTime] = useState(new Date());
 
-  useEffect(() => {
-    if (timeData?.epoch && timeData?.timezone) {
-      setCurrentTime({
-        epoch: timeData.epoch,
-        timezone: timeData.timezone
-      });
-    }
-  }, [timeData]);
+  // useEffect(() => {
+  //   if (timeData?.epoch && timeData?.timezone) {
+  //     setCurrentTime({
+  //       epoch: timeData.epoch,
+  //       timezone: timeData.timezone
+  //     });
+  //   }
+  // }, [timeData]);
 
-  // Increment local time every second
+  // Increment local time every 5 seconds (reduced from 1 second)
   useEffect(() => {
     if (!currentTime) return;
 
@@ -89,17 +90,17 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
             }
           : null
       );
-    }, 1000);
+    }, 5000); // Changed from 1000ms to 5000ms
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTime?.timezone]);
 
-  // Update browser time every second
+  // Update browser time every 5 seconds (reduced from 1 second)
   useEffect(() => {
     const interval = setInterval(() => {
       setBrowserTime(new Date());
-    }, 1000);
+    }, 5000); // Changed from 1000ms to 5000ms
 
     return () => clearInterval(interval);
   }, []);
@@ -187,6 +188,10 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
               <Settings2 size={16} />
               <span>Port Configuration</span>
             </TabsTrigger>
+            <TabsTrigger value="species-threshold" className={tabClasnames}>
+              <AlertTriangle size={16} />
+              <span>Species Threshold</span>
+            </TabsTrigger>
             <TabsTrigger value="user-management" className={tabClasnames}>
               <User2 size={16} />
               <span>User Management</span>
@@ -212,6 +217,13 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
             className="flex-1 space-y-6 mt-0 w-full"
           >
             <PortConfigurationTab />
+          </TabsContent>
+
+          <TabsContent
+            value="species-threshold"
+            className="flex-1 space-y-6 mt-0 w-full"
+          >
+            <SpeciesThresholdTab />
           </TabsContent>
 
           <TabsContent value="info" className="flex-1 space-y-6 mt-0 w-full">

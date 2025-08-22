@@ -136,7 +136,7 @@ class SocketService {
       });
 
       socket.on("connect_error", (error) => {
-        console.error(`${namespace} socket connection error:`, error);
+        // console.error(`${namespace} socket connection error:`, error);
         if (namespace === "fenceline_job_state_machine") {
           store.dispatch(socketDisconnected());
         }

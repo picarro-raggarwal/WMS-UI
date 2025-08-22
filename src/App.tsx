@@ -2,7 +2,7 @@ import { SystemStartupModal } from "@/components/SystemStartupModal";
 import { Toaster } from "@/components/ui/sonner";
 import { useSocket } from "@/hooks/useSocket";
 import { useGetSystemInfoQuery } from "@/lib/services/systemInfo.slice";
-import { useGetTimeQuery } from "@/lib/services/timesync.slice";
+// import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router";
 import { useGetSystemComponentsAvailabilityQuery } from "./pages/dashboard/data/systemMetrics.slice";
@@ -21,9 +21,9 @@ function App() {
   });
 
   // Initialize timesync at root level with polling every 30 seconds
-  useGetTimeQuery(undefined, {
-    pollingInterval: 30000
-  });
+  // useGetTimeQuery(undefined, {
+  //   pollingInterval: 30000
+  // });
 
   // Initialize system info at root level (fetch once on app load)
   useGetSystemInfoQuery();
