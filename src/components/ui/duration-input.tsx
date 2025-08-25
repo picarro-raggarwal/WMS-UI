@@ -8,6 +8,8 @@ interface DurationInputProps {
   maxSeconds?: number;
   minSeconds?: number;
   className?: string;
+  onError?: () => void;
+  onSuccess?: () => void;
 }
 
 export const DurationInput: FC<DurationInputProps> = ({
@@ -15,7 +17,9 @@ export const DurationInput: FC<DurationInputProps> = ({
   onChange,
   className,
   maxSeconds = 600, // Default 10 minutes
-  minSeconds = 0
+  minSeconds = 0,
+  onError,
+  onSuccess
 }): ReactElement => {
   const [minutes, setMinutes] = useState<string>("");
   const [seconds, setSeconds] = useState<string>("");
@@ -25,6 +29,17 @@ export const DurationInput: FC<DurationInputProps> = ({
 
   const minutesRef = useRef<HTMLInputElement>(null);
   const secondsRef = useRef<HTMLInputElement>(null);
+
+  // Call error callbacks when error state changes
+  useEffect(() => {
+    if (onError && onSuccess) {
+      if (error.isError) {
+        onError();
+      } else {
+        onSuccess();
+      }
+    }
+  }, [error.isError, onError, onSuccess]);
 
   // Update internal state when value prop changes
   useEffect(() => {
@@ -252,7 +267,7 @@ export const DurationInput: FC<DurationInputProps> = ({
       </div>
 
       {error.isError && (
-        <div className="top-full right-0 z-10 mt-1 text-red-600 text-xs whitespace-nowrap">
+        <div className="top-full right-0 z-10 mt-1 text-red-600 text-[0.7rem] whitespace-wrap ">
           {error.msg}
         </div>
       )}

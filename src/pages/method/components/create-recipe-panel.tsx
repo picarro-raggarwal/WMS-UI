@@ -89,6 +89,10 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
     description: string;
   } | null>(null);
   const [isEditing, setIsEditing] = useState(!!initialData);
+  const [applyToAllDuration, setApplyToAllDuration] = useState(0); // Default 2 minutes
+  const [durationInputErrors, setDurationInputErrors] = useState<Set<string>>(
+    new Set()
+  );
 
   const { data: apiSteps, isLoading } = useGetAllStepsQuery();
   const [createRecipe, { isLoading: isCreating }] = useCreateRecipeMutation();
@@ -215,14 +219,73 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
     setRecipeSteps((prev) => [...prev, newStep]);
   }, []);
 
-  const handleRemoveStep = useCallback((id: string) => {
-    setRecipeSteps((prev) => prev.filter((step) => step.id !== id));
-  }, []);
+  const handleAddAllPortsToRecipe = useCallback(() => {
+    // Add all available ports to the recipe
+    const allPorts = Object.values(portsByBank).flat();
+    const newSteps: RecipeStep[] = allPorts.map((port) => ({
+      id: crypto.randomUUID(),
+      step_id: port.portNumber,
+      type: port.type,
+      name: port.name,
+      duration: 120 // Default 2 minutes (120 seconds)
+    }));
+    setRecipeSteps((prev) => [...prev, ...newSteps]);
+    toast.success(`Added ${allPorts.length} ports to recipe`);
+  }, [portsByBank]);
+
+  const handleClearAllSteps = useCallback(() => {
+    if (recipeSteps.length === 0) {
+      toast.info("No steps to clear");
+      return;
+    }
+    setRecipeSteps([]);
+    setApplyToAllDuration(0);
+    setDurationInputErrors(new Set());
+    toast.success("All recipe steps cleared");
+  }, [recipeSteps.length]);
+
+  const handleApplyDurationToAll = useCallback(
+    (duration: number) => {
+      if (recipeSteps.length === 0) {
+        toast.info("No steps to update");
+        return;
+      }
+      setRecipeSteps((prev) => prev.map((step) => ({ ...step, duration })));
+      toast.success(
+        `Applied ${Math.floor(duration / 60)}:${(duration % 60)
+          .toString()
+          .padStart(2, "0")} duration to all steps`
+      );
+    },
+    [recipeSteps.length]
+  );
 
   const handleDurationChange = useCallback((id: string, duration: number) => {
     setRecipeSteps((prev) =>
       prev.map((step) => (step.id === id ? { ...step, duration } : step))
     );
+  }, []);
+
+  const handleDurationError = useCallback((id: string, hasError: boolean) => {
+    setDurationInputErrors((prev) => {
+      const newSet = new Set(prev);
+      if (hasError) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleRemoveStep = useCallback((id: string) => {
+    setRecipeSteps((prev) => prev.filter((step) => step.id !== id));
+    // Clear error for removed step
+    setDurationInputErrors((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -326,13 +389,15 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
       index,
       onRemove,
       onDurationChange,
-      overlay
+      overlay,
+      onDurationError
     }: {
       step: RecipeStep;
       index: number;
       onRemove: (id: string) => void;
       onDurationChange: (id: string, duration: number) => void;
       overlay?: boolean;
+      onDurationError: (id: string, hasError: boolean) => void;
     }) => {
       const {
         attributes,
@@ -388,9 +453,11 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
           <div className="flex items-center gap-2">
             <DurationInput
               value={step.duration}
-              onChange={(seconds) => onDurationChange(step.id, seconds)}
+              onChange={(duration) => onDurationChange(step.id, duration)}
               maxSeconds={600}
               minSeconds={1}
+              onError={() => onDurationError(step.id, true)}
+              onSuccess={() => onDurationError(step.id, false)}
             />
           </div>
           <Button
@@ -449,7 +516,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
 
       <div className="flex flex-1 gap-6 h-full min-h-0">
         {/* Left Panel - Ports */}
-        <div className="bg-gray-50 p-6 rounded-lg w-1/2 overflow-y-auto">
+        <div className="bg-gray-50 p-3 rounded-lg w-1/2 overflow-y-auto">
           {/* <h2 className="mb-4 font-semibold text-lg">Available Ports</h2> */}
 
           {isLoading ? (
@@ -457,9 +524,22 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
               <Spinner />
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <h2 className="font-semibold text-lg text-gray-700">
+                  Available Ports
+                </h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddAllPortsToRecipe}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add All Ports
+                </Button>
+              </div>
               {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
-                <div key={bankNumber} className="space-y-3">
+                <div key={bankNumber} className="space-y-2">
                   <h3 className="font-semibold text-gray-700">
                     Bank {bankNumber}
                   </h3>
@@ -476,7 +556,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
 
         {/* Right Panel - Recipe Steps */}
         <div className="flex flex-col bg-white shadow-sm rounded-lg w-1/2">
-          <div className="flex-1 space-y-6 pt-3 min-h-0">
+          <div className="flex-1 space-y-3 pt-3 min-h-0">
             <div className="flex justify-between items-start gap-2 w-full">
               <Input
                 value={recipeName}
@@ -493,7 +573,8 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
                   isCreating ||
                   !recipeName ||
                   recipeSteps.length === 0 ||
-                  recipeSteps?.some((step) => step.duration > 3600)
+                  recipeSteps?.some((step) => step.duration > 3600) ||
+                  durationInputErrors.size > 0
                 }
               >
                 {isCreating
@@ -506,7 +587,67 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
               </Button>
             </div>
 
-            <div className="flex flex-col flex-1 h-[calc(100vh-320px)] min-h-0 overflow-auto">
+            {/* Action Buttons and Duration Control */}
+            {recipeSteps.length > 0 && (
+              <div className="flex flex-col gap-3 p-3 bg-gray-50 rounded-lg border">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <DurationInput
+                      value={applyToAllDuration}
+                      onChange={(duration) => setApplyToAllDuration(duration)}
+                      onError={() =>
+                        setDurationInputErrors(
+                          (prev) => new Set([...prev, "apply-to-all"])
+                        )
+                      }
+                      onSuccess={() =>
+                        setDurationInputErrors((prev) => {
+                          const newSet = new Set(prev);
+                          newSet.delete("apply-to-all");
+                          return newSet;
+                        })
+                      }
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleApplyDurationToAll(applyToAllDuration)
+                      }
+                      disabled={
+                        applyToAllDuration === 0 ||
+                        durationInputErrors.has("apply-to-all")
+                      }
+                    >
+                      Apply to All
+                    </Button>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearAllSteps}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Clear All
+                  </Button>
+                </div>
+                <div className="text-xs text-gray-500">
+                  💡 <strong>Tip:</strong> Use "Apply to All" to quickly set the
+                  same duration for all recipe steps. This is useful when you
+                  want consistent timing across your entire recipe.
+                </div>
+                {/* {durationInputErrors.size > 0 && (
+                  <div className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                    ⚠️ <strong>Duration Errors:</strong> Please fix the duration
+                    input errors above before creating the recipe.
+                  </div>
+                )} */}
+              </div>
+            )}
+
+            <div className="flex flex-col flex-1 h-[calc(100vh-420px)] min-h-0 overflow-auto">
               <div className="flex justify-between items-center mb-2">
                 <div className="text-gray-500 text-sm">
                   <span className="mr-1 font-medium text-black">
@@ -547,6 +688,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
                             index={index}
                             onRemove={handleRemoveStep}
                             onDurationChange={handleDurationChange}
+                            onDurationError={handleDurationError}
                           />
                         ))}
                       </div>

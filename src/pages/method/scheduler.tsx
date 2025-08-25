@@ -12,7 +12,7 @@ import {
   isAfter,
   isBefore
 } from "date-fns";
-import { CalendarRange, Clock, ListFilter } from "lucide-react";
+import { Clock, ListFilter } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useGetJobHistoryQuery } from "./data/fencelineJob.slice";
 import { generateMockRecipeTimeline } from "./data/mock-recipe-timeline";
@@ -578,7 +578,7 @@ function ScheduleComponent() {
 
       {/* Tabs Navigation */}
       <div className="flex mb-4 border-b">
-        <button
+        {/* <button
           className={`px-4 py-2 text-sm font-medium ${
             activeTab === "gantt"
               ? "border-b-2 border-primary-500 text-primary-500"
@@ -588,7 +588,7 @@ function ScheduleComponent() {
         >
           <CalendarRange className="inline-block mr-1 w-4 h-4" />
           Timeline View
-        </button>
+        </button> */}
         <button
           className={`px-4 py-2 text-sm font-medium ${
             activeTab === "table"

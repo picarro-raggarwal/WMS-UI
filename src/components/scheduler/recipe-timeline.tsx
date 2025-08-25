@@ -509,15 +509,19 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
             </div>
           </div>
 
-          {/* Recipes Row */}
-          <div className="relative flex border-gray-100 border-b h-32">
+          {/* Single Recipes Row with Smart Recipes on top */}
+          <div className="relative flex border-gray-100 border-b h-60">
             {/* Left column with recipes info */}
             <div className="relative flex-shrink-0 bg-gray-50/50 p-3 border-gray-100 border-r w-48">
               <div className="mb-2 font-medium text-sm">Recipes</div>
               <div className="space-y-1 text-gray-600 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Iteration:</span>
-                  <span className="font-medium">{visibleRecipes.length}</span>
+                  <span className="text-gray-500">Start:</span>
+                  <span className="font-medium">
+                    {visibleRecipes.length > 0
+                      ? formatTime(visibleRecipes[0].startTime)
+                      : "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Running:</span>
@@ -549,7 +553,7 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                         return (
                           <div className="text-left">
                             <div>{runningRecipe.name}</div>
-                            <div className=" opacity-80">
+                            <div className="opacity-80">
                               {portInfo || "No Port"}
                             </div>
                           </div>
@@ -563,10 +567,16 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                   <span className="text-gray-500">Duration:</span>
                   <span className="font-medium">60min</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Smart Recipes:</span>
+                  <span className="font-medium text-orange-600">
+                    {visibleRecipes.filter((r) => r.isSmartRecipeActive).length}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Timeline area for recipes */}
+            {/* Timeline area for recipes with smart recipes on top */}
             <div className="relative flex-grow h-full overflow-hidden">
               {/* "Now" indicator line for this row */}
               {nowLinePosition >= 0 && nowLinePosition <= 100 && (
@@ -604,8 +614,8 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                   ></div>
                 )}
 
-              {/* All recipes merged into one row - show past, current, and future */}
-              <div className="absolute top-[5%] h-[90%] w-full">
+              {/* Recipe bars (bottom layer) */}
+              <div className="absolute top-[15%] h-[70%] w-full">
                 {visibleRecipes.map((recipe) => {
                   const recipePosition = getPosition(
                     recipe.startTime,
@@ -616,11 +626,11 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                     recipe.endTime >= currentTime;
                   const isFuture = recipe.startTime > currentTime;
 
-                  let recipeColor = "bg-blue-100"; // Default for past (light green)
+                  let recipeColor = "bg-blue-100"; // Default for past
                   if (isRunning) {
-                    recipeColor = "bg-primary-200"; // Currently running
+                    recipeColor = "bg-primary-100"; // Currently running
                   } else if (isFuture) {
-                    recipeColor = "bg-gray-100"; // Future (expected path) - gray
+                    recipeColor = "bg-gray-100"; // Future (expected path)
                   }
 
                   return (
@@ -632,69 +642,9 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                   );
                 })}
               </div>
-            </div>
-          </div>
 
-          {/* Smart Recipes Row - All smart recipe steps merged */}
-          <div className="relative flex border-gray-100 border-b h-32">
-            {/* Left column with smart recipes info */}
-            <div className="relative flex-shrink-0 bg-gray-50/50 p-3 border-gray-100 border-r w-48">
-              <div className="mb-2 font-medium text-sm">Smart Recipes</div>
-              <div className="space-y-1 text-gray-600 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Count:</span>
-                  <span className="font-medium text-orange-600">
-                    {visibleRecipes.filter((r) => r.isSmartRecipeActive).length}
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Last Port:</span>
-                  <span className="font-medium">Port 4 (5)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Timeline area for smart recipes */}
-            <div className="relative flex-grow h-full overflow-hidden">
-              {/* "Now" indicator line for this row */}
-              {nowLinePosition >= 0 && nowLinePosition <= 100 && (
-                <motion.div
-                  key={
-                    isWindowChanging ? `row-window-${Date.now()}` : "row-stable"
-                  }
-                  className="top-0 z-10 absolute bg-red-500 opacity-30 w-0.5 h-full pointer-events-none"
-                  style={{
-                    transform: "translateZ(0)",
-                    backfaceVisibility: "hidden"
-                  }}
-                  animate={{
-                    left: `${Math.round(nowLinePosition * 100) / 100}%`
-                  }}
-                  initial={{
-                    left: `${Math.round(nowLinePosition * 100) / 100}%`
-                  }}
-                  transition={{
-                    duration: isWindowChanging ? 0 : 1,
-                    ease: "linear",
-                    type: "tween"
-                  }}
-                ></motion.div>
-              )}
-
-              {/* Hover time indicator for this row */}
-              {isHoveringTimeline &&
-                hoverPosition &&
-                hoverPosition.x >= 0 &&
-                hoverPosition.x <= 100 && (
-                  <div
-                    className="top-0 z-20 absolute bg-primary-500 opacity-50 w-0.5 h-full pointer-events-none"
-                    style={{ left: `${hoverPosition.x}%` }}
-                  ></div>
-                )}
-
-              {/* All smart recipe steps merged into one row - show only past and current */}
-              <div className="absolute top-[5%] h-[90%] w-full">
+              {/* Smart recipe steps (top layer) - displayed on top of recipes */}
+              <div className="absolute top-[35%] h-[30%] w-full">
                 {visibleRecipes.flatMap((recipe) =>
                   recipe.smartRecipeSteps
                     .filter((step) => {
@@ -710,7 +660,7 @@ const RecipeTimeline: React.FC<RecipeTimelineProps> = ({
                         step.startTime <= currentTime &&
                         step.endTime >= currentTime;
 
-                      let stepColor = "bg-orange-300"; // Default for past smart recipes (orange)
+                      let stepColor = "bg-orange-300"; // Default for past smart recipes
                       if (isRunning) {
                         stepColor =
                           step.type === "maintenance"

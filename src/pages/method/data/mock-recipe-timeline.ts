@@ -45,6 +45,9 @@ export const generateMockRecipeTimeline = (): RecipeTimelineItem[] => {
   currentTime.setMinutes(0, 0, 0); // Round to start of hour
   currentTime.setHours(currentTime.getHours() - 24); // Go back 24 hours
 
+  // Track smart recipe count per day to limit to max 4 per day
+  const smartRecipeCountByDay = new Map<string, number>();
+
   // Generate 48 recipes (24 past + 24 future)
   for (let i = 0; i < 48; i++) {
     const recipeStartTime = new Date(
@@ -55,23 +58,33 @@ export const generateMockRecipeTimeline = (): RecipeTimelineItem[] => {
       recipeStartTime.getTime() + baseDuration * 60 * 1000
     );
 
+    // Check if we can add a smart recipe (max 4 per day)
+    const dayKey = recipeStartTime.toDateString();
+    const currentDayCount = smartRecipeCountByDay.get(dayKey) || 0;
+
     // Smart recipe steps are only generated for recipes that have started (past/current)
     // Future recipes don't have smart recipe steps pre-scheduled
     // Past recipes have higher chance of smart recipe steps since they've had time to trigger
     const isPastRecipe = recipeStartTime < now;
+    const canHaveSmartRecipe = currentDayCount < 4;
     const hasSmartRecipe =
       recipeStartTime <= now &&
-      (isPastRecipe ? Math.random() < 0.6 : Math.random() < 0.3);
+      canHaveSmartRecipe &&
+      (isPastRecipe ? Math.random() < 0.2 : Math.random() < 0.1); // Reduced probability
+
     const smartRecipeSteps: SmartRecipeStep[] = [];
     let totalDuration = baseDuration;
 
     if (hasSmartRecipe) {
+      // Increment the count for this day
+      smartRecipeCountByDay.set(dayKey, currentDayCount + 1);
+
       const smartStepTypes: Array<
         "maintenance" | "adjustment" | "optimization"
       > = ["maintenance", "adjustment", "optimization"];
 
-      // Random number of smart steps (1-3)
-      const numSteps = Math.floor(Math.random() * 3) + 1;
+      // Random number of smart steps (1-2, reduced from 1-3)
+      const numSteps = Math.floor(Math.random() * 2) + 1;
 
       for (let s = 0; s < numSteps; s++) {
         // Calculate sequential start time - each step starts after the previous one ends
@@ -146,8 +159,11 @@ export const generateMockRecipeTimeline = (): RecipeTimelineItem[] => {
       }
     }
 
-    // Generate ports - when smart recipe is active, only 1 port runs multiple times
+    // Generate ports - 64 ports of 2 minutes each per recipe iteration
     const ports: RecipePort[] = [];
+    const portDuration = 2; // 2 minutes per port
+    const totalPorts = 64;
+
     if (hasSmartRecipe) {
       // Smart recipe active: 1 port that runs multiple times during smart recipe steps
       const smartStepStart = smartRecipeSteps[0]?.startTime || recipeStartTime;
@@ -156,13 +172,11 @@ export const generateMockRecipeTimeline = (): RecipeTimelineItem[] => {
 
       // Create multiple instances of the same port during smart recipe execution
       // Ports run sequentially without overlapping - each starts after the previous ends
-      const portDuration = 5; // 5 minutes per port instance
-
       let currentPortTime = new Date(smartStepStart);
       let portInstance = 1;
 
-      while (currentPortTime < smartStepEnd && portInstance <= 8) {
-        // Max 8 port instances
+      while (currentPortTime < smartStepEnd && portInstance <= 16) {
+        // Max 16 port instances during smart recipe
         const portEndTime = new Date(
           currentPortTime.getTime() + portDuration * 60 * 1000
         );
@@ -183,24 +197,29 @@ export const generateMockRecipeTimeline = (): RecipeTimelineItem[] => {
         portInstance++;
       }
     } else {
-      // No smart recipe: 6 ports, 10 minutes each (normal operation)
-      for (let p = 0; p < 6; p++) {
+      // No smart recipe: 64 ports, 2 minutes each (normal operation)
+      for (let p = 0; p < totalPorts; p++) {
         const portStartTime = new Date(
-          recipeStartTime.getTime() + p * 10 * 60 * 1000
+          recipeStartTime.getTime() + p * portDuration * 60 * 1000
         );
-        const portEndTime = new Date(portStartTime.getTime() + 10 * 60 * 1000);
+        const portEndTime = new Date(
+          portStartTime.getTime() + portDuration * 60 * 1000
+        );
 
-        ports.push({
-          portNumber: p + 1,
-          startTime: portStartTime,
-          endTime: portEndTime,
-          duration: 10,
-          isActive: Math.random() > 0.3, // 70% chance of being active
-          gasType: ["CO2", "CH4", "N2O", "CO", "H2O"][
-            Math.floor(Math.random() * 5)
-          ],
-          concentration: Math.floor(Math.random() * 1000) + 100
-        });
+        // Ensure port doesn't extend beyond recipe end
+        if (portEndTime <= recipeEndTime) {
+          ports.push({
+            portNumber: p + 1,
+            startTime: portStartTime,
+            endTime: portEndTime,
+            duration: portDuration,
+            isActive: Math.random() > 0.3, // 70% chance of being active
+            gasType: ["CO2", "CH4", "N2O", "CO", "H2O"][
+              Math.floor(Math.random() * 5)
+            ],
+            concentration: Math.floor(Math.random() * 1000) + 100
+          });
+        }
       }
     }
 
