@@ -2,16 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-
-:root, body {
-  font-family:'Wix Madefor Text Variable','Inter Variable', Helvetica, sans-serif;
+:root,
+body {
+  font-family: "Wix Madefor Text Variable", "Inter Variable", Helvetica,
+    sans-serif;
   background-color: #222;
   -webkit-font-smoothing: antialiased;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
-.font-barlow,  .font-barlow body{
-  font-family: 'Barlow', sans-serif!important;
+.font-barlow,
+.font-barlow body {
+  font-family: "Barlow", sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
@@ -24,7 +26,7 @@
   .text-primary {
     color: hsl(var(--primary));
   }
-  
+
   .text-primary-foreground {
     color: hsl(var(--primary-foreground));
   }
@@ -141,7 +143,7 @@
     --sidebar-accent-foreground: 240 5.9% 90%;
     --sidebar-border: 0 0 31%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --font-wix-madefor-text: 'Wix Madefor Text Variable', sans-serif;
+    --font-wix-madefor-text: "Wix Madefor Text Variable", sans-serif;
   }
   .dark {
     --sidebar-background: 0 0 6%;
@@ -207,31 +209,50 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    }
+  }
 }
 
 .shadow-p {
-  box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+  box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px,
+    rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
 }
 
 .zebra-bg {
   border-radius: 8px;
   overflow: hidden;
-  background-image: linear-gradient(45deg, hsla(0, 0%, 100%, .25) 12.5%, hsla(0, 0%, 100%, 0) 0, hsla(0, 0%, 100%, 0) 50%, hsla(0, 0%, 100%, .25) 0, hsla(0, 0%, 100%, .25) 62.5%, hsla(0, 0%, 100%, 0) 0, hsla(0, 0%, 100%, 0));
+  background-image: linear-gradient(
+    45deg,
+    hsla(0, 0%, 100%, 0.25) 12.5%,
+    hsla(0, 0%, 100%, 0) 0,
+    hsla(0, 0%, 100%, 0) 50%,
+    hsla(0, 0%, 100%, 0.25) 0,
+    hsla(0, 0%, 100%, 0.25) 62.5%,
+    hsla(0, 0%, 100%, 0) 0,
+    hsla(0, 0%, 100%, 0)
+  );
   background-size: 11.31px 11.31px;
-  margin: .75rem 0 .75rem 2rem;
+  margin: 0.75rem 0 0.75rem 2rem;
   position: relative;
 }
 
-
-[data-pattern=stripes] {
-  background-image: linear-gradient(-45deg, currentColor 25%, transparent 25%, transparent 50%, currentColor 50%, currentColor 75%, transparent 75%, transparent 100%);
+[data-pattern="stripes"] {
+  background-image: linear-gradient(
+    -45deg,
+    currentColor 25%,
+    transparent 25%,
+    transparent 50%,
+    currentColor 50%,
+    currentColor 75%,
+    transparent 75%,
+    transparent 100%
+  );
   background-size: 6px 6px;
   color: rgba(255, 255, 255, 0.1);
 }
- 
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   font-family: var(--font-wix-madefor-text);
 }
 
@@ -239,17 +260,14 @@ h1, h2, h3 {
   font-family: var(--font-wix-madefor-text);
 }
 
-
-
 .thin-scrollbar::-webkit-scrollbar {
   width: 8px;
-  height: 8px; 
+  height: 8px;
 }
 .thin-scrollbar-light::-webkit-scrollbar {
   width: 8px;
-  height: 8px; 
+  height: 8px;
 }
-
 
 .thin-scrollbar::-webkit-scrollbar-track {
   border-radius: 12px;
@@ -260,23 +278,39 @@ h1, h2, h3 {
   background: transparent;
 }
 .thin-scrollbar::-webkit-scrollbar-thumb {
-  background: #444!important;
+  background: #444 !important;
   border-radius: 12px;
   background: #b6b6b6;
   border: 1px solid #555;
 }
 .thin-scrollbar-light::-webkit-scrollbar-thumb {
-  background: #eee!important;
+  background: #eee !important;
   border-radius: 12px;
   background: #b6b6b6;
   border: 1px solid #ccc;
 }
 
 .thin-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #666!important;
+  background: #666 !important;
 }
 .thin-scrollbar-light::-webkit-scrollbar-thumb:hover {
-  background: #666!important;
-  
+  background: #666 !important;
 }
- 
+
+/* Prevent scroll interference on number inputs */
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Ensure number inputs don't interfere with map scrolling */
+input[type="number"]:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
