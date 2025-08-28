@@ -11,7 +11,7 @@ import {
   compounds,
   generateMockCompoundThresholds,
   portCount
-} from "./species-threshold-mock-data";
+} from "../data/species-threshold-mock-data";
 import {
   validatePortThreshold,
   validateThreshold
@@ -692,26 +692,28 @@ export const SpeciesThresholdTab = () => {
 
             <div className="flex gap-2 grid-flow-col col-span-1 justify-end">
               {hasUnsavedChanges() && (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setPortThresholds(originalPortThresholds);
-                    setEditedPorts(new Set());
-                  }}
-                  variant="outline"
-                  disabled={isSaving}
-                >
-                  Cancel
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setPortThresholds(originalPortThresholds);
+                      setEditedPorts(new Set());
+                    }}
+                    variant="outline"
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={handleSaveAll}
+                    disabled={isSaving || !hasUnsavedChanges()}
+                  >
+                    {isSaving ? "Saving..." : "Save"}
+                  </Button>
+                </>
               )}
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={handleSaveAll}
-                disabled={isSaving || !hasUnsavedChanges()}
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
             </div>
           </div>
         </CardHeader>

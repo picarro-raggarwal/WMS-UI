@@ -116,7 +116,7 @@ function UpdatePasswordDialog({
             {isLoading ? "Updating..." : "Update Password"}
           </Button>
           {successMsg && (
-            <div className="mt-2 text-green-600 text-sm">{successMsg}</div>
+            <div className="mt-2 text-primary-600 text-sm">{successMsg}</div>
           )}
         </div>
       </DialogContent>

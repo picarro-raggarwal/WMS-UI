@@ -296,21 +296,3 @@ h3 {
 .thin-scrollbar-light::-webkit-scrollbar-thumb:hover {
   background: #666 !important;
 }
-
-/* Prevent scroll interference on number inputs */
-input[type="number"] {
-  -moz-appearance: textfield; /* Firefox */
-}
-
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Ensure number inputs don't interfere with map scrolling */
-input[type="number"]:focus {
-  outline: none;
-  border-color: hsl(var(--ring));
-  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
-}

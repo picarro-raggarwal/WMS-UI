@@ -1,0 +1,148 @@
+# WMS-UI Cursor Rules - Data Flow Architecture
+
+## Project Structure & Data Flow Rules
+
+### 1. Feature Page Architecture
+
+- **ALWAYS** create feature pages under `src/pages/{feature-name}/`
+- **EVERY** feature page **MUST** have a `data/` subfolder
+- **EVERY** feature page **MUST** have a `components/` subfolder
+- **EVERY** feature page **MUST** have an `index.tsx` as the main entry point
+
+### 2. Data Layer Requirements
+
+- **ALWAYS** create data files under `src/pages/{feature-name}/data/`
+- **MANDATORY** files to create in data folder:
+  - `{feature-name}.slice.ts` - Redux Toolkit Query API slice
+  - `mock-data.ts` - Mock data for development/testing
+  - `types.ts` - TypeScript interfaces/types (if needed)
+- **NEVER** import data directly in UI components - always go through the data layer
+
+### 3. Mock Data Requirements
+
+- **ALWAYS** create `mock-data.ts` in the data folder for every feature
+- **ALWAYS** include realistic, varied mock data that covers all use cases
+- **ALWAYS** export mock data as named exports (not default exports)
+- **ALWAYS** include TypeScript interfaces for the mock data structure
+- **ALWAYS** provide at least 5-10 sample records for testing
+
+### 4. API Slice Requirements
+
+- **ALWAYS** use Redux Toolkit Query with `protectedBaseQuery`
+- **ALWAYS** define proper TypeScript interfaces for all data structures
+- **ALWAYS** include proper error handling and loading states
+- **ALWAYS** use appropriate tag types for cache invalidation
+- **ALWAYS** export hooks with descriptive names (e.g., `useGet{Entity}Query`)
+
+### 5. Component Architecture
+
+- **ALWAYS** create UI components under `src/pages/{feature-name}/components/`
+- **NEVER** import data directly in components - use the exported hooks from data slices
+- **ALWAYS** handle loading, error, and empty states in components
+- **ALWAYS** use proper TypeScript typing for all props and state
+
+### 6. Data Flow Pattern
+
+```
+Feature Page (index.tsx)
+    ↓
+Data Layer (data/*.slice.ts)
+    ↓
+Mock Data (data/mock-data.ts)
+    ↓
+UI Components (components/*.tsx)
+```
+
+### 7. Import/Export Rules
+
+- **ALWAYS** use relative imports within feature folders
+- **ALWAYS** use absolute imports from `@/` for shared components and utilities
+- **ALWAYS** export data hooks from the slice file
+- **ALWAYS** import data hooks in the main feature page
+
+### 8. File Naming Conventions
+
+- Feature folders: kebab-case (e.g., `data-review`, `map-display`)
+- Data files: kebab-case (e.g., `data-review.slice.ts`, `mock-data.ts`)
+- Component files: kebab-case (e.g., `data-review-chart.tsx`)
+- Type files: kebab-case (e.g., `types.ts`)
+
+### 9. Mock Data Structure Examples
+
+```typescript
+// ALWAYS include these in mock-data.ts:
+export interface MockEntity {
+  id: string;
+  name: string;
+  // ... other properties
+}
+
+export const mockEntities: MockEntity[] = [
+  // At least 5-10 realistic sample records
+  {
+    id: "1",
+    name: "Sample Entity 1"
+    // ... other properties
+  }
+  // ... more records
+];
+```
+
+### 10. Error Handling & Loading States
+
+- **ALWAYS** implement loading spinners using `@/components/spinner`
+- **ALWAYS** handle error states with proper error messages
+- **ALWAYS** provide fallback UI for empty data states
+- **ALWAYS** use the `isLoading`, `isError`, and `data` properties from RTK Query hooks
+
+### 11. Component Props & State
+
+- **ALWAYS** define proper TypeScript interfaces for component props
+- **ALWAYS** use proper state management (useState, useEffect, etc.)
+- **ALWAYS** handle component lifecycle properly
+- **ALWAYS** implement proper error boundaries where needed
+
+### 12. Testing & Development
+
+- **ALWAYS** ensure mock data works without backend dependencies
+- **ALWAYS** test all UI states (loading, error, empty, populated)
+- **ALWAYS** verify data flows correctly from data layer to components
+- **ALWAYS** test error handling and edge cases
+
+## Example Implementation Pattern
+
+When creating a new feature, follow this exact structure:
+
+```
+src/pages/new-feature/
+├── index.tsx                 # Main feature page
+├── data/
+│   ├── new-feature.slice.ts # RTK Query API slice
+│   ├── mock-data.ts         # Mock data with 5+ records
+│   └── types.ts             # TypeScript interfaces
+└── components/
+    ├── feature-component.tsx # UI components
+    └── feature-chart.tsx     # Chart components
+```
+
+## Violation Examples (DO NOT DO)
+
+- ❌ Importing data directly in components
+- ❌ Creating components without data folders
+- ❌ Missing mock data files
+- ❌ Using default exports for mock data
+- ❌ Skipping loading/error states
+- ❌ Missing TypeScript interfaces
+
+## Compliance Checklist
+
+Before committing any feature, ensure:
+
+- [ ] Data folder exists with required files
+- [ ] Mock data file has realistic sample data
+- [ ] API slice uses proper RTK Query patterns
+- [ ] Components handle all data states
+- [ ] TypeScript interfaces are properly defined
+- [ ] Loading and error states are implemented
+- [ ] Data flows through proper layers
+- [ ] Mock data works independently

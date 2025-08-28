@@ -10,7 +10,7 @@ import {
   MetricThreshold,
   useGetAllThresholdsQuery,
   useSetMetricThresholdMutation,
-  useSetWindRoseThresholdMutation,
+  useSetWindRoseThresholdMutation
 } from "../data/thresholds.slice";
 
 interface ThresholdVisualizationProps extends MetricThreshold {
@@ -21,7 +21,7 @@ const ThresholdVisualization = ({
   warning,
   alarm,
   unit,
-  isEditing,
+  isEditing
 }: ThresholdVisualizationProps) => {
   if (!warning && !alarm) return null;
 
@@ -94,7 +94,7 @@ const ThresholdVisualization = ({
                 style={{
                   left: `${tick.position}%`,
                   height: `${tick.height}px`,
-                  transform: "translateX(-50%)",
+                  transform: "translateX(-50%)"
                 }}
               />
             ))}
@@ -133,13 +133,13 @@ export const ThresholdsTab = () => {
   const {
     data: metricsConfig,
     isError: isErrorMetrics,
-    isLoading: isLoadingMetrics,
+    isLoading: isLoadingMetrics
   } = useGetMetricsQuery();
 
   const {
     data: thresholdsData,
     isError: isErrorThresholds,
-    isLoading: isLoadingThresholds,
+    isLoading: isLoadingThresholds
   } = useGetAllThresholdsQuery();
 
   const [setMetricThreshold, { isLoading: isSaving }] =
@@ -168,7 +168,7 @@ export const ThresholdsTab = () => {
           id,
           label: formatMetricLabel(id),
           unit: config.unit || "",
-          type: config.type,
+          type: config.type
         }))
     : [];
 
@@ -176,7 +176,7 @@ export const ThresholdsTab = () => {
     id: "wind_rose_calm_threshold",
     label: "Wind Rose Calm Threshold",
     type: "hardware",
-    unit: "m/s",
+    unit: "m/s"
   });
 
   const filteredMetrics = availableMetrics.filter((metric) =>
@@ -210,8 +210,8 @@ export const ThresholdsTab = () => {
       ...editingMetrics,
       [metricId]: {
         warning: existingThreshold?.warning || 0,
-        alarm: existingThreshold?.alarm || 0,
-      } as MetricThreshold,
+        alarm: existingThreshold?.alarm || 0
+      } as MetricThreshold
     });
     // Clear any existing errors
     const { [metricId]: _, ...restErrors } = errors;
@@ -246,7 +246,7 @@ export const ThresholdsTab = () => {
     if (isWindRose) {
       try {
         await setWindRoseThreshold({
-          calm_threshold: threshold.warning,
+          calm_threshold: threshold.warning
         }).unwrap();
 
         toast.success(`Thresholds updated for ${formatMetricLabel(metricId)}`);
@@ -261,7 +261,7 @@ export const ThresholdsTab = () => {
         await setMetricThreshold({
           metric_name: metricId,
           warning: threshold.warning,
-          alarm: threshold.alarm,
+          alarm: threshold.alarm
         }).unwrap();
 
         toast.success(`Thresholds updated for ${formatMetricLabel(metricId)}`);
@@ -287,16 +287,16 @@ export const ThresholdsTab = () => {
         [metricId]: {
           ...editingMetrics[metricId],
           ["warning"]: value,
-          ["alarm"]: value + 10,
-        },
+          ["alarm"]: value + 10
+        }
       });
     } else {
       setEditingMetrics({
         ...editingMetrics,
         [metricId]: {
           ...editingMetrics[metricId],
-          [type]: value,
-        },
+          [type]: value
+        }
       });
     }
 

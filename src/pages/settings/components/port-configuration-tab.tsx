@@ -246,26 +246,28 @@ export const PortConfigurationTab = () => {
             </div>
             <div className="flex gap-2 grid-flow-col col-span-1 justify-end">
               {hasUnsavedChanges && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setPortNames(lastSavedNames);
-                    setPortEnabled(lastSavedEnabled);
-                  }}
-                  disabled={isSaving}
-                >
-                  Cancel
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setPortNames(lastSavedNames);
+                      setPortEnabled(lastSavedEnabled);
+                    }}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSaveAllChanges}
+                    disabled={!hasUnsavedChanges || isSaving}
+                    variant="primary"
+                    size="sm"
+                  >
+                    {isSaving ? "Saving..." : "Save"}
+                  </Button>
+                </>
               )}
-              <Button
-                onClick={handleSaveAllChanges}
-                disabled={!hasUnsavedChanges || isSaving}
-                variant="primary"
-                size="sm"
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
             </div>
           </div>
         </CardHeader>
@@ -327,7 +329,7 @@ export const PortConfigurationTab = () => {
                                       disabled={
                                         !editValue ||
                                         editValue === "" ||
-                                        editValue === origin
+                                        editValue === originalValue
                                       }
                                       className="hover:bg-primary-50 p-0 border-primary-200 hover:border-primary-300 w-7 h-7 text-primary-600"
                                       title="Save changes"

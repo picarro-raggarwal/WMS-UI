@@ -1,4 +1,4 @@
-import { Threshold } from "./species-threshold-mock-data";
+import { Threshold } from "../data/species-threshold-mock-data";
 
 // Validation function for threshold values
 export const validateThreshold = (

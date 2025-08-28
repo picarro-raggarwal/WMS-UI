@@ -11,7 +11,6 @@ import { formatDateTime } from "@/utils";
 import { useLocalStorage } from "@mantine/hooks";
 import {
   AlertTriangle,
-  Cylinder,
   Info,
   Monitor,
   Moon,
@@ -25,6 +24,7 @@ import { useEffect, useState } from "react";
 import { GasCylinders } from "../qa-qc/components/gas-cylinders";
 import { GeneralTab } from "./components/general-tab";
 import { PortConfigurationTab } from "./components/port-configuration-tab";
+import { SmartRecipeTab } from "./components/smart-recipe-tab";
 import { SpeciesThresholdTab } from "./components/species-threshold-tab";
 import { ThresholdsTab } from "./components/thresholds-tab";
 import { UsersTab } from "./components/users-tab";
@@ -167,23 +167,23 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
               <Info size={16} />
               <span>System Info</span>
             </TabsTrigger>
-            <TabsTrigger value="general" className={tabClasnames}>
+            {/* <TabsTrigger value="general" className={tabClasnames}>
               <Settings2 size={16} />
               <span>General Settings</span>
-            </TabsTrigger>
+            </TabsTrigger> */}
 
-            <TabsTrigger value="thresholds" className={tabClasnames}>
+            {/* <TabsTrigger value="thresholds" className={tabClasnames}>
               <AlertTriangle size={16} />
               <span>Alarm Thresholds</span>
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger value="display" className={tabClasnames}>
               <Monitor size={16} />
               <span>Display Settings</span>
             </TabsTrigger>
-            <TabsTrigger value="gas-cylinders" className={tabClasnames}>
+            {/* <TabsTrigger value="gas-cylinders" className={tabClasnames}>
               <Cylinder size={16} />
               <span>Gas Tanks</span>
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger value="port-config" className={tabClasnames}>
               <Settings2 size={16} />
               <span>Port Configuration</span>
@@ -191,6 +191,10 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
             <TabsTrigger value="species-threshold" className={tabClasnames}>
               <AlertTriangle size={16} />
               <span>Species Threshold</span>
+            </TabsTrigger>
+            <TabsTrigger value="smart-recipe" className={tabClasnames}>
+              <Settings2 size={16} />
+              <span>Smart Recipe</span>
             </TabsTrigger>
             <TabsTrigger value="user-management" className={tabClasnames}>
               <User2 size={16} />
@@ -224,6 +228,13 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
             className="flex-1 space-y-6 mt-0 w-full"
           >
             <SpeciesThresholdTab />
+          </TabsContent>
+
+          <TabsContent
+            value="smart-recipe"
+            className="flex-1 space-y-6 mt-0 w-full"
+          >
+            <SmartRecipeTab />
           </TabsContent>
 
           <TabsContent value="info" className="flex-1 space-y-6 mt-0 w-full">
