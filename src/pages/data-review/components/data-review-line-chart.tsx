@@ -1,4 +1,4 @@
-import { ChartData } from "@/types/data-review";
+import { ChartData } from "@/types";
 import {
   formatDateTime,
   formatDate as formatDateUtil,

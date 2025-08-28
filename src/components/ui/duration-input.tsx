@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import { FC, ReactElement, useEffect, useRef, useState } from "react";
 
 interface DurationInputProps {
@@ -232,7 +232,7 @@ export const DurationInput: FC<DurationInputProps> = ({
             placeholder={isMinutesFocused ? "00" : "mm"}
             aria-label="Minutes"
             className={cn(
-              "w-12 h-9 text-center px-0.5 py-1 transition-all text-sm  !min-w-0 [&>input]:px-2",
+              "px-0.5 [&>input]:px-2 py-1 w-12 !min-w-0 h-9 text-sm text-center transition-all",
               error.isError &&
                 "border-red-500 focus:border-red-500 focus:ring-red-500 hover:border-red-500 hover:ring-red-500",
               isMinutesFocused && "ring-1 ring-primary-500 border-primary-500"
@@ -256,7 +256,7 @@ export const DurationInput: FC<DurationInputProps> = ({
             placeholder={isSecondsFocused ? "00" : "ss"}
             aria-label="Seconds"
             className={cn(
-              "w-12 h-9 text-center px-0.5 py-1 transition-all text-sm   !min-w-0 [&>input]:px-2",
+              "px-0.5 [&>input]:px-2 py-1 w-12 !min-w-0 h-9 text-sm text-center transition-all",
               error.isError &&
                 "border-red-500 focus:border-red-500 focus:ring-red-500",
               isSecondsFocused && "ring-1 ring-primary-500 border-primary-500"
@@ -267,7 +267,7 @@ export const DurationInput: FC<DurationInputProps> = ({
       </div>
 
       {error.isError && (
-        <div className="top-full right-0 z-10 mt-1 text-red-600 text-[0.7rem] whitespace-wrap ">
+        <div className="top-full right-0 z-10 mt-1 text-[0.7rem] text-red-600 whitespace-wrap">
           {error.msg}
         </div>
       )}

@@ -1,16 +1,16 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
-  SubcomponentData,
+  AlertProcessedEvent,
+  AnemometerData,
+  CatalyticConverterData,
   DriverAlert,
   FencelineJobState,
-  AnemometerData,
-  TemperatureControllerData,
-  CatalyticConverterData,
-  MfcData,
-  HvacSystemData,
   GasTankData,
-  AlertProcessedEvent,
-} from "@/types/socket";
+  HvacSystemData,
+  MfcData,
+  SubcomponentData,
+  TemperatureControllerData
+} from "@/types";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface SocketState {
   subcomponentData: SubcomponentData[];
@@ -38,7 +38,7 @@ const initialState: SocketState = {
   mfcData: null,
   hvacSystemData: null,
   gasTankData: null,
-  processedAlerts: [],
+  processedAlerts: []
 };
 
 // Max number of items to keep in arrays
@@ -54,20 +54,41 @@ export const socketSlice = createSlice({
     socketDisconnected: (state) => {
       state.connected = false;
     },
-    socketSubcomponentDataReceived: (state, action: PayloadAction<SubcomponentData>) => {
-      state.subcomponentData = [action.payload, ...state.subcomponentData.slice(0, MAX_ITEMS - 1)];
+    socketSubcomponentDataReceived: (
+      state,
+      action: PayloadAction<SubcomponentData>
+    ) => {
+      state.subcomponentData = [
+        action.payload,
+        ...state.subcomponentData.slice(0, MAX_ITEMS - 1)
+      ];
     },
     socketDriverAlertsReceived: (state, action: PayloadAction<DriverAlert>) => {
-      state.driverAlerts = [action.payload, ...state.driverAlerts.slice(0, MAX_ITEMS - 1)];
+      state.driverAlerts = [
+        action.payload,
+        ...state.driverAlerts.slice(0, MAX_ITEMS - 1)
+      ];
     },
-    socketFencelineJobStateReceived: (state, action: PayloadAction<FencelineJobState>) => {
+    socketFencelineJobStateReceived: (
+      state,
+      action: PayloadAction<FencelineJobState>
+    ) => {
       state.fencelineJobState = action.payload;
     },
-    socketProcessedAlertsReceived: (state, action: PayloadAction<AlertProcessedEvent>) => {
-      state.processedAlerts = [action.payload, ...state.processedAlerts.slice(0, MAX_ITEMS - 1)];
+    socketProcessedAlertsReceived: (
+      state,
+      action: PayloadAction<AlertProcessedEvent>
+    ) => {
+      state.processedAlerts = [
+        action.payload,
+        ...state.processedAlerts.slice(0, MAX_ITEMS - 1)
+      ];
     },
     // Namespace-specific data update actions
-    socketAnemometerDataReceived: (state, action: PayloadAction<AnemometerData>) => {
+    socketAnemometerDataReceived: (
+      state,
+      action: PayloadAction<AnemometerData>
+    ) => {
       state.anemometerData = action.payload;
     },
     socketTemperatureControllerDataReceived: (
@@ -85,7 +106,10 @@ export const socketSlice = createSlice({
     socketMfcDataReceived: (state, action: PayloadAction<MfcData>) => {
       state.mfcData = action.payload;
     },
-    socketHvacSystemDataReceived: (state, action: PayloadAction<HvacSystemData>) => {
+    socketHvacSystemDataReceived: (
+      state,
+      action: PayloadAction<HvacSystemData>
+    ) => {
       state.hvacSystemData = action.payload;
     },
     socketGasTankDataReceived: (state, action: PayloadAction<GasTankData>) => {
@@ -99,8 +123,8 @@ export const socketSlice = createSlice({
     },
     clearProcessedAlerts: (state) => {
       state.processedAlerts = [];
-    },
-  },
+    }
+  }
 });
 
 export const {
@@ -118,7 +142,7 @@ export const {
   socketGasTankDataReceived,
   clearSubcomponentData,
   clearDriverAlerts,
-  clearProcessedAlerts,
+  clearProcessedAlerts
 } = socketSlice.actions;
 
 export default socketSlice.reducer;

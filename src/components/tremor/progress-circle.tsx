@@ -3,40 +3,40 @@
 import React from "react";
 import { tv, VariantProps } from "tailwind-variants";
 
-import { cx } from "@/lib/utils";
+import { cx } from "@/utils";
 
 const progressCircleVariants = tv({
   slots: {
     background: "",
-    circle: "",
+    circle: ""
   },
   variants: {
     variant: {
       default: {
         background: "stroke-primary-50 dark:stroke-primary-500/30",
-        circle: "stroke-primary-500 dark:stroke-primary-500",
+        circle: "stroke-primary-500 dark:stroke-primary-500"
       },
       neutral: {
         background: "stroke-gray-200 dark:stroke-gray-500/40",
-        circle: "stroke-gray-500 dark:stroke-gray-500",
+        circle: "stroke-gray-500 dark:stroke-gray-500"
       },
       warning: {
         background: "stroke-yellow-200 dark:stroke-yellow-500/30",
-        circle: "stroke-yellow-500 dark:stroke-yellow-500",
+        circle: "stroke-yellow-500 dark:stroke-yellow-500"
       },
       error: {
         background: "stroke-red-200 dark:stroke-red-500/30",
-        circle: "stroke-red-500 dark:stroke-red-500",
+        circle: "stroke-red-500 dark:stroke-red-500"
       },
       success: {
         background: "stroke-emerald-200 dark:stroke-emerald-500/30",
-        circle: "stroke-emerald-500 dark:stroke-emerald-500",
-      },
-    },
+        circle: "stroke-emerald-500 dark:stroke-emerald-500"
+      }
+    }
   },
   defaultVariants: {
-    variant: "default",
-  },
+    variant: "default"
+  }
 });
 
 interface ProgressCircleProps
@@ -81,14 +81,16 @@ const ProgressCircle = React.forwardRef<SVGSVGElement, ProgressCircleProps>(
         aria-valuemax={max}
         data-max={max}
         data-value={safeValue ?? null}
-        tremor-id="tremor-raw">
+        tremor-id="tremor-raw"
+      >
         <svg
           ref={forwardedRef}
           width={radius * 2}
           height={radius * 2}
           viewBox={`0 0 ${radius * 2} ${radius * 2}`}
           className={cx("-rotate-90 transform", className)}
-          {...props}>
+          {...props}
+        >
           <circle
             r={normalizedRadius}
             cx={radius}
@@ -113,12 +115,17 @@ const ProgressCircle = React.forwardRef<SVGSVGElement, ProgressCircleProps>(
               className={cx(
                 "transition-colors ease-linear",
                 circle(),
-                showAnimation && "transform-gpu transition-all duration-300 ease-in-out"
+                showAnimation &&
+                  "transform-gpu transition-all duration-300 ease-in-out"
               )}
             />
           ) : null}
         </svg>
-        <div className={cx("absolute inset-0 flex items-center justify-center")}>{children}</div>
+        <div
+          className={cx("absolute inset-0 flex items-center justify-center")}
+        >
+          {children}
+        </div>
       </div>
     );
   }

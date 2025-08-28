@@ -1,9 +1,9 @@
 // Tremor Raw Dialog [v0.0.0]
 
+import { cx } from "@/utils";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import React from "react";
-import { cx } from "../../lib/utils";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -42,21 +42,26 @@ const DialogContent = React.forwardRef<
         "fixed left-[50%] top-[50%] z-50 grid w-full dark:focus-outline-none dark:foucs:ring-none max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg md:rounded-2xl bg-white dark:bg-neutral-900 dark:text-white dark:border-neutral-800 border px-9 py-8 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] ",
         className
       )}
-      {...props}>
+      {...props}
+    >
       {!hideClose && (
-        <div className="absolute top-0 right-0  pt-4 pr-4 sm:block">
-          <DialogPrimitive.Close asChild className="active:outline-none focus:ring-0">
+        <div className="sm:block top-0 right-0 absolute pt-4 pr-4">
+          <DialogPrimitive.Close
+            asChild
+            className="active:outline-none focus:ring-0"
+          >
             <button
               type="button"
-              className="outline-offset-0 active:outline-white rounded-full bg-gray-50 dark:bg-neutral-800 dark:text-white text-gray-600 hover:text-black hover:scale-105 active:outline-none focus:ring-0 transition-scale focus:outline-none focus:bg-gray-100">
+              className="bg-gray-50 focus:bg-gray-100 dark:bg-neutral-800 rounded-full focus:outline-none active:outline-none active:outline-white outline-offset-0 focus:ring-0 text-gray-600 hover:text-black dark:text-white hover:scale-105 transition-scale"
+            >
               <span className="sr-only">Close</span>
-              <X className="h-10 w-10 p-2.5" aria-hidden="true" />
+              <X className="p-2.5 w-10 h-10" aria-hidden="true" />
             </button>
           </DialogPrimitive.Close>
         </div>
       )}
-      {/* <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
+      {/* <DialogPrimitive.Close className="top-4 right-4 absolute data-[state=open]:bg-accent opacity-70 hover:opacity-100 rounded-sm focus:outline-none focus:ring-2 focus:ring-ring ring-offset-background focus:ring-offset-2 data-[state=open]:text-muted-foreground transition-opacity disabled:pointer-events-none">
+        <X className="w-4 h-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close> */}
       {children}
@@ -65,14 +70,26 @@ const DialogContent = React.forwardRef<
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
-const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cx("flex flex-col text-center sm:text-left", className)} {...props} />
+const DialogHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cx("flex flex-col text-center sm:text-left", className)}
+    {...props}
+  />
 );
 DialogHeader.displayName = "DialogHeader";
 
-const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+const DialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cx("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
+    className={cx(
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      className
+    )}
     {...props}
   />
 );
@@ -115,5 +132,5 @@ export {
   DialogOverlay,
   DialogPortal,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 };

@@ -1,5 +1,3 @@
-import { ChartData } from "@/types/data-review";
-
 export type WindRoseDirection =
   | "N"
   | "NNE"
@@ -37,7 +35,7 @@ export interface WindData {
   calm_threshold?: number;
 }
 
-export interface ChartDataPoint {
+export interface ChartData {
   timestamps: number;
   [key: string]: number;
 }

@@ -1,31 +1,29 @@
-import { ProgressCircle } from "@/components/tremor/progress-circle";
-import { Card, CardTitle } from "@/components/ui/card";
-import {
-  useGetCurrentStateQuery,
-  useGetMeasurementStatusQuery,
-} from "@/pages/method/data/fencelineStateMachine.slice";
-import { useGetJobHistoryQuery } from "@/pages/method/data/fencelineJob.slice";
 import { Spinner } from "@/components/spinner";
+import { ProgressCircle } from "@/components/tremor/progress-circle";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from "@/components/ui/accordion";
+import { Card, CardTitle } from "@/components/ui/card";
+import { useSocket } from "@/hooks/useSocket";
+import { useGetJobHistoryQuery } from "@/pages/method/data/fencelineJob.slice";
 import {
-  CheckCircle2,
-  Clock,
+  CurrentJob,
+  useGetCurrentStateQuery,
+  useGetMeasurementStatusQuery
+} from "@/pages/method/data/fencelineStateMachine.slice";
+import { WebSocketJobData, WebSocketJobStateData } from "@/types";
+import { formatLabel, formatTime, formatUnixTimestamp } from "@/utils";
+import {
   AlertCircle,
-  Infinity as InfinityIcon,
-  Play,
+  CheckCircle2,
   CircleDashed,
-  MessageCircle,
+  Clock,
+  Infinity as InfinityIcon
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useSocket } from "@/hooks/useSocket";
-import { WebSocketJobData, WebSocketJobStateData } from "@/types/socket";
-import { CurrentJob } from "@/pages/method/data/fencelineStateMachine.slice";
-import { formatLabel, formatTime, formatUnixTimestamp } from "@/utils";
 interface CurrentState {
   state: string;
   system_status?: string;
@@ -39,23 +37,22 @@ const MeasurementState = () => {
   const [currentState, setCurrentState] = useState<CurrentState | null>(null);
 
   // Only query these endpoints if websocket has an error or is not connected
-  const { data: stateData, isLoading: isStateLoading } = useGetCurrentStateQuery(undefined, {
-    pollingInterval: 5000,
-    skip: connected && !wsError,
-  });
+  const { data: stateData, isLoading: isStateLoading } =
+    useGetCurrentStateQuery(undefined, {
+      pollingInterval: 5000,
+      skip: connected && !wsError
+    });
 
   const { data: measurementStateData, isLoading: isMeasurementStateLoading } =
     useGetMeasurementStatusQuery(undefined, {
       pollingInterval: 5000,
-      skip: connected && !wsError,
+      skip: connected && !wsError
     });
 
-  const { data: jobHistoryData, isLoading: isJobHistoryLoading } = useGetJobHistoryQuery(
-    undefined,
-    {
-      pollingInterval: 5000,
-    }
-  );
+  const { data: jobHistoryData, isLoading: isJobHistoryLoading } =
+    useGetJobHistoryQuery(undefined, {
+      pollingInterval: 5000
+    });
 
   // Update state when websocket data changes
   useEffect(() => {
@@ -84,10 +81,10 @@ const MeasurementState = () => {
               recipe: currentJob.recipe_name || "Unknown Recipe",
               elapsed_time: currentJob.elapsed_time_seconds,
               duration: currentJob.total_expected_duration_seconds,
-              status: "in_progress", //assuming here that all jobs are in progress from ws but need to revisit this
+              status: "in_progress" //assuming here that all jobs are in progress from ws but need to revisit this
             }
           : null,
-        lastFetched: Date.now(),
+        lastFetched: Date.now()
       });
       setWsError(false);
     } catch (error) {
@@ -103,12 +100,13 @@ const MeasurementState = () => {
     setCurrentState({
       state: stateData.state,
       current_job: measurementStateData.current_job,
-      lastFetched: Date.now(),
+      lastFetched: Date.now()
     });
   }, [wsError, stateData, measurementStateData]);
 
   const isLoading =
-    (!connected && (isStateLoading || isMeasurementStateLoading)) || isJobHistoryLoading;
+    (!connected && (isStateLoading || isMeasurementStateLoading)) ||
+    isJobHistoryLoading;
 
   if (isLoading || !currentState) {
     return (
@@ -129,7 +127,8 @@ const MeasurementState = () => {
     );
   }
 
-  const isRunning = currentState.state === "Running" || currentState.state === "SystemStartup";
+  const isRunning =
+    currentState.state === "Running" || currentState.state === "SystemStartup";
 
   const calculateProgress = () => {
     const job = currentState?.current_job;
@@ -161,19 +160,21 @@ const MeasurementState = () => {
     if (!seconds) return "--:--";
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   const getJobTime = (job: WebSocketJobData | CurrentJob) => {
     if ("elapsed_time_seconds" in job) {
       return {
         elapsed: job.elapsed_time_seconds,
-        total: job.total_expected_duration_seconds,
+        total: job.total_expected_duration_seconds
       };
     }
     return {
       elapsed: job.elapsed_time,
-      total: job.duration,
+      total: job.duration
     };
   };
 
@@ -193,13 +194,19 @@ const MeasurementState = () => {
           {currentState.state === "SystemStartup" && (
             <Spinner size="14" className="text-primary-500" />
           )}
-          {(currentState.state === "Idle" || currentState.state === "Unknown") && (
+          {(currentState.state === "Idle" ||
+            currentState.state === "Unknown") && (
             <div className="bg-neutral-50 border-4 border-neutral-200 rounded-full w-14 h-14 text-primary-500" />
           )}
 
           {currentState.current_job &&
             (currentState.current_job.job_type === "manual" ? (
-              <ProgressCircle value={0} radius={38} strokeWidth={9} color="primary">
+              <ProgressCircle
+                value={0}
+                radius={38}
+                strokeWidth={9}
+                color="primary"
+              >
                 <p className="font-medium text-xs">
                   <InfinityIcon size={20} className="text-primary-600" />
                 </p>
@@ -209,7 +216,8 @@ const MeasurementState = () => {
                 value={progressPercentage}
                 radius={38}
                 strokeWidth={9}
-                color="primary">
+                color="primary"
+              >
                 <p className="font-medium text-base">{progressPercentage}%</p>
               </ProgressCircle>
             ))}
@@ -218,7 +226,12 @@ const MeasurementState = () => {
             currentState.state !== "Idle" &&
             currentState.state !== "Unknown" &&
             !currentState.current_job && (
-              <ProgressCircle value={0} radius={30} strokeWidth={6} color="primary">
+              <ProgressCircle
+                value={0}
+                radius={30}
+                strokeWidth={6}
+                color="primary"
+              >
                 <p className="opacity-0 font-medium text-base">{0}%</p>
               </ProgressCircle>
             )}
@@ -228,8 +241,11 @@ const MeasurementState = () => {
           <div className="flex items-center gap-4 mb-1">
             <div
               className={`${
-                isRunning ? "bg-primary-500/5 text-primary-500" : "bg-neutral-100 text-neutral-600"
-              } -ml-1 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5`}>
+                isRunning
+                  ? "bg-primary-500/5 text-primary-500"
+                  : "bg-neutral-100 text-neutral-600"
+              } -ml-1 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5`}
+            >
               <div
                 className={`w-1.5 h-1.5 ${
                   isRunning ? "bg-primary-500" : "bg-neutral-400"
@@ -252,10 +268,17 @@ const MeasurementState = () => {
                 <span>
                   Elapsed:{" "}
                   <span className="tabular-nums">
-                    {formatTimeDisplay(getJobTime(currentState.current_job).elapsed)}
+                    {formatTimeDisplay(
+                      getJobTime(currentState.current_job).elapsed
+                    )}
                   </span>
                 </span>
-                <span>Total: {formatTimeDisplay(getJobTime(currentState.current_job).total)}</span>
+                <span>
+                  Total:{" "}
+                  {formatTimeDisplay(
+                    getJobTime(currentState.current_job).total
+                  )}
+                </span>
                 <span className="bg-neutral-100 dark:bg-neutral-700 px-2 py-0.5 rounded">
                   Job #{currentState.current_job.job_id}
                 </span>
@@ -275,7 +298,8 @@ const MeasurementState = () => {
         <Accordion
           type="single"
           collapsible
-          className="bg-neutral-50 hover:bg-neutral-50 dark:bg-neutral-800/50 dark:hover:bg-neutral-700 px-8 py-1 border-neutral-100 dark:border-neutral-700 border-t rounded-b-xl w-full">
+          className="bg-neutral-50 hover:bg-neutral-50 dark:bg-neutral-800/50 dark:hover:bg-neutral-700 px-8 py-1 border-neutral-100 dark:border-neutral-700 border-t rounded-b-xl w-full"
+        >
           <AccordionItem value="recent-runs" className="border-b-0">
             <AccordionTrigger className="py-2 hover:no-underline">
               <div className="flex items-center gap-2 text-sm">
@@ -287,7 +311,10 @@ const MeasurementState = () => {
               <div className="pt-3 pb-4">
                 <div className="relative">
                   {jobHistoryData?.map((job, index) => (
-                    <div key={job.job_id} className="relative flex gap-4 pb-4 last:pb-0">
+                    <div
+                      key={job.job_id}
+                      className="relative flex gap-4 pb-4 last:pb-0"
+                    >
                       {index < jobHistoryData.length - 1 && (
                         <div className="top-8 bottom-0 left-4 absolute bg-neutral-200 dark:bg-neutral-700 w-px" />
                       )}
@@ -295,13 +322,19 @@ const MeasurementState = () => {
                       <div className="z-10 relative flex-shrink-0 mt-1">
                         <div className="flex justify-center items-center bg-white dark:bg-neutral-800 rounded-full ring-2 ring-neutral-100 dark:ring-neutral-700 w-8 h-8">
                           {job.job_status === "finished" ? (
-                            <CheckCircle2 size={18} className="text-primary-500" />
+                            <CheckCircle2
+                              size={18}
+                              className="text-primary-500"
+                            />
                           ) : job.job_status === "cancelled" ? (
                             <AlertCircle size={18} className="text-amber-500" />
                           ) : job.job_status === "in_progress" ? (
                             <Spinner className="text-primary-500" />
                           ) : job.job_status === "created" ? (
-                            <CircleDashed size={16} className="text-neutral-400" />
+                            <CircleDashed
+                              size={16}
+                              className="text-neutral-400"
+                            />
                           ) : (
                             <AlertCircle size={18} className="text-red-500" />
                           )}
@@ -332,7 +365,8 @@ const MeasurementState = () => {
                                 : job.job_status === "created"
                                 ? "bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400"
                                 : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                            }`}>
+                            }`}
+                          >
                             {job.job_status}
                           </span>
                         </div>
@@ -342,7 +376,9 @@ const MeasurementState = () => {
                           {job.duration > 0 && (
                             <div className="flex items-center gap-1">
                               <Clock size={12} />
-                              <span className="font-medium">{formatTimeDisplay(job.duration)}</span>
+                              <span className="font-medium">
+                                {formatTimeDisplay(job.duration)}
+                              </span>
                             </div>
                           )}
                           {job.start_time && (

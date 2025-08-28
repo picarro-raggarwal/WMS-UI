@@ -1,8 +1,8 @@
-import { useLoginMutation } from "@/common/authAPI";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
+import { useLoginMutation } from "@/utils";
 import { AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -71,8 +71,8 @@ export default function AuthLogin({
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
         {showSuccessMessage && (
-          <Alert className="border-green-200 bg-green-50 text-green-800">
-            <CheckCircle className="h-4 w-4" />
+          <Alert className="bg-green-50 border-green-200 text-green-800">
+            <CheckCircle className="w-4 h-4" />
             <AlertDescription>
               Password updated successfully! Please login with your new
               credentials.
@@ -82,7 +82,7 @@ export default function AuthLogin({
 
         {error && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="w-4 h-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -90,7 +90,7 @@ export default function AuthLogin({
         <div className="flex flex-col gap-2">
           <label
             htmlFor="username"
-            className="text-sm font-medium text-neutral-700"
+            className="font-medium text-neutral-700 text-sm"
           >
             Username
           </label>
@@ -109,7 +109,7 @@ export default function AuthLogin({
         <div className="flex flex-col gap-2">
           <label
             htmlFor="password"
-            className="text-sm font-medium text-neutral-700"
+            className="font-medium text-neutral-700 text-sm"
           >
             Password
           </label>
@@ -122,12 +122,12 @@ export default function AuthLogin({
               placeholder="Enter your password"
               autoComplete="current-password"
               required
-              className="border-neutral-200 focus:border-primary-500 focus:ring-primary-500 pr-10"
+              className="pr-10 border-neutral-200 focus:border-primary-500 focus:ring-primary-500"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
+              className="top-1/2 right-3 absolute text-neutral-500 hover:text-neutral-700 -translate-y-1/2 transform"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>

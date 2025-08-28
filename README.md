@@ -75,13 +75,83 @@ src/
 │   ├── qa-qc/          # Quality assurance and calibration
 │   ├── service/        # System setup and configuration
 │   └── settings/       # User and system settings
-├── lib/                # Utility libraries and services
+├── lib/                # Redux store and API services
 │   ├── services/       # API and socket services
 │   └── store.ts        # Redux store configuration
 ├── hooks/              # Custom React hooks
-├── types/              # TypeScript type definitions
-└── utils/              # Helper functions and utilities
+├── types/              # Centralized TypeScript types
+    ├── common/         # Common types (API, charts)
+    ├── index.ts        # Single export point for all types
+    └── socket.ts       # WebSocket specific types
+└── utils/              # Centralized utility functions
+    ├── api/            # API utilities (auth, queries)
+    ├── charts/         # Chart utilities and colors
+    ├── formatting/     # Text, time, threshold formatting
+    ├── hooks/          # Utility hooks (scroll, resize)
+    ├── ui/             # UI utilities (class names, formatters)
+    └── index.ts        # Single export point for all utilities
 ```
+
+## 🛠️ Utils Organization
+
+The project follows a centralized utility organization pattern for better maintainability and consistency:
+
+### **Import Pattern**
+
+All utilities are imported from a single entry point:
+
+```typescript
+// ✅ CORRECT - Single import point
+import { formatLabel, cn, chartColors, useScroll } from "@/utils";
+
+// ❌ WRONG - Don't import from individual files
+import { formatLabel } from "@/utils/formatting/textFormatting";
+```
+
+### **Available Utility Categories**
+
+- **Formatting**: Text, time, and threshold formatting utilities
+- **UI**: Class name utilities, formatters, and focus styles
+- **Charts**: Color palettes, chart helpers, and domain calculations
+- **Hooks**: Custom utility hooks for scroll and window resize
+- **API**: Authentication, protected queries, and API utilities
+
+### **Benefits**
+
+- **Single source of truth** for all utilities
+- **Easy refactoring** without updating multiple imports
+- **Consistent patterns** across the codebase
+- **Better discoverability** for developers
+
+## 📝 **Types Organization**
+
+The project follows a centralized types organization pattern for better maintainability and consistency:
+
+### **Import Pattern**
+
+All types are imported from a single entry point:
+
+```typescript
+// ✅ CORRECT - Single import point
+import { BaseResponse, ChartDataPoint, Alert, Recipe } from "@/types";
+
+// ❌ WRONG - Don't import from individual files
+import { Alert } from "@/pages/alerts/data/alerts.slice";
+```
+
+### **Available Type Categories**
+
+- **Common API**: Response wrappers, pagination, error handling
+- **Common Charts**: Chart data, configuration, wind rose types
+- **Feature-Specific**: Types used by individual features (dashboard, alerts, etc.)
+- **WebSocket**: Real-time data and communication types
+
+### **Benefits**
+
+- **Single source of truth** for all types
+- **Easy refactoring** without updating multiple imports
+- **Consistent patterns** across the codebase
+- **Reduced duplication** through shared common types
 
 ## 🚦 Getting Started
 

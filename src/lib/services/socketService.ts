@@ -9,7 +9,7 @@ import {
   MfcData,
   SubcomponentData,
   TemperatureControllerData
-} from "@/types/socket";
+} from "@/types";
 import { io, Socket } from "socket.io-client";
 import {
   socketAnemometerDataReceived,

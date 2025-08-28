@@ -1,8 +1,5 @@
-import {
-  AuthTokenResponse,
-  PasswordUpdateRequiredResponse
-} from "@/common/authAPI";
 import { useGetProfileQuery } from "@/pages/settings/data/user-management.slice";
+import { AuthTokenResponse, PasswordUpdateRequiredResponse } from "@/utils";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router";
 

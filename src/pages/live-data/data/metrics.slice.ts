@@ -1,5 +1,5 @@
-import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
-import { MetricsResponse } from "@/types/data-review";
+import { MetricsResponse } from "@/types";
+import { protectedBaseQuery } from "@/utils";
 import { createApi } from "@reduxjs/toolkit/query/react";
 
 type DownsampleMode = "MEAN" | "MEDIAN" | "FIRST" | "LAST";

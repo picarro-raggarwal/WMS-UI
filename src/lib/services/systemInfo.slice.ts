@@ -1,4 +1,4 @@
-import { protectedBaseQuery } from "@/common/ProtectedBaseQuery";
+import { protectedBaseQuery } from "@/utils";
 import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface AnalyzerInfo {

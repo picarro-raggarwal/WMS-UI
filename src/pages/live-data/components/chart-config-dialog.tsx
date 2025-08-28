@@ -7,25 +7,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { MetricOption } from "@/types/data-review";
-import { Grid, Grid2x2, Search, Settings, SlidersHorizontal } from "lucide-react";
+import { MetricOption } from "@/types";
+import { formatLabel } from "@/utils";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useGetMetricsQuery } from "../data/metrics.slice";
-import { formatLabel } from "@/utils";
 
 interface ChartConfigDialogProps {
   selectedMetrics: string[];
   onMetricsChange: React.Dispatch<React.SetStateAction<[string, string]>>;
 }
 
-export const ChartConfigDialog = ({ selectedMetrics, onMetricsChange }: ChartConfigDialogProps) => {
+export const ChartConfigDialog = ({
+  selectedMetrics,
+  onMetricsChange
+}: ChartConfigDialogProps) => {
   const {
     data: metricsConfig,
     isError: isErrorMetrics,
-    isLoading: isLoadingMetrics,
+    isLoading: isLoadingMetrics
   } = useGetMetricsQuery();
   const [searchQuery, setSearchQuery] = useState("");
   const [newSelectedMetrics, setNewSelectedMetrics] = useState<string[]>([]);
@@ -46,14 +49,14 @@ export const ChartConfigDialog = ({ selectedMetrics, onMetricsChange }: ChartCon
     }
   };
 
-  const availableMetrics: MetricOption[] = Object.entries(metricsConfig?.metrics ?? {}).map(
-    ([id, config]) => ({
-      id: id,
-      label: formatLabel(id),
-      unit: config.unit ?? "",
-      type: config.type,
-    })
-  );
+  const availableMetrics: MetricOption[] = Object.entries(
+    metricsConfig?.metrics ?? {}
+  ).map(([id, config]) => ({
+    id: id,
+    label: formatLabel(id),
+    unit: config.unit ?? "",
+    type: config.type
+  }));
 
   const filteredMetrics = availableMetrics.filter(
     (metric) =>
@@ -96,7 +99,9 @@ export const ChartConfigDialog = ({ selectedMetrics, onMetricsChange }: ChartCon
             )}
             {isErrorMetrics && (
               <div className="flex justify-center items-center col-span-2">
-                <p className="text-muted-foreground text-sm">Error loading metrics</p>
+                <p className="text-muted-foreground text-sm">
+                  Error loading metrics
+                </p>
               </div>
             )}
             {!isErrorMetrics &&
@@ -104,7 +109,8 @@ export const ChartConfigDialog = ({ selectedMetrics, onMetricsChange }: ChartCon
                 <div
                   key={metric.id}
                   onClick={() => handleMetricToggle(metric.id)}
-                  className="flex items-center space-x-3 bg-white hover:bg-muted/50 shadow-sm px-4 py-4 rounded-lg active:scale-[.98] transition-scale duration-100 cursor-pointer">
+                  className="flex items-center space-x-3 bg-white hover:bg-muted/50 shadow-sm px-4 py-4 rounded-lg active:scale-[.98] transition-scale duration-100 cursor-pointer"
+                >
                   <Checkbox
                     id={metric.id}
                     checked={newSelectedMetrics.includes(metric.id)}
@@ -121,7 +127,9 @@ export const ChartConfigDialog = ({ selectedMetrics, onMetricsChange }: ChartCon
                       </p>
                     </div>
                     {metric.unit && (
-                      <p className="text-muted-foreground text-sm">Unit: {metric.unit}</p>
+                      <p className="text-muted-foreground text-sm">
+                        Unit: {metric.unit}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -143,8 +151,12 @@ export const ChartConfigDialog = ({ selectedMetrics, onMetricsChange }: ChartCon
                   if (newSelectedMetrics.length < 2) {
                     return;
                   }
-                  onMetricsChange([newSelectedMetrics[0], newSelectedMetrics[1]]);
-                }}>
+                  onMetricsChange([
+                    newSelectedMetrics[0],
+                    newSelectedMetrics[1]
+                  ]);
+                }}
+              >
                 Apply
               </Button>
             </DialogTrigger>

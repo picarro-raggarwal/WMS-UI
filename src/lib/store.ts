@@ -1,4 +1,3 @@
-import { authApi } from "@/common/authAPI";
 import { systemInfoApi } from "@/lib/services/systemInfo.slice";
 import { timeSyncApi } from "@/lib/services/timesync.slice";
 import { alertsApi } from "@/pages/alerts/data/alerts.slice";
@@ -16,6 +15,7 @@ import { settingsApi } from "@/pages/settings/data/settings.slice";
 import { smartRecipeApi } from "@/pages/settings/data/smart-recipe.slice";
 import { thresholdsApi } from "@/pages/settings/data/thresholds.slice";
 import { userManagementApi } from "@/pages/settings/data/user-management.slice";
+import { authApi } from "@/utils";
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import socketReducer from "./services/socketSlice";

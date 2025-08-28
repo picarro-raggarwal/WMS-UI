@@ -6,8 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetSystemInfoQuery } from "@/lib/services/systemInfo.slice";
 // import { useGetTimeQuery } from "@/lib/services/timesync.slice";
-import { convertTimestampToTimezone } from "@/lib/utils";
-import { formatDateTime } from "@/utils";
+import { convertTimestampToTimezone, formatDateTime } from "@/utils";
 import { useLocalStorage } from "@mantine/hooks";
 import {
   AlertTriangle,

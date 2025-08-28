@@ -1,6 +1,5 @@
 import { ChevronsUpDown, LogOut, User2 } from "lucide-react";
 
-import { useLogoutMutation } from "@/common/authAPI";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -17,6 +16,7 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
+import { useLogoutMutation } from "@/utils";
 
 export function NavUser({
   user

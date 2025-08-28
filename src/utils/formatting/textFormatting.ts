@@ -57,7 +57,7 @@ export function formatLabel(input: string): string {
     "eto",
     "h2o",
     "hon",
-    "gps",
+    "gps"
   ]);
 
   return words

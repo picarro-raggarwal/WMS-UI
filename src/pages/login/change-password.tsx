@@ -1,9 +1,8 @@
-import { useRequiredUpdatePasswordMutation } from "@/common/authAPI";
-import { clearAuthData } from "@/common/ProtectedBaseQuery";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
+import { clearAuthData, useRequiredUpdatePasswordMutation } from "@/utils";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -96,7 +95,7 @@ export default function ChangePasswordForm() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
         {error && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="w-4 h-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -104,7 +103,7 @@ export default function ChangePasswordForm() {
         <div className="flex flex-col gap-2">
           <label
             htmlFor="newPassword"
-            className="text-sm font-medium text-neutral-700"
+            className="font-medium text-neutral-700 text-sm"
           >
             New Password
           </label>
@@ -116,12 +115,12 @@ export default function ChangePasswordForm() {
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Enter your new password"
               required
-              className="border-neutral-200 focus:border-primary-500 focus:ring-primary-500 pr-10"
+              className="pr-10 border-neutral-200 focus:border-primary-500 focus:ring-primary-500"
             />
             <button
               type="button"
               onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
+              className="top-1/2 right-3 absolute text-neutral-500 hover:text-neutral-700 -translate-y-1/2 transform"
             >
               {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -131,7 +130,7 @@ export default function ChangePasswordForm() {
         <div className="flex flex-col gap-2">
           <label
             htmlFor="confirmPassword"
-            className="text-sm font-medium text-neutral-700"
+            className="font-medium text-neutral-700 text-sm"
           >
             Confirm New Password
           </label>
@@ -143,12 +142,12 @@ export default function ChangePasswordForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your new password"
               required
-              className="border-neutral-200 focus:border-primary-500 focus:ring-primary-500 pr-10"
+              className="pr-10 border-neutral-200 focus:border-primary-500 focus:ring-primary-500"
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
+              className="top-1/2 right-3 absolute text-neutral-500 hover:text-neutral-700 -translate-y-1/2 transform"
             >
               {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -160,7 +159,7 @@ export default function ChangePasswordForm() {
             type="button"
             variant="outline"
             onClick={handleCancel}
-            className="flex-1 border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+            className="flex-1 hover:bg-neutral-50 border-neutral-300 text-neutral-700"
           >
             Cancel
           </Button>

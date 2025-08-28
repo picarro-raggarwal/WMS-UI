@@ -1,6 +1,6 @@
 import { DATE_TIME_FORMAT } from "@/constants";
 import { clsx, type ClassValue } from "clsx";
-import { format, isValid, fromUnixTime } from "date-fns";
+import { format, fromUnixTime, isValid } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -18,7 +18,7 @@ export const focusInput = [
   // ring color
   "focus:ring-blue-200 focus:dark:ring-blue-700/30",
   // border color
-  "focus:border-blue-500 focus:dark:border-blue-700",
+  "focus:border-blue-500 focus:dark:border-blue-700"
 ];
 
 // Tremor focusRing [v0.0.1]
@@ -27,7 +27,7 @@ export const focusRing = [
   // base
   "outline outline-offset-2 outline-0 focus-visible:outline-2",
   // outline color
-  "outline-blue-500 dark:outline-blue-500",
+  "outline-blue-500 dark:outline-blue-500"
 ];
 
 // Tremor hasErrorInput [v0.0.1]
@@ -38,7 +38,7 @@ export const hasErrorInput = [
   // border color
   "border-red-500 dark:border-red-700",
   // ring color
-  "ring-red-200 dark:ring-red-700/30",
+  "ring-red-200 dark:ring-red-700/30"
 ];
 
 interface CurrencyParams {
@@ -65,17 +65,21 @@ type FormatterFunctions = {
 };
 
 export const formatters: FormatterFunctions = {
-  currency: ({ number, maxFractionDigits = 2, currency = "USD" }: CurrencyParams): string => {
+  currency: ({
+    number,
+    maxFractionDigits = 2,
+    currency = "USD"
+  }: CurrencyParams): string => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
-      maximumFractionDigits: maxFractionDigits,
+      maximumFractionDigits: maxFractionDigits
     }).format(number);
   },
 
   unit: (number: number): string => {
     return new Intl.NumberFormat("en-US", {
-      style: "decimal",
+      style: "decimal"
     }).format(number);
   },
 
@@ -83,7 +87,7 @@ export const formatters: FormatterFunctions = {
     return new Intl.NumberFormat("en-US", {
       style: "percent",
       minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
+      maximumFractionDigits: decimals
     }).format(number);
   },
 
@@ -91,16 +95,16 @@ export const formatters: FormatterFunctions = {
     return `${new Intl.NumberFormat("en-US", {
       style: "decimal",
       minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
+      maximumFractionDigits: decimals
     }).format(number)}M`;
-  },
+  }
 };
 
 export const percentageFormatter = (number: number, decimals = 1) => {
   const formattedNumber = new Intl.NumberFormat("en-US", {
     style: "percent",
     minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    maximumFractionDigits: decimals
   }).format(number);
   const symbol = number > 0 && number !== Infinity ? "+" : "";
 
@@ -148,7 +152,9 @@ export const convertTimestampToTimezone = (
     new Intl.DateTimeFormat("en-US", { timeZone: timezone });
   } catch (error) {
     throw new Error(
-      `Invalid timezone '${timezone}': ${error instanceof Error ? error.message : "Unknown error"}`
+      `Invalid timezone '${timezone}': ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
     );
   }
 
@@ -163,7 +169,7 @@ export const convertTimestampToTimezone = (
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      hour12: false,
+      hour12: false
     });
 
     const parts = formatter.formatToParts(date);

@@ -30,7 +30,7 @@ import {
 } from "@/lib/services/systemInfo.slice";
 // import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { useGetSystemMetricsQuery } from "@/pages/dashboard/data/systemMetrics.slice";
-import { WebSocketJobStateData } from "@/types/socket";
+import { WebSocketJobStateData } from "@/types";
 import { formatTime } from "@/utils";
 import { useLocalStorage } from "@mantine/hooks";
 import BatteryIndicator from "./battery-indicator";
