@@ -1,11 +1,11 @@
 // Types for our map data
-export type BoundaryPoint = { lat: number; lng: number };
+export type BoundaryPoint = { x: number; y: number };
 export type Boundary = {
   id: string;
   name: string;
   type: "safe" | "warning" | "danger";
-  points: { lat: number; lng: number }[];
-  markers?: { lat: number; lng: number }[];
+  points: { x: number; y: number }[];
+  markers?: { x: number; y: number }[];
 };
 
 // Image configuration
@@ -21,10 +21,10 @@ export const mockBoundaries: Boundary[] = [
     name: "Bedroom 1",
     type: "safe",
     points: [
-      { lat: 1744.6146, lng: 1477.3463 },
-      { lat: 1743.9736, lng: 1880.492 },
-      { lat: 1347.8782, lng: 1880.492 },
-      { lat: 1347.2373, lng: 1480.5509 }
+      { x: 1744.6146, y: 1477.3463 },
+      { x: 1743.9736, y: 1880.492 },
+      { x: 1347.8782, y: 1880.492 },
+      { x: 1347.2373, y: 1480.5509 }
     ]
   },
   {
@@ -32,10 +32,10 @@ export const mockBoundaries: Boundary[] = [
     name: "Bedroom 2",
     type: "warning",
     points: [
-      { lat: 1212.2332, lng: 948.3457 },
-      { lat: 1212.2332, lng: 1351.3926 },
-      { lat: 813.3095, lng: 1351.3926 },
-      { lat: 812.2787, lng: 947.3149 }
+      { x: 1212.2332, y: 948.3457 },
+      { x: 1212.2332, y: 1351.3926 },
+      { x: 813.3095, y: 1351.3926 },
+      { x: 812.2787, y: 947.3149 }
     ]
   },
   {
@@ -43,10 +43,10 @@ export const mockBoundaries: Boundary[] = [
     name: "Bathroom",
     type: "danger",
     points: [
-      { lat: 1745.3906, lng: 545.8247 },
-      { lat: 1743.6069, lng: 815.1696 },
-      { lat: 1347.6163, lng: 815.1696 },
-      { lat: 1347.6163, lng: 546.7166 }
+      { x: 1745.3906, y: 545.8247 },
+      { x: 1743.6069, y: 815.1696 },
+      { x: 1347.6163, y: 815.1696 },
+      { x: 1347.6163, y: 546.7166 }
     ]
   },
   {
@@ -54,10 +54,10 @@ export const mockBoundaries: Boundary[] = [
     name: "Living Room",
     type: "safe",
     points: [
-      { lat: 809.8835, lng: 948.4652 },
-      { lat: 812.1187, lng: 1350.7993 },
-      { lat: 406.8044, lng: 1350.7993 },
-      { lat: 407.5494, lng: 946.9751 }
+      { x: 809.8835, y: 948.4652 },
+      { x: 812.1187, y: 1350.7993 },
+      { x: 406.8044, y: 1350.7993 },
+      { x: 407.5494, y: 946.9751 }
     ]
   },
   {
@@ -65,12 +65,12 @@ export const mockBoundaries: Boundary[] = [
     name: "Common Area",
     type: "safe",
     points: [
-      { lat: 1741.1746, lng: 820.9646 },
-      { lat: 1742.6341, lng: 1119.4308 },
-      { lat: 1665.281, lng: 1117.2415 },
-      { lat: 1664.5512, lng: 892.4797 },
-      { lat: 1542.6836, lng: 892.4797 },
-      { lat: 1540.4944, lng: 822.424 }
+      { x: 1741.1746, y: 820.9646 },
+      { x: 1742.6341, y: 1119.4308 },
+      { x: 1665.281, y: 1117.2415 },
+      { x: 1664.5512, y: 892.4797 },
+      { x: 1542.6836, y: 892.4797 },
+      { x: 1540.4944, y: 822.424 }
     ]
   }
 ];
@@ -109,12 +109,12 @@ export const boundaryStyles = {
 export function randomPointInPolygon(
   polygon: [number, number][]
 ): [number, number] {
-  const lats = polygon.map(([lat]) => lat);
-  const lngs = polygon.map(([, lng]) => lng);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
+  const xs = polygon.map(([x]) => x);
+  const ys = polygon.map(([, y]) => y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
 
   // Simple point-in-polygon test (ray-casting)
   function isInside([x, y]: [number, number]) {
@@ -136,8 +136,8 @@ export function randomPointInPolygon(
   let tries = 0;
   do {
     pt = [
-      minLat + Math.random() * (maxLat - minLat),
-      minLng + Math.random() * (maxLng - minLng)
+      minX + Math.random() * (maxX - minX),
+      minY + Math.random() * (maxY - minY)
     ];
     tries++;
     if (tries > 100) break; // fallback if polygon is too thin
@@ -150,24 +150,24 @@ export const deviceTypes = ["mobile", "hand-held", "watch"];
 // Helper to generate moving markers with id and deviceType
 export function getMovingMarkers(boundaries: Boundary[]) {
   return boundaries.map((boundary, bIdx) => {
-    const poly = boundary.points.map((p) => [p.lat, p.lng] as [number, number]);
+    const poly = boundary.points.map((p) => [p.x, p.y] as [number, number]);
     if (
       !poly ||
       poly.length < 3 ||
-      poly.some(([lat, lng]) => isNaN(lat) || isNaN(lng))
+      poly.some(([x, y]) => isNaN(x) || isNaN(y))
     ) {
       return [];
     }
     // Generate a random number of markers (2-5) for each boundary
     const numMarkers = Math.floor(Math.random() * 4) + 2; // 2 to 5
     return Array.from({ length: numMarkers }).map((_, idx) => {
-      const [lat, lng] = randomPointInPolygon(poly);
+      const [x, y] = randomPointInPolygon(poly);
       const deviceType =
         deviceTypes[Math.floor(Math.random() * deviceTypes.length)];
       return {
         id: `${boundary.id}-marker-${idx}`,
-        lat,
-        lng,
+        x,
+        y,
         deviceType
       };
     });

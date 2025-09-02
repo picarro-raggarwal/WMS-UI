@@ -7,8 +7,8 @@ interface BoundaryDetailsProps {
   showMarkers: boolean;
   movingMarkers: Array<{
     id: string;
-    lat: number;
-    lng: number;
+    x: number;
+    y: number;
     deviceType: string;
   }>;
   onEdit: (boundary: Boundary) => void;
@@ -54,7 +54,7 @@ export const BoundaryDetails = ({
       <ul className="mb-4 text-gray-700 text-xs space-y-1">
         {boundary.points.map((pt, idx) => (
           <li key={idx}>
-            Lat: {pt.lat.toFixed(4)}, Lng: {pt.lng.toFixed(4)}
+            X: {pt.x.toFixed(4)}, Y: {pt.y.toFixed(4)}
           </li>
         ))}
       </ul>
@@ -67,8 +67,8 @@ export const BoundaryDetails = ({
             {movingMarkers.map((marker, idx) => (
               <li key={marker.id}>
                 <span className="font-mono">Tag #{idx + 1}</span>
-                {` (Device: ${marker.deviceType})`}: Lat:{" "}
-                {marker.lat.toFixed(4)}, Lng: {marker.lng.toFixed(4)}
+                {` (Device: ${marker.deviceType})`}: X: {marker.x.toFixed(4)},
+                Y: {marker.y.toFixed(4)}
               </li>
             ))}
           </ul>

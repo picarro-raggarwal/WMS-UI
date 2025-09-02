@@ -1,13 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { Plus, X } from "lucide-react";
 import { Boundary } from "../data/mock-data";
 
@@ -19,11 +12,7 @@ interface BoundaryFormProps<T extends Partial<Boundary> | Boundary> {
   onCancel: () => void;
   onAddPoint: () => void;
   onRemovePoint: (index: number) => void;
-  onCoordinateChange: (
-    index: number,
-    field: "lat" | "lng",
-    value: number
-  ) => void;
+  onCoordinateChange: (index: number, field: "x" | "y", value: number) => void;
 }
 
 export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
@@ -46,9 +35,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
     boundary.name &&
     boundary.points &&
     boundary.points.length >= 3 &&
-    !boundary.points.some(
-      (p) => !p.lat || !p.lng || p.lat === 0 || p.lng === 0
-    );
+    !boundary.points.some((p) => !p.x || !p.y || p.x === 0 || p.y === 0);
 
   return (
     <div className="mb-6 p-4 border border-gray-200 rounded-lg">
@@ -78,27 +65,6 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
         </div>
 
         <div>
-          <Label htmlFor={typeInputId} className="block mb-2">
-            Boundary Type
-          </Label>
-          <Select
-            value={boundary.type}
-            onValueChange={(value: "safe" | "warning" | "danger") =>
-              onBoundaryChange({ ...boundary, type: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="safe">Safe</SelectItem>
-              <SelectItem value="warning">Warning</SelectItem>
-              <SelectItem value="danger">Danger</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
           <div className="flex justify-between items-center mb-3">
             <Label className="block">Coordinates</Label>
             <Button
@@ -117,13 +83,13 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
               <Input
                 type="number"
                 inputMode="decimal"
-                placeholder="Lat"
-                value={point.lat || ""}
+                placeholder="X"
+                value={point.x || ""}
                 onChange={(e) => {
                   const value =
                     e.target.value === "" ? 0 : parseFloat(e.target.value);
                   if (!isNaN(value)) {
-                    onCoordinateChange(index, "lat", value);
+                    onCoordinateChange(index, "x", value);
                   }
                 }}
                 onWheelCapture={(e) => {
@@ -137,7 +103,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                   }
                 }}
                 className={`flex-1 min-w-0 ${
-                  !point.lat || point.lat === 0
+                  !point.x || point.x === 0
                     ? "border-red-300 focus:border-red-500"
                     : ""
                 }`}
@@ -147,13 +113,13 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
               <Input
                 type="number"
                 inputMode="decimal"
-                placeholder="Lng"
-                value={point.lng || ""}
+                placeholder="Y"
+                value={point.y || ""}
                 onChange={(e) => {
                   const value =
                     e.target.value === "" ? 0 : parseFloat(e.target.value);
                   if (!isNaN(value)) {
-                    onCoordinateChange(index, "lng", value);
+                    onCoordinateChange(index, "y", value);
                   }
                 }}
                 onWheelCapture={(e) => {
@@ -167,7 +133,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                   }
                 }}
                 className={`flex-1 min-w-0 ${
-                  !point.lng || point.lng === 0
+                  !point.y || point.y === 0
                     ? "border-red-300 focus:border-red-500"
                     : ""
                 }`}
