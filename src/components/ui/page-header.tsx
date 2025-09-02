@@ -5,15 +5,16 @@ const routeToPageName: Record<string, string> = {
   "/dashboard": "Overview",
   "/dashboard/live-data": "Live Data",
   "/dashboard/map-display": "Map Display",
-  "/dashboard/data-review": "Data Review",
-  "/dashboard/qa-qc": "QA/QC",
+  // "/dashboard/data-review": "Data Review",
+  "/dashboard/data-review-2": "Data Review",
+  "/dashboard/qa-qc": "Quality Assurance & Control",
   "/dashboard/method": "Method",
   "/dashboard/method/create": "Create Recipe",
   "/dashboard/settings": "Settings",
   "/dashboard/service": "Service",
   "/dashboard/alerts": "Alerts",
   "/dashboard/reports": "Reports",
-  "/dashboard/history": "History"
+  "/dashboard/personal-exposure": "Personal Exposure Management"
 };
 
 interface PageHeaderProps {

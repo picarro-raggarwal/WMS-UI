@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DurationInput } from "@/components/ui/duration-input";
 import { Input } from "@/components/ui/input";
+import { generateAllPorts, getPortsByBank } from "@/types/common/ports";
 import {
   DndContext,
   DragEndEvent,
@@ -31,7 +32,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { mockStepNames } from "../data/mock-recipe";
 import {
   useCreateRecipeMutation,
   useGetAllStepsQuery
@@ -109,40 +109,10 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
     }
   }, [initialData]);
 
-  // Generate ports data
-  const generatePorts = useMemo((): Port[] => {
-    const ports: Port[] = [];
+  // Generate ports data using common configuration
+  const ports = useMemo(() => generateAllPorts(), []);
 
-    // Generate 64 regular ports (4 banks of 16 ports each)
-    for (let bank = 1; bank <= 4; bank++) {
-      for (let portInBank = 1; portInBank <= 16; portInBank++) {
-        const portNumber = (bank - 1) * 16 + portInBank;
-
-        ports.push({
-          id: `port-${portNumber}`,
-          portNumber,
-          name: mockStepNames[portNumber] || `Port ${portNumber}`,
-          type: "regular",
-          bankNumber: bank
-        });
-      }
-    }
-
-    return ports;
-  }, []);
-
-  const ports = generatePorts;
-
-  const portsByBank = useMemo(() => {
-    return ports.reduce((acc, port) => {
-      const bankKey = port.bankNumber;
-      if (!acc[bankKey]) {
-        acc[bankKey] = [];
-      }
-      acc[bankKey].push(port);
-      return acc;
-    }, {} as Record<number, Port[]>);
-  }, [ports]);
+  const portsByBank = useMemo(() => getPortsByBank(ports), [ports]);
 
   // Update total duration when recipe steps change
   useEffect(() => {

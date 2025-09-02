@@ -2,10 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import {
+  generateAllPorts,
+  getPortsByBank,
+  mockStepNames
+} from "@/types/common/ports";
 import { Check, Edit3, RotateCcw, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { mockStepNames } from "../../method/data/mock-recipe";
 
 interface Port {
   id: string;
@@ -142,45 +146,31 @@ export const PortConfigurationTab = () => {
     }
   };
 
-  // Generate ports data - memoized to prevent unnecessary recalculations
-  const generatePorts = useMemo((): Port[] => {
-    const ports: Port[] = [];
-    for (let bank = 1; bank <= 4; bank++) {
-      for (let portInBank = 1; portInBank <= 16; portInBank++) {
-        const portNumber = (bank - 1) * 16 + portInBank;
+  // Generate ports data using common configuration
+  const basePorts = useMemo(() => generateAllPorts(), []);
 
-        // If this port is currently being edited, use the editValue
-        // Otherwise use the stored portNames value
-        let displayName: string;
-        if (editingPort === portNumber) {
-          displayName = editValue;
-        } else {
-          displayName = portNames[portNumber] || `Port ${portNumber}`;
-        }
-
-        ports.push({
-          id: `port-${portNumber}`,
-          portNumber,
-          name: displayName,
-          bankNumber: bank,
-          enabled: portEnabled[portNumber] || true // Use portEnabled state
-        });
+  const ports = useMemo((): Port[] => {
+    return basePorts.map((port) => {
+      // If this port is currently being edited, use the editValue
+      // Otherwise use the stored portNames value
+      let displayName: string;
+      if (editingPort === port.portNumber) {
+        displayName = editValue;
+      } else {
+        displayName = portNames[port.portNumber] || port.name;
       }
-    }
-    return ports;
-  }, [editingPort, editValue, portNames, portEnabled]);
 
-  const ports = generatePorts;
-  const portsByBank = useMemo(() => {
-    return ports.reduce((acc, port) => {
-      const bankKey = port.bankNumber;
-      if (!acc[bankKey]) {
-        acc[bankKey] = [];
-      }
-      acc[bankKey].push(port);
-      return acc;
-    }, {} as Record<number, Port[]>);
-  }, [ports]);
+      return {
+        id: port.id,
+        portNumber: port.portNumber,
+        name: displayName,
+        bankNumber: port.bankNumber,
+        enabled: portEnabled[port.portNumber] || true // Use portEnabled state
+      };
+    });
+  }, [basePorts, editingPort, editValue, portNames, portEnabled]);
+
+  const portsByBank = useMemo(() => getPortsByBank(ports), [ports]);
 
   const handleEditStart = (portNumber: number, currentName: string) => {
     setEditingPort(portNumber);
