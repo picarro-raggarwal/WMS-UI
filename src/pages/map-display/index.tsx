@@ -328,7 +328,7 @@ const MapDisplay = () => {
               return (
                 <Polygon
                   key={boundary.id}
-                  positions={validPoints.map((p) => [p.x, p.y])}
+                  positions={validPoints.map((p) => [p.y, p.x])}
                   pathOptions={boundaryStyles[boundary.type]}
                   eventHandlers={{
                     click: () => handleBoundaryClick(boundary)
@@ -351,7 +351,7 @@ const MapDisplay = () => {
 
                 return (
                   <Polygon
-                    positions={validPoints.map((p) => [p.x, p.y])}
+                    positions={validPoints.map((p) => [p.y, p.x])}
                     pathOptions={{
                       color: "purple",
                       fillColor: "purple",
@@ -376,7 +376,7 @@ const MapDisplay = () => {
 
                 return (
                   <Polygon
-                    positions={validPoints.map((p) => [p.x, p.y])}
+                    positions={validPoints.map((p) => [p.y, p.x])}
                     pathOptions={{
                       color: "orange",
                       fillColor: "orange",
@@ -393,7 +393,7 @@ const MapDisplay = () => {
                 <AnimatedMarker
                   key={marker.id}
                   id={marker.id}
-                  position={[marker.x, marker.y]}
+                  position={[marker.y, marker.x]}
                   deviceType={marker.deviceType}
                   tagNumber={index + 1}
                 />

@@ -1,3 +1,13 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,7 +17,7 @@ import {
   getPortsByBank,
   mockStepNames
 } from "@/types/common/ports";
-import { Check, Edit3, RotateCcw, X } from "lucide-react";
+import { Check, Edit3, RotateCcw, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,6 +27,7 @@ interface Port {
   name: string;
   bankNumber: number;
   enabled: boolean;
+  type: "regular";
 }
 
 export const PortConfigurationTab = () => {
@@ -53,6 +64,12 @@ export const PortConfigurationTab = () => {
   const [editValue, setEditValue] = useState("");
   const [originalValue, setOriginalValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Dialog states
+  const [showEstablishFlowRateDialog, setShowEstablishFlowRateDialog] =
+    useState(false);
+  const [showSaveConfirmationDialog, setShowSaveConfirmationDialog] =
+    useState(false);
 
   // Track the last saved state to determine unsaved changes
   const [lastSavedNames, setLastSavedNames] = useState<Record<number, string>>(
@@ -146,6 +163,37 @@ export const PortConfigurationTab = () => {
     }
   };
 
+  const handleEstablishFlowRate = async () => {
+    try {
+      console.log("🚀 Starting Establish Flow Rate process...");
+
+      // TODO: Implement actual establish flow rate API call
+      // Example: await establishFlowRate()
+
+      // Simulate network call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      console.log("✅ Establish Flow Rate completed successfully!");
+      toast.success("Flow rate established successfully!");
+    } catch (error) {
+      console.error("❌ Failed to establish flow rate:", error);
+      toast.error("Failed to establish flow rate. Please try again.");
+    }
+  };
+
+  const handleSaveWithConfirmation = () => {
+    // Check if any port enabled status has changed
+    const hasPortStatusChanges = Object.entries(portEnabled).some(
+      ([portNum, enabled]) => enabled !== lastSavedEnabled[parseInt(portNum)]
+    );
+
+    if (hasPortStatusChanges) {
+      setShowSaveConfirmationDialog(true);
+    } else {
+      handleSaveAllChanges();
+    }
+  };
+
   // Generate ports data using common configuration
   const basePorts = useMemo(() => generateAllPorts(), []);
 
@@ -165,7 +213,8 @@ export const PortConfigurationTab = () => {
         portNumber: port.portNumber,
         name: displayName,
         bankNumber: port.bankNumber,
-        enabled: portEnabled[port.portNumber] || true // Use portEnabled state
+        enabled: portEnabled[port.portNumber] || true, // Use portEnabled state
+        type: "regular" as const
       };
     });
   }, [basePorts, editingPort, editValue, portNames, portEnabled]);
@@ -225,7 +274,7 @@ export const PortConfigurationTab = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className=" justify-between items-start gap-4 grid grid-cols-4">
+          <div className="justify-between items-start gap-4 grid grid-cols-4">
             <div className="flex flex-col grid-flow-col col-span-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 Port Configuration
@@ -234,7 +283,16 @@ export const PortConfigurationTab = () => {
                 Edit port labels and toggle port status.
               </p>
             </div>
-            <div className="flex gap-2 grid-flow-col col-span-1 justify-end">
+            <div className="flex justify-end gap-2 grid-flow-col col-span-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEstablishFlowRateDialog(true)}
+                className="flex items-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                Establish Flow Rate
+              </Button>
               {hasUnsavedChanges && (
                 <>
                   <Button
@@ -249,7 +307,7 @@ export const PortConfigurationTab = () => {
                     Cancel
                   </Button>
                   <Button
-                    onClick={handleSaveAllChanges}
+                    onClick={handleSaveWithConfirmation}
                     disabled={!hasUnsavedChanges || isSaving}
                     variant="primary"
                     size="sm"
@@ -266,7 +324,7 @@ export const PortConfigurationTab = () => {
             {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
               <div
                 key={bankNumber}
-                className=" p-6 border border-gray-200 rounded-xl"
+                className="p-6 border border-gray-200 rounded-xl"
               >
                 <div className="flex justify-between items-center mb-4 pb-3 border-gray-200 border-b">
                   <h3 className="flex items-center gap-2 font-semibold text-gray-700">
@@ -304,7 +362,7 @@ export const PortConfigurationTab = () => {
                                     onKeyDown={(e) =>
                                       handleKeyPress(e, port.portNumber)
                                     }
-                                    className="border-blue-200 focus:border-blue-400 focus:ring-blue-400 h-7 text-xs flex-1"
+                                    className="flex-1 border-blue-200 focus:border-blue-400 focus:ring-blue-400 h-7 text-xs"
                                     autoFocus
                                     placeholder="Enter port label..."
                                     maxLength={20}
@@ -401,6 +459,89 @@ export const PortConfigurationTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Establish Flow Rate Confirmation Dialog */}
+      <AlertDialog
+        open={showEstablishFlowRateDialog}
+        onOpenChange={setShowEstablishFlowRateDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-yellow-600" />
+              Establish Flow Rate
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                This action will establish flow rate for all sampling lines.
+                <strong className="text-red-600">
+                  {" "}
+                  All running jobs will be interrupted.
+                </strong>
+              </p>
+              <p className="text-gray-600 text-sm">
+                Optimize flow rate each time the sampling line is changed.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowEstablishFlowRateDialog(false);
+                handleEstablishFlowRate();
+              }}
+              className="bg-primary-600 hover:bg-primary-700"
+            >
+              Establish Flow Rate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Save with Flow Rate Confirmation Dialog */}
+      <AlertDialog
+        open={showSaveConfirmationDialog}
+        onOpenChange={setShowSaveConfirmationDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-yellow-600" />
+              Port Status Changes Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                You have changed port status settings. Saving these changes will
+                trigger
+                <strong className="text-yellow-600">
+                  {" "}
+                  Establish Flow Rate
+                </strong>{" "}
+                to run, which will{" "}
+                <strong className="text-red-600">
+                  interrupt all running jobs.
+                </strong>
+              </p>
+              <p className="text-gray-600 text-sm">
+                Optimize flow rate each time the sampling line is changed.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowSaveConfirmationDialog(false);
+                handleSaveAllChanges();
+              }}
+              className="bg-primary-600 hover:bg-primary-700"
+            >
+              Save & Establish Flow Rate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

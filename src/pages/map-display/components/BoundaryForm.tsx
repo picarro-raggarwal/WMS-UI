@@ -40,7 +40,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
   return (
     <div className="mb-6 p-4 border border-gray-200 rounded-lg">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-lg">{title}</h3>
+        <h3 className="font-semibold">{title}</h3>
         <Button variant="ghost" size="sm" onClick={onCancel}>
           <X className="w-4 h-4" />
         </Button>
@@ -60,6 +60,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                 name: e.target.value
               })
             }
+            className="h-9"
             placeholder="Enter boundary name"
           />
         </div>
@@ -73,7 +74,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
               size="sm"
               onClick={onAddPoint}
             >
-              <Plus className="w-3 h-3 mr-2" />
+              <Plus className="mr-2 w-3 h-3" />
               Add Point
             </Button>
           </div>
@@ -102,7 +103,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                     e.preventDefault();
                   }
                 }}
-                className={`flex-1 min-w-0 ${
+                className={`flex-1 min-w-0 h-9 ${
                   !point.x || point.x === 0
                     ? "border-red-300 focus:border-red-500"
                     : ""
@@ -132,7 +133,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                     e.preventDefault();
                   }
                 }}
-                className={`flex-1 min-w-0 ${
+                className={`flex-1 min-w-0 h-9 ${
                   !point.y || point.y === 0
                     ? "border-red-300 focus:border-red-500"
                     : ""
@@ -144,7 +145,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                 variant="ghost"
                 size="sm"
                 onClick={() => onRemovePoint(index)}
-                className="p-1 h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="hover:bg-red-50 p-1 w-8 h-8 text-red-600 hover:text-red-700"
                 title="Remove coordinate point"
               >
                 <X className="w-3 h-3" />

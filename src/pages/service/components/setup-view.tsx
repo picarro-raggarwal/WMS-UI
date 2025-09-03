@@ -1,11 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
-import { Loader2, CheckCircle2 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/spinner";
-import { Card } from "@/components/ui/card";
-import ModelViewer from "@/pages/dashboard/components/model-view-sam";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useSidebar } from "@/components/ui/sidebar";
+import ModelViewer from "@/pages/dashboard/components/model-view-sam";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 
 interface SetupStep {
@@ -28,28 +27,28 @@ const SetupView = () => {
     {
       label: "System Initialization",
       description: "Booting up core systems and checking hardware integrity",
-      status: "loading",
+      status: "loading"
     },
     {
       label: "Sensor Calibration",
       description: "Calibrating environmental and analytical sensors",
-      status: "pending",
+      status: "pending"
     },
     {
       label: "Network Configuration",
       description: "Establishing secure network connections",
-      status: "pending",
+      status: "pending"
     },
     {
       label: "Database Setup",
       description: "Initializing measurement database",
-      status: "pending",
+      status: "pending"
     },
     {
       label: "System Validation",
       description: "Performing final system checks",
-      status: "pending",
-    },
+      status: "pending"
+    }
   ]);
 
   const updateStep = useCallback(() => {
@@ -69,7 +68,7 @@ const SetupView = () => {
       setSteps((prevSteps) =>
         prevSteps.map((step) => ({
           ...step,
-          status: "complete",
+          status: "complete"
         }))
       );
     }
@@ -91,15 +90,15 @@ const SetupView = () => {
   }, [currentStep, steps.length]);
 
   return (
-    <div className="grid grid-cols-5 h-screen   rounded-lg overflow-hidden">
-      <div className="flex flex-col col-span-3  justify-center max-w-2xl mx-auto px-8 space-y-6">
+    <div className="grid grid-cols-5 rounded-lg h-screen overflow-hidden">
+      <div className="flex flex-col justify-center space-y-6 col-span-3 mx-auto px-8 max-w-2xl">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-neutral-950 dark:text-white">
+          <h2 className="font-semibold text-neutral-950 dark:text-white text-2xl">
             {steps[steps.length - 1].status === "complete"
-              ? "Your Fenceline System is ready"
-              : "Your Picarro Fenceline System is almost ready."}
+              ? "Your Workplace Monitoring System is ready"
+              : "Your Picarro Workplace Monitoring System is almost ready."}
           </h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm">
             {steps[steps.length - 1].status === "complete"
               ? "System setup complete. Your device is now configured and ready for operation."
               : "Welcome to your Fencline System. Please wait while we configure your device. This may take a few minutes."}
@@ -126,7 +125,8 @@ const SetupView = () => {
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor"
-                    className="size-5 text-primary-500 -mr-1">
+                    className="-mr-1 size-5 text-primary-500"
+                  >
                     <path
                       fill-rule="evenodd"
                       d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
@@ -135,12 +135,15 @@ const SetupView = () => {
                   </svg>
                 )}
                 {step.status === "pending" && (
-                  <div className="w-4 h-4 rounded-full border-2 border-neutral-200 border-inset" />
+                  <div className="border-2 border-inset border-neutral-200 rounded-full w-4 h-4" />
                 )}
                 <div
-                  className={`space-y-1 -mt-0.5 ${step.status === "pending" ? "opacity-50" : ""}`}>
-                  <p className="text-sm font-medium">{step.label}</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  className={`space-y-1 -mt-0.5 ${
+                    step.status === "pending" ? "opacity-50" : ""
+                  }`}
+                >
+                  <p className="font-medium text-sm">{step.label}</p>
+                  <p className="text-neutral-500 dark:text-neutral-400 text-xs">
                     {step.description}
                   </p>
                 </div>
@@ -150,7 +153,7 @@ const SetupView = () => {
         </Card>
       </div>
 
-      <div className="  overflow-hidden   col-span-2">
+      <div className="col-span-2 overflow-hidden">
         <ModelViewer isRotating={isRotating} />
       </div>
     </div>

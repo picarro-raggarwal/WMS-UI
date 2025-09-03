@@ -315,17 +315,17 @@ export const SpeciesThresholdTab = () => {
   const handleEditClick = (compound: string) => {
     setEditingCompound(compound);
     // Initialize editing values with current compound values
-    // const currentCompound = portThresholds[compound];
-    // if (currentCompound) {
-    //   // Get the first port's values as a reference (all ports should have same values)
-    //   const firstPort = currentCompound[1];
-    //   if (firstPort) {
-    //     setEditingValues({
-    //       warning: firstPort.warning,
-    //       alarm: firstPort.alarm
-    //     });
-    //   }
-    // }
+    const currentCompound = portThresholds[compound];
+    if (currentCompound) {
+      // Get the first port's values as a reference (all ports should have same values)
+      const firstPort = currentCompound[1];
+      if (firstPort) {
+        setEditingValues({
+          warning: firstPort.warning,
+          alarm: firstPort.alarm
+        });
+      }
+    }
   };
 
   const handleCancelEdit = () => {

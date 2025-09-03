@@ -72,17 +72,17 @@ interface DataContextType {
 
 const defaultContext: DataContextType = {
   systemInfo: {
-    name: "Fenceline System",
+    name: "Workplace Monitoring System",
     id: "4959205",
     serialNumber: "P8FLA4959205",
     manufactureDate: new Date("2024-01-01"),
     location: {
       latitude: 37.7749,
-      longitude: -122.4194,
+      longitude: -122.4194
     },
     ups: {
       percentage: 0,
-      status: "Armed",
+      status: "Armed"
     },
     status: {
       anemometer: "normal",
@@ -92,8 +92,8 @@ const defaultContext: DataContextType = {
       cpu: "normal",
       connectivity: "normal",
       gps: "normal",
-      catalyticConverter: "normal",
-    },
+      catalyticConverter: "normal"
+    }
   },
   systemMetrics: {
     cabinetTemp: null,
@@ -104,7 +104,7 @@ const defaultContext: DataContextType = {
     gasCylinder1: null,
     gasCylinder2: null,
     systemStatus: "ok",
-    setSystemStatus: () => {},
+    setSystemStatus: () => {}
   },
   sensorData: {
     TVOC: null,
@@ -112,50 +112,58 @@ const defaultContext: DataContextType = {
     windSpeed: null,
     windDirection: null,
     cabinetTemp: null,
-    cavityPressure: null,
+    cavityPressure: null
   },
   measurementState: {
     state: "Idle",
     systemStatus: "Idle",
     currentJob: null,
-    lastFetched: new Date().toISOString(),
+    lastFetched: new Date().toISOString()
   },
   updateSystemName: () => {},
   updateUpsPercentage: () => {},
-  updateSystemData: () => {},
+  updateSystemData: () => {}
 };
 
 const DataContext = createContext<DataContextType>(defaultContext);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
-  return <DataContext.Provider value={defaultContext}>{children}</DataContext.Provider>;
+  return (
+    <DataContext.Provider value={defaultContext}>
+      {children}
+    </DataContext.Provider>
+  );
 }
 
 export function useSystemInfo() {
   const context = useContext(DataContext);
-  if (!context) throw new Error("useSystemInfo must be used within DataProvider");
+  if (!context)
+    throw new Error("useSystemInfo must be used within DataProvider");
   return {
     ...context.systemInfo,
     updateSystemName: context.updateSystemName,
     updateUpsPercentage: context.updateUpsPercentage,
-    updateSystemData: context.updateSystemData,
+    updateSystemData: context.updateSystemData
   };
 }
 
 export function useSystemMetrics() {
   const context = useContext(DataContext);
-  if (!context) throw new Error("useSystemMetrics must be used within DataProvider");
+  if (!context)
+    throw new Error("useSystemMetrics must be used within DataProvider");
   return context.systemMetrics;
 }
 
 export function useSensorData() {
   const context = useContext(DataContext);
-  if (!context) throw new Error("useSensorData must be used within DataProvider");
+  if (!context)
+    throw new Error("useSensorData must be used within DataProvider");
   return context.sensorData;
 }
 
 export function useMeasurementState() {
   const context = useContext(DataContext);
-  if (!context) throw new Error("useMeasurementState must be used within DataProvider");
+  if (!context)
+    throw new Error("useMeasurementState must be used within DataProvider");
   return context.measurementState;
 }

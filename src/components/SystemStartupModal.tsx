@@ -3,13 +3,13 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Spinner } from "./spinner";
 import { SystemComponentsAvailabilityResponse } from "@/pages/dashboard/data/systemMetrics.slice";
-import { CheckCircle2, XCircle } from "lucide-react";
-import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { SerializedError } from "@reduxjs/toolkit";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import { CheckCircle2, XCircle } from "lucide-react";
+import { Spinner } from "./spinner";
 
 interface SystemStartupModalProps {
   isOpen: boolean;
@@ -24,7 +24,7 @@ export function SystemStartupModal({
   onOpenChange,
   systemComponentsAvailabilityData,
   isLoadingSystemComponentsAvailability,
-  errorSystemComponentsAvailability,
+  errorSystemComponentsAvailability
 }: SystemStartupModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -37,15 +37,17 @@ export function SystemStartupModal({
             System Starting Up
           </DialogTitle>
           <DialogDescription className="px-4 text-center">
-            The Fenceline System is currently starting up. Please wait while all components
-            initialize.
+            The Workplace Monitoring System is currently starting up. Please
+            wait while all components initialize.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center space-y-4 px-2 py-4">
           {systemComponentsAvailabilityData?.device_availability && (
             <div className="w-full">
               <SystemComponentsList
-                deviceAvailability={systemComponentsAvailabilityData.device_availability}
+                deviceAvailability={
+                  systemComponentsAvailabilityData.device_availability
+                }
               />
             </div>
           )}
@@ -76,7 +78,13 @@ function DeviceStatus({ name, status }: { name: string; status: boolean }) {
 }
 
 // Component to render device group with sub-components
-function DeviceGroup({ name, devices }: { name: string; devices: Record<string, boolean> }) {
+function DeviceGroup({
+  name,
+  devices
+}: {
+  name: string;
+  devices: Record<string, boolean>;
+}) {
   const allAvailable = Object.values(devices).every((status) => status);
 
   return (
@@ -100,7 +108,7 @@ function DeviceGroup({ name, devices }: { name: string; devices: Record<string, 
 
 // Component to render all system components
 function SystemComponentsList({
-  deviceAvailability,
+  deviceAvailability
 }: {
   deviceAvailability: Record<string, boolean | Record<string, boolean>>;
 }) {
@@ -126,7 +134,11 @@ function SystemComponentsList({
           </h5>
           <div className="gap-2 grid grid-cols-2">
             {Object.entries(simpleDevices).map(([deviceName, status]) => (
-              <DeviceStatus key={deviceName} name={deviceName} status={status} />
+              <DeviceStatus
+                key={deviceName}
+                name={deviceName}
+                status={status}
+              />
             ))}
           </div>
         </div>
@@ -140,7 +152,11 @@ function SystemComponentsList({
           </h5>
           <div className="gap-4 grid grid-cols-1">
             {Object.entries(deviceGroups).map(([deviceName, devices]) => (
-              <DeviceGroup key={deviceName} name={deviceName} devices={devices} />
+              <DeviceGroup
+                key={deviceName}
+                name={deviceName}
+                devices={devices}
+              />
             ))}
           </div>
         </div>
