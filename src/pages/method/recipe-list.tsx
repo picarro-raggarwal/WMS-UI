@@ -247,9 +247,9 @@ const RecipeList = () => {
         </div>
       </div>
 
-      <div className="flex-shrink-0 mb-3 pb-2 dark:border-neutral-700 border-b-2 font-semibold dark:text-white text-base md:text-xl leading-none tracking-tight">
+      <div className="flex-shrink-0 mb-3 pb-2 border-neutral-200 dark:border-neutral-700 border-b-2 font-semibold text-neutral-900 dark:text-neutral-100 text-base md:text-xl leading-none tracking-tight">
         Recipe Library{" "}
-        <span className="text-gray-500 text-base">
+        <span className="text-neutral-500 dark:text-neutral-400 text-base">
           ({filteredRecipes.length})
         </span>
       </div>
@@ -262,6 +262,7 @@ const RecipeList = () => {
               placeholder="Search recipes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
             />
           </div>
           <Button
@@ -275,31 +276,31 @@ const RecipeList = () => {
 
       <div className="py-4 h-[calc(100vh-300px)] overflow-auto">
         {filteredRecipes?.length === 0 ? (
-          <div className="py-8 text-gray-500 text-center">
+          <div className="py-8 text-neutral-500 dark:text-neutral-400 text-center">
             {searchTerm ? "No recipes match your search" : "No recipes found"}
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-lg h-full overflow-hidden">
-            <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg h-full overflow-hidden">
+            <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-600 scrollbar-track-neutral-100 dark:scrollbar-track-neutral-800">
               <Table>
-                <TableHeader className="top-0 z-10 sticky bg-gray-50">
+                <TableHeader className="top-0 z-10 sticky bg-neutral-100 dark:bg-neutral-800">
                   <TableRow>
-                    <TableHead className="w-1/5 font-medium text-gray-500 text-xs uppercase tracking-wider">
+                    <TableHead className="w-1/5 font-medium text-neutral-500 dark:text-neutral-400 text-xs uppercase tracking-wider">
                       Recipe
                     </TableHead>
-                    <TableHead className="w-1/5 font-medium text-gray-500 text-xs uppercase tracking-wider">
+                    <TableHead className="w-1/5 font-medium text-neutral-500 dark:text-neutral-400 text-xs uppercase tracking-wider">
                       Duration
                     </TableHead>
-                    <TableHead className="w-1/5 font-medium text-gray-500 text-xs uppercase tracking-wider">
+                    <TableHead className="w-1/5 font-medium text-neutral-500 dark:text-neutral-400 text-xs uppercase tracking-wider">
                       Steps
                     </TableHead>
-                    <TableHead className="w-1/5 font-medium text-gray-500 text-xs uppercase tracking-wider">
+                    <TableHead className="w-1/5 font-medium text-neutral-500 dark:text-neutral-400 text-xs uppercase tracking-wider">
                       Schedule Status
                     </TableHead>
-                    <TableHead className="w-1/5 font-medium text-gray-500 text-xs uppercase tracking-wider">
+                    <TableHead className="w-1/5 font-medium text-neutral-500 dark:text-neutral-400 text-xs uppercase tracking-wider">
                       Created
                     </TableHead>
-                    <TableHead className="w-1/5 font-medium text-gray-500 text-xs text-right uppercase tracking-wider">
+                    <TableHead className="w-1/5 font-medium text-neutral-500 dark:text-neutral-400 text-xs text-right uppercase tracking-wider">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -313,15 +314,15 @@ const RecipeList = () => {
                     return (
                       <TableRow
                         key={recipe.recipe_row_id}
-                        className="hover:bg-gray-50"
+                        className="hover:bg-neutral-100 dark:hover:bg-neutral-800"
                       >
                         <TableCell className="font-medium">
                           <div className="flex items-center">
                             <div>
-                              <div className="font-medium text-gray-900 text-sm">
+                              <div className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
                                 {formatLabel(recipe.recipe_name)}
                               </div>
-                              <div className="text-gray-500 text-sm">
+                              <div className="text-neutral-500 dark:text-neutral-400 text-sm">
                                 ID: {recipe.recipe_row_id} • Version{" "}
                                 {recipe.version_id}
                               </div>
@@ -329,8 +330,8 @@ const RecipeList = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center text-gray-900 text-sm">
-                            <Clock className="mr-1 w-4 h-4 text-gray-400" />
+                          <div className="flex items-center text-neutral-900 dark:text-neutral-100 text-sm">
+                            <Clock className="mr-1 w-4 h-4 text-neutral-400 dark:text-neutral-500" />
 
                             <Tooltip delayDuration={100}>
                               <TooltipTrigger>
@@ -346,8 +347,8 @@ const RecipeList = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center text-gray-900 text-sm">
-                            <Beaker className="mr-1 w-4 h-4 text-gray-400" />
+                          <div className="flex items-center text-neutral-900 dark:text-neutral-100 text-sm">
+                            <Beaker className="mr-1 w-4 h-4 text-neutral-400 dark:text-neutral-500" />
                             {recipe.steps?.length || 0}
                           </div>
                         </TableCell>
@@ -366,7 +367,7 @@ const RecipeList = () => {
                                     : "Measurement"}
                                 </span>
                               </div>
-                              <div className="mt-1 text-gray-500 text-xs">
+                              <div className="mt-1 text-neutral-500 dark:text-neutral-400 text-xs">
                                 <div>
                                   {formatDateTime(scheduleInfo.startTime)}
                                 </div>
@@ -374,12 +375,12 @@ const RecipeList = () => {
                               </div>
                             </div>
                           ) : (
-                            <span className="inline-flex items-center bg-gray-100 px-2.5 py-0.5 rounded-full font-medium text-gray-800 text-xs">
+                            <span className="inline-flex items-center bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 rounded-full font-medium text-neutral-800 dark:text-neutral-200 text-xs">
                               Not Scheduled
                             </span>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-neutral-700 dark:text-neutral-300">
                           {recipe.created_at
                             ? formatDistanceToNow(
                                 new Date(recipe.created_at * 1000),
@@ -492,12 +493,12 @@ const RecipeList = () => {
           </DialogHeader>
 
           <div className="text-center space-y-4">
-            <div className="text-gray-600">
+            <div className="text-neutral-600 dark:text-neutral-400">
               <p className="mb-2">
                 <strong>{schedulingRecipe?.recipe_name}</strong> will run
                 indefinitely until manually interrupted.
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 Recipe ID: {schedulingRecipe?.recipe_id} • Duration:{" "}
                 {formatDuration(schedulingRecipe?.duration || 0)}
               </p>

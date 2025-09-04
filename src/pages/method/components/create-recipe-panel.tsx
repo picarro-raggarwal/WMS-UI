@@ -330,19 +330,21 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   const PortItem = useCallback(
     ({ port }: { port: Port }) => {
       return (
-        <div className="p-3 border border-gray-200 rounded-lg transition-colors bg-white hover:border-gray-300">
+        <div className="p-3 border border-neutral-200 dark:border-neutral-700 rounded-lg transition-colors bg-neutral-50 dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-600">
           <div className="flex justify-between items-center">
             <div className="flex-1">
-              <div className="font-medium text-gray-900 text-sm">
+              <div className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
                 Port #{port.portNumber}
               </div>
-              <div className="text-gray-500 text-xs">{port.name}</div>
+              <div className="text-neutral-500 dark:text-neutral-400 text-xs">
+                {port.name}
+              </div>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleAddPortToRecipe(port)}
-              className="hover:bg-gray-100 p-1 rounded-full w-8 h-8"
+              className="hover:bg-neutral-100 dark:hover:bg-neutral-800 p-1 rounded-full w-8 h-8"
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -403,22 +405,24 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         <div
           ref={setNodeRef}
           style={style}
-          className="flex items-center gap-4 shadow-sm p-2 rounded-lg ring-1 ring-black/5 bg-white"
+          className="flex items-center gap-4 shadow-sm p-2 rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-700 bg-neutral-50 dark:bg-neutral-800"
         >
           <div
             {...(!overlay ? { ...attributes, ...listeners } : {})}
-            className="flex justify-center items-center text-neutral-400 hover:text-neutral-600 cursor-move"
+            className="flex justify-center items-center text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-move"
           >
             <GripVertical className="w-4 h-4" />
           </div>
-          <div className="flex justify-center items-center bg-gray-100 rounded-full w-6 h-6 text-sm">
+          <div className="flex justify-center items-center bg-neutral-200 dark:bg-neutral-700 rounded-full w-6 h-6 text-sm text-neutral-900 dark:text-neutral-100">
             {index + 1}
           </div>
           <div className="flex-grow">
-            <div className="font-medium text-gray-900">
+            <div className="font-medium text-neutral-900 dark:text-neutral-100">
               Port #{step.step_id}
             </div>
-            <div className="text-gray-500 text-sm">{step.name}</div>
+            <div className="text-neutral-500 dark:text-neutral-400 text-sm">
+              {step.name}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <DurationInput
@@ -434,7 +438,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
             variant="ghost"
             size="icon"
             onClick={() => onRemove(step.id)}
-            className="text-gray-400 hover:text-red-500"
+            className="text-neutral-400 dark:text-neutral-500 hover:text-red-500"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -452,9 +456,9 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
           <div className="flex-none blur-[1px] -ml-[100%] w-full [background-image:linear-gradient(90deg,rgba(56,189,248,0)_0%,#0EA5E9_32.29%,rgba(88,186,37,0.3)_67.19%,rgba(236,72,153,0)_100%)]"></div>
         </div>
       </div>
-      <div className="flex flex-shrink-0 justify-between items-center dark:border-neutral-700 border-b-2">
+      <div className="flex flex-shrink-0 justify-between items-center border-neutral-200 dark:border-neutral-700 border-b-2">
         <div className="flex items-center gap-1 mb-2">
-          <div className="font-semibold dark:text-white text-base md:text-xl leading-none tracking-tight">
+          <div className="font-semibold text-neutral-900 dark:text-neutral-100 text-base md:text-xl leading-none tracking-tight">
             {isEditing ? "Edit Recipe" : "Create New Recipe"}
           </div>
 
@@ -463,7 +467,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
               variant="ghost"
               size="xs"
               onClick={onBack}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
@@ -486,7 +490,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
 
       <div className="flex flex-1 gap-6 h-full min-h-0">
         {/* Left Panel - Ports */}
-        <div className="bg-gray-50 p-3 rounded-lg w-1/2 overflow-y-auto">
+        <div className="bg-neutral-50 dark:bg-neutral-900 p-3 rounded-lg w-1/2 overflow-y-auto">
           {/* <h2 className="mb-4 font-semibold text-lg">Available Ports</h2> */}
 
           {isLoading ? (
@@ -496,7 +500,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
           ) : (
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <h2 className="font-semibold text-lg text-gray-700">
+                <h2 className="font-semibold text-lg text-neutral-700 dark:text-neutral-300">
                   Available Ports
                 </h2>
                 <Button
@@ -510,7 +514,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
               </div>
               {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
                 <div key={bankNumber} className="space-y-2">
-                  <h3 className="font-semibold text-gray-700">
+                  <h3 className="font-semibold text-neutral-700 dark:text-neutral-300">
                     Bank {bankNumber}
                   </h3>
                   <div className="gap-3 grid grid-cols-2">
@@ -525,14 +529,14 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         </div>
 
         {/* Right Panel - Recipe Steps */}
-        <div className="flex flex-col bg-white shadow-sm rounded-lg w-1/2">
+        <div className="flex flex-col bg-neutral-50 dark:bg-neutral-900 shadow-sm rounded-lg w-1/2 px-2">
           <div className="flex-1 space-y-3 pt-3 min-h-0">
             <div className="flex justify-between items-start gap-2 w-full">
               <Input
                 value={recipeName}
                 onChange={(e) => setRecipeName(e.target.value)}
                 placeholder="Enter recipe name"
-                className="w-full max-w-md"
+                className="w-full max-w-md bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
               />
 
               <Button
@@ -559,7 +563,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
 
             {/* Action Buttons and Duration Control */}
             {recipeSteps.length > 0 && (
-              <div className="flex flex-col gap-3 p-3 bg-gray-50 rounded-lg border">
+              <div className="flex flex-col gap-3 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <DurationInput
@@ -603,7 +607,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
                     Clear All
                   </Button>
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">
                   💡 <strong>Tip:</strong> Use "Apply to All" to quickly set the
                   same duration for all recipe steps. This is useful when you
                   want consistent timing across your entire recipe.
@@ -619,23 +623,23 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
 
             <div className="flex flex-col flex-1 h-[calc(100vh-420px)] min-h-0 overflow-auto">
               <div className="flex justify-between items-center mb-2">
-                <div className="text-gray-500 text-sm">
-                  <span className="mr-1 font-medium text-black">
+                <div className="text-neutral-500 dark:text-neutral-400 text-sm">
+                  <span className="mr-1 font-medium text-neutral-900 dark:text-neutral-100">
                     {recipeSteps.length}
                   </span>
                   Recipe Steps
                 </div>
-                <div className="text-gray-500 text-sm">
+                <div className="text-neutral-500 dark:text-neutral-400 text-sm">
                   Total Duration
-                  <span className="ml-1 font-medium text-black">
+                  <span className="ml-1 font-medium text-neutral-900 dark:text-neutral-100">
                     {totalDuration}
                   </span>
                 </div>
               </div>
 
-              <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg h-full overflow-y-auto">
+              <div className="p-4 border-2 border-neutral-200 dark:border-neutral-700 border-dashed rounded-lg h-full overflow-y-auto">
                 {recipeSteps.length === 0 ? (
-                  <div className="flex justify-center items-center h-full text-gray-500 text-sm">
+                  <div className="flex justify-center items-center h-full text-neutral-500 dark:text-neutral-400 text-sm">
                     Add ports to begin building your recipe
                   </div>
                 ) : (

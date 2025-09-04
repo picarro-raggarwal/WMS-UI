@@ -279,7 +279,7 @@ export const PortConfigurationTab = () => {
               <CardTitle className="flex items-center gap-2 text-lg">
                 Port Configuration
               </CardTitle>
-              <p className="mt-1 text-gray-600 text-sm">
+              <p className="mt-1 text-neutral-600 dark:text-neutral-400 text-sm">
                 Edit port labels and toggle port status.
               </p>
             </div>
@@ -324,13 +324,13 @@ export const PortConfigurationTab = () => {
             {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
               <div
                 key={bankNumber}
-                className="p-6 border border-gray-200 rounded-xl"
+                className="p-6 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-900"
               >
-                <div className="flex justify-between items-center mb-4 pb-3 border-gray-200 border-b">
-                  <h3 className="flex items-center gap-2 font-semibold text-gray-700">
+                <div className="flex justify-between items-center mb-4 pb-3 border-neutral-200 dark:border-neutral-700 border-b">
+                  <h3 className="flex items-center gap-2 font-semibold text-neutral-700 dark:text-neutral-300">
                     Bank {bankNumber}
                   </h3>
-                  <div className="bg-white px-2 py-1 border border-gray-200 rounded-full text-gray-500 text-xs">
+                  <div className="bg-neutral-50 dark:bg-neutral-900 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded-full text-neutral-500 dark:text-neutral-400 text-xs">
                     {bankPorts.length} ports
                   </div>
                 </div>
@@ -340,17 +340,21 @@ export const PortConfigurationTab = () => {
                       key={port.id}
                       className={`border rounded-lg p-3 transition-all duration-200 ${
                         editingPort === port.portNumber
-                          ? "border-blue-300 bg-blue-50 shadow-md"
-                          : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:shadow-sm"
-                      } ${!port.enabled ? "opacity-60 bg-gray-50" : ""}`}
+                          ? "border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 shadow-md"
+                          : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-600 hover:shadow-sm"
+                      } ${
+                        !port.enabled
+                          ? "opacity-60 bg-neutral-50 dark:bg-neutral-800"
+                          : ""
+                      }`}
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 font-medium text-gray-900 text-sm">
-                            <div className="bg-gray-400 rounded-full w-2 h-2"></div>
+                          <div className="flex items-center gap-2 font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+                            <div className="bg-neutral-400 dark:bg-neutral-500 rounded-full w-2 h-2"></div>
                             Port #{port.portNumber}
                           </div>
-                          <div className="mt-1 text-gray-500 text-sm">
+                          <div className="mt-1 text-neutral-500 dark:text-neutral-400 text-sm">
                             {editingPort === port.portNumber ? (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -362,7 +366,7 @@ export const PortConfigurationTab = () => {
                                     onKeyDown={(e) =>
                                       handleKeyPress(e, port.portNumber)
                                     }
-                                    className="flex-1 border-blue-200 focus:border-blue-400 focus:ring-blue-400 h-7 text-xs"
+                                    className="flex-1 border-blue-200 dark:border-blue-600 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-blue-400 dark:focus:ring-blue-500 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 h-7 text-xs"
                                     autoFocus
                                     placeholder="Enter port label..."
                                     maxLength={20}
@@ -408,7 +412,7 @@ export const PortConfigurationTab = () => {
                                     </Button>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1 text-gray-500 text-xs">
+                                <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400 text-xs">
                                   <span>
                                     Press Enter to save, Esc to cancel
                                   </span>
@@ -416,7 +420,7 @@ export const PortConfigurationTab = () => {
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-600 hover:text-gray-800 transition-colors">
+                                <span className="font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">
                                   {port.name}
                                 </span>
                                 <Button
@@ -425,9 +429,9 @@ export const PortConfigurationTab = () => {
                                   onClick={() =>
                                     handleEditStart(port.portNumber, port.name)
                                   }
-                                  className="hover:bg-blue-50 p-0 w-5 h-5 text-gray-400 hover:text-blue-600"
+                                  className="hover:bg-blue-50 dark:hover:bg-blue-900/20 p-0 w-5 h-5 text-neutral-400 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400"
                                 >
-                                  <Edit3 className="w-3 h-3" />
+                                  <Edit3 className="w-3 h-3 dark:text-yellow-500/70" />
                                 </Button>
                               </div>
                             )}

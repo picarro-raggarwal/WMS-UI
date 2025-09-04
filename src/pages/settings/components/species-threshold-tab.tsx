@@ -73,11 +73,13 @@ const Port = ({
     <div
       className={`text-center p-2 border rounded transition-all cursor-pointer ${
         isUpdated
-          ? "border-green-400 bg-green-50"
-          : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100"
+          ? "border-green-400 bg-green-50 dark:bg-green-900/20"
+          : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-700"
       }`}
     >
-      <div className="mb-1 text-gray-500 text-xs">Port {portNumber}</div>
+      <div className="mb-1 text-neutral-500 dark:text-neutral-400 text-xs">
+        Port {portNumber}
+      </div>
 
       <div className="font-medium text-xs">
         <div className="flex justify-center items-center gap-1">
@@ -96,7 +98,7 @@ const Port = ({
                 }
               }}
               onBlur={onSaveInlineEdit}
-              className="border border-yellow-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-400 w-10 h-6 text-xs text-center"
+              className="border border-yellow-300 dark:border-yellow-600 rounded focus:outline-none focus:ring-1 focus:ring-yellow-400 dark:focus:ring-yellow-500 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 w-10 h-6 text-xs text-center"
               placeholder="W"
               min={0}
               max={1000}
@@ -105,7 +107,7 @@ const Port = ({
             />
           ) : (
             <span
-              className="hover:bg-gray-200 px-1 py-0.5 rounded transition-colors cursor-pointer"
+              className="hover:bg-neutral-200 dark:hover:bg-neutral-700 px-1 py-0.5 rounded transition-colors cursor-pointer text-neutral-700 dark:text-neutral-300"
               onClick={() => onStartInlineEdit(compound, portNumber, "warning")}
               onDoubleClick={() =>
                 onStartInlineEdit(compound, portNumber, "warning")
@@ -136,7 +138,7 @@ const Port = ({
                 }
               }}
               onBlur={onSaveInlineEdit}
-              className="border border-red-300 rounded focus:outline-none focus:ring-1 focus:ring-red-400 w-10 h-6 text-xs text-center"
+              className="border border-red-300 dark:border-red-600 rounded focus:outline-none focus:ring-1 focus:ring-red-400 dark:focus:ring-red-500 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 w-10 h-6 text-xs text-center"
               placeholder="A"
               min={0}
               max={1000}
@@ -145,7 +147,7 @@ const Port = ({
             />
           ) : (
             <span
-              className="hover:bg-gray-200 px-1 py-0.5 rounded transition-colors cursor-pointer"
+              className="hover:bg-neutral-200 dark:hover:bg-neutral-700 px-1 py-0.5 rounded transition-colors cursor-pointer text-neutral-700 dark:text-neutral-300"
               onClick={() => onStartInlineEdit(compound, portNumber, "alarm")}
               onDoubleClick={() =>
                 onStartInlineEdit(compound, portNumber, "alarm")
@@ -683,7 +685,7 @@ export const SpeciesThresholdTab = () => {
               <CardTitle className="mb-2 text-lg">
                 Species Threshold Configuration
               </CardTitle>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm">
                 Configure warning and alarm thresholds for different compounds
                 across all ports. Click on any port to edit its thresholds
                 individually.
@@ -727,7 +729,7 @@ export const SpeciesThresholdTab = () => {
                 placeholder="Filter by compound name"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-6"
+                className="pl-6 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
               />
             </div>
           </div>
@@ -735,7 +737,7 @@ export const SpeciesThresholdTab = () => {
           {/* Compounds List */}
           <div className="space-y-6">
             {filteredCompounds.length === 0 ? (
-              <div className="py-12 text-muted-foreground text-base text-center">
+              <div className="py-12 text-neutral-500 dark:text-neutral-400 text-base text-center">
                 {searchQuery
                   ? "No compounds match your search."
                   : "No compounds available for threshold configuration."}
@@ -748,13 +750,13 @@ export const SpeciesThresholdTab = () => {
 
                 return (
                   <div key={compound} className="space-y-3">
-                    <div className="bg-white dark:bg-neutral-900 p-6 border dark:border-neutral-700/50 rounded-lg">
+                    <div className="bg-neutral-50 dark:bg-neutral-900 p-6 border border-neutral-200 dark:border-neutral-700 rounded-lg">
                       <div className="flex justify-between items-start mb-6">
                         <div className="flex-1">
-                          <div className="font-semibold text-base">
+                          <div className="font-semibold text-neutral-900 dark:text-neutral-100 text-base">
                             {compound}
                           </div>
-                          <div className="text-muted-foreground text-sm">
+                          <div className="text-neutral-500 dark:text-neutral-400 text-sm">
                             Compound • ppm
                           </div>
                         </div>
@@ -795,7 +797,7 @@ export const SpeciesThresholdTab = () => {
 
                       {editing ? (
                         <div className="space-y-4 ">
-                          <div className="bg-gray-50 p-3 border border-gray-200 rounded-lg text-gray-500 text-xs">
+                          <div className="bg-neutral-100 dark:bg-neutral-800 p-3 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-500 dark:text-neutral-400 text-xs">
                             ⚠️{" "}
                             <strong>
                               Save Changes will overwrite all port values
@@ -821,7 +823,7 @@ export const SpeciesThresholdTab = () => {
                                   )
                                 }
                                 onFocus={(e) => e.target.select()}
-                                className="w-full"
+                                className="w-full bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
                                 step="0.1"
                                 placeholder="Enter warning threshold (ppm)"
                                 min={0}
@@ -840,7 +842,7 @@ export const SpeciesThresholdTab = () => {
                                   handleThresholdChange("alarm", e.target.value)
                                 }
                                 onFocus={(e) => e.target.select()}
-                                className="w-full"
+                                className="w-full bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
                                 step="0.1"
                                 placeholder="Enter alarm threshold (ppm)"
                                 min={0}
@@ -863,10 +865,10 @@ export const SpeciesThresholdTab = () => {
                         <div className="">
                           <div className="flex justify-between items-center mb-4">
                             <div>
-                              <h4 className="font-medium text-gray-900 dark:text-white">
+                              <h4 className="font-medium text-neutral-900 dark:text-neutral-100">
                                 Port Management
                               </h4>
-                              <p className="mt-1 text-gray-500 text-xs">
+                              <p className="mt-1 text-neutral-500 dark:text-neutral-400 text-xs">
                                 Managing thresholds for {portCount} ports
                               </p>
                             </div>
@@ -882,7 +884,7 @@ export const SpeciesThresholdTab = () => {
                           </div>
 
                           {/* Port Editing Instructions */}
-                          <div className="mt-2 mb-4 text-gray-500 text-xs">
+                          <div className="mt-2 mb-4 text-neutral-500 dark:text-neutral-400 text-xs">
                             💡 Click on any port to edit its thresholds
                             individually
                           </div>
@@ -933,7 +935,7 @@ export const SpeciesThresholdTab = () => {
 
                           {/* Help text for inline editing */}
                           {inlineEditing && (
-                            <div className="mt-3 text-gray-500 text-xs text-center">
+                            <div className="mt-3 text-neutral-500 dark:text-neutral-400 text-xs text-center">
                               💡 Type value • Press Enter to save • Press Esc to
                               cancel • Click outside to save
                             </div>

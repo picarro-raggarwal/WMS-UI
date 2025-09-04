@@ -25,7 +25,9 @@ export const BoundaryDetails = ({
   return (
     <div className="flex-1">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-lg">{boundary.name}</h3>
+        <h3 className="font-semibold text-lg text-neutral-900 dark:text-neutral-100">
+          {boundary.name}
+        </h3>
         <div className="flex space-x-1">
           <Button
             variant="ghost"
@@ -45,13 +47,13 @@ export const BoundaryDetails = ({
           </Button>
         </div>
       </div>
-      <p className="mb-3 text-gray-600 text-sm">
+      <p className="mb-3 text-neutral-600 dark:text-neutral-400 text-sm">
         Type: <span className="capitalize">{boundary.type}</span>
       </p>
-      <div className="mb-2 font-semibold text-gray-500 text-xs">
+      <div className="mb-2 font-semibold text-neutral-500 dark:text-neutral-400 text-xs">
         Boundary Points:
       </div>
-      <ul className="mb-4 text-gray-700 text-xs space-y-1">
+      <ul className="mb-4 text-neutral-700 dark:text-neutral-300 text-xs space-y-1">
         {boundary.points.map((pt, idx) => (
           <li key={idx}>
             X: {pt.x.toFixed(4)}, Y: {pt.y.toFixed(4)}
@@ -60,10 +62,10 @@ export const BoundaryDetails = ({
       </ul>
       {showMarkers && (
         <>
-          <div className="mb-2 font-semibold text-gray-500 text-xs">
+          <div className="mb-2 font-semibold text-neutral-500 dark:text-neutral-400 text-xs">
             Markers:
           </div>
-          <ul className="mb-4 text-gray-700 text-xs space-y-1">
+          <ul className="mb-4 text-neutral-700 dark:text-neutral-300 text-xs space-y-1">
             {movingMarkers.map((marker, idx) => (
               <li key={marker.id}>
                 <span className="font-mono">Tag #{idx + 1}</span>

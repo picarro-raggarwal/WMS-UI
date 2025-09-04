@@ -335,7 +335,7 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
                 </TooltipContent>
               </div>
             </Tooltip>
-            {uiVersion} | {systemInfo?.serial_number || "SYS-FMS"}
+            {uiVersion} | {systemInfo?.serial_number || "SYS-WMS"}
           </p>
         </div>
       </div>

@@ -38,9 +38,11 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
     !boundary.points.some((p) => !p.x || !p.y || p.x === 0 || p.y === 0);
 
   return (
-    <div className="mb-6 p-4 border border-gray-200 rounded-lg">
+    <div className="mb-6 p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-800">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold">{title}</h3>
+        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+          {title}
+        </h3>
         <Button variant="ghost" size="sm" onClick={onCancel}>
           <X className="w-4 h-4" />
         </Button>
@@ -48,7 +50,10 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor={nameInputId} className="block mb-2">
+          <Label
+            htmlFor={nameInputId}
+            className="block mb-2 text-neutral-700 dark:text-neutral-300"
+          >
             Boundary Name
           </Label>
           <Input
@@ -60,14 +65,16 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                 name: e.target.value
               })
             }
-            className="h-9"
+            className="h-9 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
             placeholder="Enter boundary name"
           />
         </div>
 
         <div>
           <div className="flex justify-between items-center mb-3">
-            <Label className="block">Coordinates</Label>
+            <Label className="block text-neutral-700 dark:text-neutral-300">
+              Coordinates
+            </Label>
             <Button
               type="button"
               variant="outline"
@@ -103,9 +110,9 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                     e.preventDefault();
                   }
                 }}
-                className={`flex-1 min-w-0 h-9 ${
+                className={`flex-1 min-w-0 h-9 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 ${
                   !point.x || point.x === 0
-                    ? "border-red-300 focus:border-red-500"
+                    ? "border-red-300 dark:border-red-600 focus:border-red-500 dark:focus:border-red-500"
                     : ""
                 }`}
                 required
@@ -133,9 +140,9 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                     e.preventDefault();
                   }
                 }}
-                className={`flex-1 min-w-0 h-9 ${
+                className={`flex-1 min-w-0 h-9 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 ${
                   !point.y || point.y === 0
-                    ? "border-red-300 focus:border-red-500"
+                    ? "border-red-300 dark:border-red-600 focus:border-red-500 dark:focus:border-red-500"
                     : ""
                 }`}
                 required
@@ -145,7 +152,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                 variant="ghost"
                 size="sm"
                 onClick={() => onRemovePoint(index)}
-                className="hover:bg-red-50 p-1 w-8 h-8 text-red-600 hover:text-red-700"
+                className="hover:bg-red-50 dark:hover:bg-red-900/20 p-1 w-8 h-8 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                 title="Remove coordinate point"
               >
                 <X className="w-3 h-3" />

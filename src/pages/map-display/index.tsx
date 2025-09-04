@@ -275,8 +275,10 @@ const MapDisplay = () => {
         <main className="flex flex-col mx-auto px-8 md:px-12 py-8 w-full max-w-8xl h-[calc(100vh-4rem)]">
           <div className="flex flex-1 justify-center items-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 border-gray-900 border-b-2 rounded-full w-32 h-32 animate-spin"></div>
-              <p className="text-gray-600">Loading map...</p>
+              <div className="mx-auto mb-4 border-neutral-900 dark:border-neutral-100 border-b-2 rounded-full w-32 h-32 animate-spin"></div>
+              <p className="text-neutral-600 dark:text-neutral-400">
+                Loading map...
+              </p>
             </div>
           </div>
         </main>
@@ -297,7 +299,7 @@ const MapDisplay = () => {
         {/* Left: Map Section */}
         <div
           ref={mapContainerRef}
-          className="relative flex-1 border border-gray-200 rounded-lg overflow-hidden"
+          className="relative flex-1 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden"
         >
           <MapContainer
             bounds={bounds}
@@ -408,7 +410,7 @@ const MapDisplay = () => {
         </div>
 
         {/* Right Sidebar */}
-        <aside className="flex flex-col flex-shrink-0 bg-white shadow mt-8 md:mt-0 ml-0 md:ml-4 p-6 border border-gray-200 rounded-lg w-full md:w-96 h-full overflow-y-auto">
+        <aside className="flex flex-col flex-shrink-0 bg-neutral-50 dark:bg-neutral-900 shadow mt-8 md:mt-0 ml-0 md:ml-4 p-6 border border-neutral-200 dark:border-neutral-700 rounded-lg w-full md:w-96 h-full overflow-y-auto">
           <MapControls
             showMarkers={showMarkers}
             onShowMarkersChange={setShowMarkers}
@@ -454,7 +456,7 @@ const MapDisplay = () => {
           )}
 
           {!selectedBoundary && !isAddingBoundary && !isEditingBoundary && (
-            <div className="py-8 text-gray-500 text-center">
+            <div className="py-8 text-neutral-500 dark:text-neutral-400 text-center">
               <p>Select a boundary to view details</p>
               <p className="mt-2 text-sm">
                 Or click "Add Boundary" to create a new one
