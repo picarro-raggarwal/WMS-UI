@@ -702,7 +702,7 @@ export const SpeciesThresholdTab = () => {
                     variant="outline"
                     disabled={isSaving}
                   >
-                    Cancel
+                    Reset
                   </Button>
                   <Button
                     size="sm"

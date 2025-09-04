@@ -304,7 +304,7 @@ export const PortConfigurationTab = () => {
                     }}
                     disabled={isSaving}
                   >
-                    Cancel
+                    Reset
                   </Button>
                   <Button
                     onClick={handleSaveWithConfirmation}
