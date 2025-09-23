@@ -164,7 +164,7 @@ const RecipeList = () => {
         // Add any other fields you need for the API
       };
 
-      console.log("Recipe scheduled with info:", recipeInfo);
+      // console.log("Recipe scheduled with info:", recipeInfo);
 
       // Show success toast
       toast.success(

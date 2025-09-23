@@ -298,8 +298,6 @@ const createVisualMap = (thresholds: ThresholdsConfig | null) => {
     temp.pieces.push(alarmPiece);
   }
 
-  console.log(temp);
-
   return temp;
 };
 

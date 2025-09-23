@@ -239,7 +239,7 @@ const MethodPage = () => {
     frequency: { value: string; unit: string };
     duration: string;
   }) => {
-    console.log("Scheduling recipe:", selectedRecipe?.name, data);
+    // console.log("Scheduling recipe:", selectedRecipe?.name, data);
 
     if (!selectedRecipe) return;
 

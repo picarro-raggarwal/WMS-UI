@@ -94,7 +94,9 @@ export const PortConfigurationTab = () => {
 
   // Debug portEnabled state changes
   useEffect(() => {
-    // Removed console log
+    {
+      /* empty */
+    }
   }, [portEnabled]);
 
   // Check if there are unsaved changes
@@ -119,29 +121,6 @@ export const PortConfigurationTab = () => {
 
     setIsSaving(true);
     try {
-      // Console all changes
-      console.log("🚀 Saving Port Configuration Changes:");
-      console.log("📝 Port Name Changes:", portNames);
-      console.log("🔌 Port Enable/Disable Changes:", portEnabled);
-
-      // Log what changed from last saved state
-      const nameChanges = Object.entries(portNames).filter(
-        ([portNum, name]) => name !== lastSavedNames[parseInt(portNum)]
-      );
-      const enableChanges = Object.entries(portEnabled).filter(
-        ([portNum, enabled]) => enabled !== lastSavedEnabled[parseInt(portNum)]
-      );
-
-      if (nameChanges.length > 0) {
-        console.log("✏️ Modified Port Labels:", nameChanges);
-      }
-      if (enableChanges.length > 0) {
-        console.log(
-          "🔒 Disabled Ports:",
-          enableChanges.map(([portNum]) => parseInt(portNum))
-        );
-      }
-
       // TODO: Implement network call to save changes
       // Example: await savePortConfiguration({ portNames, portEnabled })
 
@@ -149,14 +128,12 @@ export const PortConfigurationTab = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Success toast
-      console.log("✅ Port configuration saved successfully!");
       toast.success("Port configuration saved successfully!");
 
       // Update the last saved state to current values
       setLastSavedNames({ ...portNames });
       setLastSavedEnabled({ ...portEnabled });
     } catch (error) {
-      console.error("❌ Failed to save port configuration:", error);
       toast.error("Failed to save port configuration. Please try again.");
     } finally {
       setIsSaving(false);
@@ -165,18 +142,14 @@ export const PortConfigurationTab = () => {
 
   const handleEstablishFlowRate = async () => {
     try {
-      console.log("🚀 Starting Establish Flow Rate process...");
-
       // TODO: Implement actual establish flow rate API call
       // Example: await establishFlowRate()
 
       // Simulate network call
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      console.log("✅ Establish Flow Rate completed successfully!");
       toast.success("Flow rate established successfully!");
     } catch (error) {
-      console.error("❌ Failed to establish flow rate:", error);
       toast.error("Failed to establish flow rate. Please try again.");
     }
   };

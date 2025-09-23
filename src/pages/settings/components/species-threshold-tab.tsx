@@ -231,9 +231,6 @@ export const SpeciesThresholdTab = () => {
           // Validate the value using utility function
           const currentThreshold = portThresholds[compound]?.[port];
           if (!currentThreshold) {
-            console.error(
-              `No threshold data found for compound ${compound} port ${port}`
-            );
             return;
           }
           const errorMessage = validatePortThreshold(
@@ -261,9 +258,6 @@ export const SpeciesThresholdTab = () => {
           // Check if value actually changed from original
           const originalValue = portThresholds[compound]?.[port]?.[type];
           if (originalValue === undefined) {
-            console.error(
-              `No original value found for compound ${compound} port ${port} type ${type}`
-            );
             return;
           }
           const hasValueChanged = originalValue !== numValue;
@@ -440,9 +434,6 @@ export const SpeciesThresholdTab = () => {
   ) => {
     const currentValue = portThresholds[compound]?.[portNumber]?.[type];
     if (currentValue === undefined) {
-      console.error(
-        `No current value found for compound ${compound} port ${portNumber} type ${type}`
-      );
       return;
     }
     setInlineEditing({
@@ -471,9 +462,6 @@ export const SpeciesThresholdTab = () => {
     // Validate using utility function
     const currentThreshold = portThresholds[compound]?.[port];
     if (!currentThreshold) {
-      console.error(
-        `No threshold data found for compound ${compound} port ${port}`
-      );
       return;
     }
 
@@ -503,9 +491,6 @@ export const SpeciesThresholdTab = () => {
     // Check if value actually changed from original
     const originalValue = portThresholds[compound]?.[port]?.[type];
     if (originalValue === undefined) {
-      console.error(
-        `No original value found for compound ${compound} port ${port} type ${type}`
-      );
       return;
     }
 
@@ -609,7 +594,6 @@ export const SpeciesThresholdTab = () => {
 
     // Safety check: ensure editedPorts is always a Set
     if (!(editedPorts instanceof Set)) {
-      console.error("editedPorts is not a Set:", editedPorts);
       // Reset to a proper Set
       setEditedPorts(new Set());
       return false;
@@ -625,10 +609,6 @@ export const SpeciesThresholdTab = () => {
     () => (): boolean => {
       // Safety check: ensure editedPorts is always a Set
       if (!(editedPorts instanceof Set)) {
-        console.error(
-          "hasUnsavedChanges: editedPorts is not a Set:",
-          editedPorts
-        );
         // Reset to a proper Set
         setEditedPorts(new Set());
         return false;
@@ -690,7 +670,6 @@ export const SpeciesThresholdTab = () => {
       toast.success("All species thresholds saved successfully!");
     } catch (error) {
       toast.error("Failed to save species thresholds");
-      console.error("Save error:", error);
     } finally {
       setIsSaving(false);
     }
@@ -981,9 +960,6 @@ export const SpeciesThresholdTab = () => {
 
                                     // Skip rendering if port threshold data is missing
                                     if (!portThreshold) {
-                                      console.warn(
-                                        `Missing port threshold data for compound ${compound} port ${portNumber}`
-                                      );
                                       return null;
                                     }
 

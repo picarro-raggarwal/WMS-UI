@@ -63,8 +63,6 @@ class SocketService {
   connect() {
     if (Object.keys(this.sockets).length > 0) return;
 
-    // console.log("Connecting to all namespaces and listening for ALL events in each...");
-
     // Connect to all namespaces
     ALL_NAMESPACES.forEach((namespace) => {
       const namespacePath =

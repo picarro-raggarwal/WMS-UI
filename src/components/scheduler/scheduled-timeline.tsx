@@ -1,9 +1,9 @@
-import React, { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
-import { motion } from "framer-motion";
 import { useGetAllRecipesQuery } from "@/pages/method/data/recipes.slice";
-import { formatLabel, formatDateTime, formatTime } from "@/utils";
+import { formatDateTime, formatLabel, formatTime } from "@/utils";
+import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Plus, RotateCcw } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 
 // Define ScheduleJob types to avoid circular dependency
 interface MeasurementJob {
@@ -64,17 +64,18 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
   setTimeScale,
   isGrouped,
   setIsGrouped,
-  onScheduleJob,
+  onScheduleJob
 }) => {
   // Fetch recipes for name lookup
   const { data: recipes } = useGetAllRecipesQuery();
 
   // Create recipe lookup map
   const recipeMap = useMemo(() => {
-    console.log("recipes", recipes);
     if (!recipes) return new Map();
     //@TODO  this should proabably be recipe_id but the backend is not returning it correctly
-    return new Map(recipes.map((recipe) => [recipe.recipe_row_id, recipe.recipe_name]));
+    return new Map(
+      recipes.map((recipe) => [recipe.recipe_row_id, recipe.recipe_name])
+    );
   }, [recipes]);
 
   // Get recipe name by ID
@@ -92,7 +93,9 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
 
     if (runningJobs.length > 0) {
       // Start window from the earliest running job's start time
-      const earliestStart = Math.min(...runningJobs.map((job) => job.startTime.getTime()));
+      const earliestStart = Math.min(
+        ...runningJobs.map((job) => job.startTime.getTime())
+      );
       return new Date(earliestStart);
     }
 
@@ -130,7 +133,9 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
     );
 
     if (runningJobs.length > 0) {
-      const earliestStart = Math.min(...runningJobs.map((job) => job.startTime.getTime()));
+      const earliestStart = Math.min(
+        ...runningJobs.map((job) => job.startTime.getTime())
+      );
       setWindowStartTime(new Date(earliestStart));
     } else {
       setWindowStartTime(new Date(currentTime.getTime() - 30 * 60 * 1000));
@@ -157,7 +162,9 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
       setIsWindowChanging(true);
       const viewDuration = getViewDuration();
       // Calculate new window start time to put NOW at 10% from the left
-      const newWindowStart = new Date(currentTime.getTime() - viewDuration * 0.1);
+      const newWindowStart = new Date(
+        currentTime.getTime() - viewDuration * 0.1
+      );
       setWindowStartTime(newWindowStart);
       // Reset window changing flag after a brief delay
       setTimeout(() => setIsWindowChanging(false), 100);
@@ -197,14 +204,15 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
               : `Measurement${recipeName ? ` - ${recipeName}` : ""}`,
           showFrequency: job.jobType === "calibration",
           frequency:
-            job.jobType === "calibration" && job.originalJob.job_type === "calibration"
-              ? `Every ${(job.originalJob as CalibrationJob).frequency_amount} ${
-                  (job.originalJob as CalibrationJob).frequency_unit
-                }`
+            job.jobType === "calibration" &&
+            job.originalJob.job_type === "calibration"
+              ? `Every ${
+                  (job.originalJob as CalibrationJob).frequency_amount
+                } ${(job.originalJob as CalibrationJob).frequency_unit}`
               : undefined,
           scheduleDetails: job.originalJob,
           jobType: job.jobType,
-          recipeId: recipeId || 0,
+          recipeId: recipeId || 0
         });
       }
     });
@@ -249,7 +257,7 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
 
     return {
       left: `${(startOffset / viewDuration) * 100}%`,
-      width: `${(duration / viewDuration) * 100}%`,
+      width: `${(duration / viewDuration) * 100}%`
     };
   };
 
@@ -295,7 +303,7 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
       x: positionPercent,
       time: hoverTime,
       job: jobsAtTime[0], // Primary job for backward compatibility
-      jobs: jobsAtTime, // All jobs at this time
+      jobs: jobsAtTime // All jobs at this time
     });
   };
 
@@ -335,7 +343,9 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
 
     setIsWindowChanging(true);
     if (runningJobs.length > 0) {
-      const earliestStart = Math.min(...runningJobs.map((job) => job.startTime.getTime()));
+      const earliestStart = Math.min(
+        ...runningJobs.map((job) => job.startTime.getTime())
+      );
       setWindowStartTime(new Date(earliestStart));
     } else {
       setWindowStartTime(new Date(currentTime.getTime() - 30 * 60 * 1000));
@@ -364,12 +374,18 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
       firstMarkerTime.setHours(0, 0, 0, 0);
 
       for (let i = 0; i <= markerCount; i++) {
-        const markerTime = new Date(firstMarkerTime.getTime() + i * dayInterval);
-        const position = ((markerTime.getTime() - windowStartTime.getTime()) / viewDuration) * 100;
+        const markerTime = new Date(
+          firstMarkerTime.getTime() + i * dayInterval
+        );
+        const position =
+          ((markerTime.getTime() - windowStartTime.getTime()) / viewDuration) *
+          100;
 
         // Only show markers that are within the visible area
         if (position >= -5 && position <= 105) {
-          const weekday = markerTime.toLocaleDateString(undefined, { weekday: "short" });
+          const weekday = markerTime.toLocaleDateString(undefined, {
+            weekday: "short"
+          });
           const date = markerTime.getDate();
           const time = "00:00";
 
@@ -377,7 +393,8 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
             <div
               key={i}
               className={`top-0 absolute border-gray-100 border-l h-full`}
-              style={{ left: `${position}%` }}>
+              style={{ left: `${position}%` }}
+            >
               <div className="-top-8 absolute flex flex-col items-center -translate-x-1/2">
                 <span className="text-gray-400 text-xs">{weekday}</span>
                 <span className="text-gray-600 text-xs">{date}</span>
@@ -403,22 +420,29 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
           markerTime = new Date(hourAlignedTime.getTime() + i * HOUR);
         }
 
-        const position = ((markerTime.getTime() - windowStartTime.getTime()) / viewDuration) * 100;
+        const position =
+          ((markerTime.getTime() - windowStartTime.getTime()) / viewDuration) *
+          100;
 
         // Only show markers that are within the visible area (with some buffer)
         if (position >= -5 && position <= 105) {
           // Only display the hour part for hour markers, full time for 15-min markers
-          const label = timeScale === "1h" ? formatTime(markerTime) : `${markerTime.getHours()}:00`;
+          const label =
+            timeScale === "1h"
+              ? formatTime(markerTime)
+              : `${markerTime.getHours()}:00`;
 
           markers.push(
             <div
               key={i}
               className="top-0 absolute border-gray-100 border-l h-full"
-              style={{ left: `${position}%` }}>
+              style={{ left: `${position}%` }}
+            >
               <span
                 className={`-top-6 absolute text-gray-500 text-xs whitespace-nowrap -translate-x-1/2 ${
                   position > 100 ? "hidden" : ""
-                }`}>
+                }`}
+              >
                 {label}
               </span>
             </div>
@@ -438,14 +462,18 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
     rowType: string;
   }
 
-  const groupSequentialJobs = (rowJobs: JobInstance[]): (GroupedJob | JobInstance)[] => {
+  const groupSequentialJobs = (
+    rowJobs: JobInstance[]
+  ): (GroupedJob | JobInstance)[] => {
     if (!isGrouped) return rowJobs;
 
     const groups: GroupedJob[] = [];
     let currentGroup: GroupedJob | null = null;
 
     // Sort jobs by start time
-    const sortedJobs = [...rowJobs].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    const sortedJobs = [...rowJobs].sort(
+      (a, b) => a.startTime.getTime() - b.startTime.getTime()
+    );
 
     sortedJobs.forEach((job) => {
       const rowType = `${job.jobType}_${job.recipe || "default"}`;
@@ -457,13 +485,14 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
           startTime: job.startTime,
           endTime: job.endTime,
           count: 1,
-          rowType,
+          rowType
         };
       } else {
         // Check if this job starts right after the current group ends
         // and is of the same type/recipe
         if (
-          Math.abs(job.startTime.getTime() - currentGroup.endTime.getTime()) < 1000 &&
+          Math.abs(job.startTime.getTime() - currentGroup.endTime.getTime()) <
+            1000 &&
           job.jobType === currentGroup.jobType &&
           job.recipe === currentGroup.recipe
         ) {
@@ -477,7 +506,7 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
             startTime: job.startTime,
             endTime: job.endTime,
             count: 1,
-            rowType,
+            rowType
           };
         }
       }
@@ -520,8 +549,6 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
       result.set(rowType, rowJobs);
     });
 
-    console.log(result);
-
     return result;
   }, [visibleJobs, rows]);
 
@@ -535,25 +562,29 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
           <Button
             onClick={() => setTimeScale("1h")}
             variant={timeScale === "1h" ? "default" : "outline"}
-            size="sm">
+            size="sm"
+          >
             1h
           </Button>
           <Button
             onClick={() => setTimeScale("12h")}
             variant={timeScale === "12h" ? "default" : "outline"}
-            size="sm">
+            size="sm"
+          >
             12h
           </Button>
           <Button
             onClick={() => setTimeScale("24h")}
             variant={timeScale === "24h" ? "default" : "outline"}
-            size="sm">
+            size="sm"
+          >
             24h
           </Button>
           <Button
             onClick={() => setTimeScale("7d")}
             variant={timeScale === "7d" ? "default" : "outline"}
-            size="sm">
+            size="sm"
+          >
             7 days
           </Button>
         </div>
@@ -567,13 +598,19 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
           {!isNowLineVisible && (
             <div className="flex items-center gap-2 bg-orange-50 px-2 py-1 rounded-md text-orange-600 text-sm">
               <div className="bg-orange-500 rounded-full w-2 h-2 animate-pulse"></div>
-              Current time is {nowLinePosition < 0 ? "in the past" : "in the future"}
+              Current time is{" "}
+              {nowLinePosition < 0 ? "in the past" : "in the future"}
             </div>
           )}
 
           {/* Pan controls */}
           <div className="hidden flex items-center gap-1 border rounded-md">
-            <Button onClick={panLeft} variant="ghost" size="sm" className="p-0 w-8 h-8">
+            <Button
+              onClick={panLeft}
+              variant="ghost"
+              size="sm"
+              className="p-0 w-8 h-8"
+            >
               <ChevronLeft size={16} />
             </Button>
             <Button
@@ -581,16 +618,24 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
               variant={!isNowLineVisible ? "default" : "ghost"}
               size="sm"
               className={`h-8 w-8 p-0 ${
-                !isNowLineVisible ? "bg-orange-500 hover:bg-orange-600 text-white" : ""
+                !isNowLineVisible
+                  ? "bg-orange-500 hover:bg-orange-600 text-white"
+                  : ""
               }`}
               title={
                 !isNowLineVisible
                   ? "Jump to current time - NOW is off-screen"
                   : "Reset to current time"
-              }>
+              }
+            >
               <RotateCcw size={14} />
             </Button>
-            <Button onClick={panRight} variant="ghost" size="sm" className="p-0 w-8 h-8">
+            <Button
+              onClick={panRight}
+              variant="ghost"
+              size="sm"
+              className="p-0 w-8 h-8"
+            >
               <ChevronRight size={16} />
             </Button>
           </div>
@@ -602,7 +647,8 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
           className="relative"
           onMouseMove={handleTimelineMouseMove}
           onMouseEnter={handleTimelineMouseEnter}
-          onMouseLeave={handleTimelineMouseLeave}>
+          onMouseLeave={handleTimelineMouseLeave}
+        >
           <div className="relative pl-48 border-gray-200 border-b h-8">
             <div className="relative w-full h-full">
               {renderTimeMarkers()}
@@ -614,17 +660,23 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                   className="top-0 z-10 absolute bg-red-500 w-0.5 h-full"
                   style={{
                     transform: "translateZ(0)", // Force hardware acceleration
-                    backfaceVisibility: "hidden", // Reduce rendering artifacts
+                    backfaceVisibility: "hidden" // Reduce rendering artifacts
                   }}
-                  animate={{ left: `${Math.round(nowLinePosition * 100) / 100}%` }}
-                  initial={{ left: `${Math.round(nowLinePosition * 100) / 100}%` }}
+                  animate={{
+                    left: `${Math.round(nowLinePosition * 100) / 100}%`
+                  }}
+                  initial={{
+                    left: `${Math.round(nowLinePosition * 100) / 100}%`
+                  }}
                   transition={{
                     duration: isWindowChanging ? 0 : 1,
                     ease: "linear",
-                    type: "tween",
-                  }}>
+                    type: "tween"
+                  }}
+                >
                   <div className="-top-6 absolute bg-red-500 px-1 py-0.5 rounded w-16 text-white text-xs text-center whitespace-nowrap -translate-x-1/2">
-                    NOW <span className="hidden">{formatTime(currentTime)}</span>
+                    NOW{" "}
+                    <span className="hidden">{formatTime(currentTime)}</span>
                   </div>
                 </motion.div>
               )}
@@ -636,7 +688,8 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                 hoverPosition.x <= 100 && (
                   <div
                     className="top-0 z-20 absolute bg-primary-500 w-0.5 h-full pointer-events-none"
-                    style={{ left: `${hoverPosition.x}%` }}>
+                    style={{ left: `${hoverPosition.x}%` }}
+                  >
                     <div className="-top-12 absolute bg-primary-500 px-2 py-1 rounded max-w-64 text-white text-xs text-center whitespace-nowrap -translate-x-1/2">
                       <div className="font-medium">
                         {timeScale === "7d"
@@ -651,7 +704,9 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                                 ? "Measurement"
                                 : "Calibration"}
                               {hoverPosition.jobs[0].recipe &&
-                                ` - ${getRecipeName(hoverPosition.jobs[0].recipe)}`}
+                                ` - ${getRecipeName(
+                                  hoverPosition.jobs[0].recipe
+                                )}`}
                             </>
                           ) : (
                             <>
@@ -659,15 +714,20 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                               <br />
                               {hoverPosition.jobs.map((job, index) => (
                                 <div key={index}>
-                                  {job.jobType === "measure" ? "Measurement" : "Calibration"}
-                                  {job.recipe && ` - ${getRecipeName(job.recipe)}`}
+                                  {job.jobType === "measure"
+                                    ? "Measurement"
+                                    : "Calibration"}
+                                  {job.recipe &&
+                                    ` - ${getRecipeName(job.recipe)}`}
                                 </div>
                               ))}
                             </>
                           )}
                         </div>
                       ) : (
-                        <div className="opacity-75 mt-0.5 text-[10px]">No job scheduled</div>
+                        <div className="opacity-75 mt-0.5 text-[10px]">
+                          No job scheduled
+                        </div>
                       )}
                     </div>
                   </div>
@@ -689,7 +749,10 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
             const scheduleDetails = firstJob?.originalJob;
 
             return (
-              <div key={row.type} className="relative flex border-gray-100 border-b h-28">
+              <div
+                key={row.type}
+                className="relative flex border-gray-100 border-b h-28"
+              >
                 <div className="relative flex-shrink-0 bg-gray-50/50 p-3 border-gray-100 border-r w-48">
                   {/* {isRowRunning && (
                     <div className="bottom-3 left-3 absolute bg-primary-500 mt-1 px-2 rounded-full font-medium text-[10px] text-white">
@@ -699,9 +762,12 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                   <div
                     className={`mb-1 font-medium text-sm ${
                       isRowRunning ? "text-primary-500" : ""
-                    }`}>
+                    }`}
+                  >
                     {formatLabel(getRecipeName(firstJob?.recipe)) ||
-                      formatLabel(getRecipeName(scheduleDetails?.recipe_row_id)) ||
+                      formatLabel(
+                        getRecipeName(scheduleDetails?.recipe_row_id)
+                      ) ||
                       row.label}
                   </div>
                   {scheduleDetails && (
@@ -709,7 +775,9 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                       <div className="flex justify-between">
                         <span className="text-gray-500">Start:</span>
                         <span className="font-medium text-[10px] leading-tight">
-                          {formatDateTime(new Date(scheduleDetails.start_epoch * 1000))}
+                          {formatDateTime(
+                            new Date(scheduleDetails.start_epoch * 1000)
+                          )}
                         </span>
                       </div>
 
@@ -717,8 +785,14 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                         <span className="text-gray-500">Duration:</span>
                         <span className="font-medium">
                           {scheduleDetails.job_type === "measure"
-                            ? `${(scheduleDetails as MeasurementJob).duration_seconds / 60}min`
-                            : `${(scheduleDetails as CalibrationJob).job_duration_seconds / 60}min`}
+                            ? `${
+                                (scheduleDetails as MeasurementJob)
+                                  .duration_seconds / 60
+                              }min`
+                            : `${
+                                (scheduleDetails as CalibrationJob)
+                                  .job_duration_seconds / 60
+                              }min`}
                         </span>
                       </div>
 
@@ -727,19 +801,28 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                           <div className="flex justify-between">
                             <span className="text-gray-500">Freq:</span>
                             <span className="font-medium text-[10px]">
-                              {(scheduleDetails as CalibrationJob).frequency_amount}{" "}
-                              {(scheduleDetails as CalibrationJob).frequency_unit}
+                              {
+                                (scheduleDetails as CalibrationJob)
+                                  .frequency_amount
+                              }{" "}
+                              {
+                                (scheduleDetails as CalibrationJob)
+                                  .frequency_unit
+                              }
                             </span>
                           </div>
                         </>
                       )}
 
-                      {firstJob?.recipe && scheduleDetails.job_type === "measure" && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Recipe:</span>
-                          <span className="font-medium">{getRecipeName(firstJob?.recipe)}</span>
-                        </div>
-                      )}
+                      {firstJob?.recipe &&
+                        scheduleDetails.job_type === "measure" && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Recipe:</span>
+                            <span className="font-medium">
+                              {getRecipeName(firstJob?.recipe)}
+                            </span>
+                          </div>
+                        )}
                     </div>
                   )}{" "}
                 </div>
@@ -748,19 +831,28 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                   {/* "Now" indicator line for this row */}
                   {nowLinePosition >= 0 && nowLinePosition <= 100 && (
                     <motion.div
-                      key={isWindowChanging ? `row-window-${Date.now()}` : "row-stable"}
+                      key={
+                        isWindowChanging
+                          ? `row-window-${Date.now()}`
+                          : "row-stable"
+                      }
                       className="top-0 z-10 absolute bg-red-500 opacity-30 w-0.5 h-full pointer-events-none"
                       style={{
                         transform: "translateZ(0)", // Force hardware acceleration
-                        backfaceVisibility: "hidden", // Reduce rendering artifacts
+                        backfaceVisibility: "hidden" // Reduce rendering artifacts
                       }}
-                      animate={{ left: `${Math.round(nowLinePosition * 100) / 100}%` }}
-                      initial={{ left: `${Math.round(nowLinePosition * 100) / 100}%` }}
+                      animate={{
+                        left: `${Math.round(nowLinePosition * 100) / 100}%`
+                      }}
+                      initial={{
+                        left: `${Math.round(nowLinePosition * 100) / 100}%`
+                      }}
                       transition={{
                         duration: isWindowChanging ? 0 : 1,
                         ease: "linear",
-                        type: "tween",
-                      }}></motion.div>
+                        type: "tween"
+                      }}
+                    ></motion.div>
                   )}
 
                   {/* Hover time indicator for this row */}
@@ -770,7 +862,8 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                     hoverPosition.x <= 100 && (
                       <div
                         className="top-0 z-20 absolute bg-primary-500 opacity-50 w-0.5 h-full pointer-events-none"
-                        style={{ left: `${hoverPosition.x}%` }}></div>
+                        style={{ left: `${hoverPosition.x}%` }}
+                      ></div>
                     )}
 
                   {groupSequentialJobs(rowJobs).map((job, jobIndex) => {
@@ -784,11 +877,16 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
 
                     return (
                       <div
-                        key={isGrouped ? `group-${jobIndex}` : `job-${(job as JobInstance).id}`}
+                        key={
+                          isGrouped
+                            ? `group-${jobIndex}`
+                            : `job-${(job as JobInstance).id}`
+                        }
                         className={`absolute top-[10%] h-[80%]   cursor-pointer bg-gray-100 border rounded-lg transition-all group ${
                           isRunning ? " " : ""
                         }`}
-                        style={position}>
+                        style={position}
+                      >
                         {/* Show count for grouped jobs */}
                         {isGrouped && (
                           <div className="hidden absolute inset-0 flex justify-center items-center font-medium text-gray-600 text-xs">
@@ -803,7 +901,8 @@ const ScheduledTimeline: React.FC<ScheduledTimelineProps> = ({
                             onClick={(e) => {
                               e.stopPropagation();
                               onScheduleJob(job.recipe);
-                            }}>
+                            }}
+                          >
                             <Plus size={10} />
                           </Button>
                         )}

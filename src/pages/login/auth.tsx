@@ -44,7 +44,7 @@ export default function AuthLogin({
         setError("Error logging in");
       }
     } catch (err: any) {
-      console.log("Login failed:", err);
+      // console.log("Login failed:", err);
       setError(
         err?.data?.error_description ||
           err?.data?.message ||

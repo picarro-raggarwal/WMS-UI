@@ -1,32 +1,29 @@
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
-  SheetTitle,
+  SheetTitle
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { formatUnixTimestamp } from "@/utils";
+import {
+  AlertCircle,
+  AlertOctagon,
+  AlertTriangle,
+  Bell,
+  Eye,
+  Info,
+  RotateCcw
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   Alert,
-  severityMap,
   normalizeSeverity,
+  severityMap,
   useAcknowledgeAlertMutation,
-  useClearAlertMutation,
+  useClearAlertMutation
 } from "../data/alerts.slice";
-import {
-  AlertTriangle,
-  AlertCircle,
-  Bell,
-  Info,
-  AlertOctagon,
-  Eye,
-  X,
-  RotateCcw,
-} from "lucide-react";
-import { formatUnixTimestamp } from "@/utils";
-import { toast } from "sonner";
 interface AlertDetailsPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -67,8 +64,13 @@ const getSeverityColor = (severity: number | string) => {
   }
 };
 
-export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelProps) => {
-  const [acknowledgeAlert, { isLoading: isAcknowledging }] = useAcknowledgeAlertMutation();
+export const AlertDetailsPanel = ({
+  isOpen,
+  onClose,
+  alert
+}: AlertDetailsPanelProps) => {
+  const [acknowledgeAlert, { isLoading: isAcknowledging }] =
+    useAcknowledgeAlertMutation();
   const [clearAlert, { isLoading: isClearing }] = useClearAlertMutation();
 
   if (!alert) return null;
@@ -82,13 +84,12 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
       await acknowledgeAlert({
         driver_name: alert.driver_name,
         alarm_name: alert.alarm_name,
-        error: alert.error,
+        error: alert.error
       }).unwrap();
 
       toast.success("Alert acknowledged successfully");
       onClose();
     } catch (error) {
-      console.error("Failed to acknowledge alert:", error);
       toast.error("Failed to acknowledge alert. Please try again.");
     }
   };
@@ -98,13 +99,12 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
       await clearAlert({
         driver_name: alert.driver_name,
         alarm_name: alert.alarm_name,
-        error: alert.error,
+        error: alert.error
       }).unwrap();
 
       toast.success("Alert cleared successfully");
       onClose();
     } catch (error) {
-      console.error("Failed to clear alert:", error);
       toast.error("Failed to clear alert. Please try again.");
     }
   };
@@ -114,7 +114,9 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
       <SheetContent className="flex flex-col justify-between bg-neutral-50 pb-0 w-full min-w-[500px] max-w-[90vw] h-full max-h-[100vh] overflow-y-auto duration-200">
         <SheetHeader className="space-y-3 pb-4 border-b">
           <div className="flex items-start gap-3">
-            <div className={`p-1.5 rounded ${getSeverityColor(alert.severity)}`}>
+            <div
+              className={`p-1.5 rounded ${getSeverityColor(alert.severity)}`}
+            >
               {getSeverityIcon(alert.severity)}
             </div>
             <div className="flex-1 min-w-0">
@@ -131,7 +133,9 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
         <div className="space-y-6 mt-4 overflow-auto">
           {/* Status Overview */}
           <div className="space-y-3">
-            <h3 className="font-medium text-gray-900 dark:text-white text-sm">Status</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white text-sm">
+              Status
+            </h3>
             <div className="gap-3 grid grid-cols-3">
               <div className="space-y-1">
                 <div className="text-neutral-600 text-xs">Severity</div>
@@ -143,14 +147,18 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
               </div>
               <div className="space-y-1">
                 <div className="text-neutral-600 text-xs">Count</div>
-                <div className="font-medium text-sm">{alert.published_count}</div>
+                <div className="font-medium text-sm">
+                  {alert.published_count}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Error Details */}
           <div className="space-y-3">
-            <h3 className="font-medium text-gray-900 dark:text-white text-sm">Error Details</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white text-sm">
+              Error Details
+            </h3>
             <div className="bg-gray-50 dark:bg-neutral-800/50 p-3 border dark:border-neutral-700/50 rounded font-mono text-xs leading-relaxed">
               {alert.error}
             </div>
@@ -158,7 +166,9 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
 
           {/* Timing */}
           <div className="space-y-3">
-            <h3 className="font-medium text-gray-900 dark:text-white text-sm">Timing</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white text-sm">
+              Timing
+            </h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-neutral-600">First Occurrence</span>
@@ -176,7 +186,9 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-medium text-gray-900 dark:text-white text-sm">Technical Details</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white text-sm">
+              Technical Details
+            </h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-neutral-600">Driver</span>
@@ -220,7 +232,8 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
               <div
                 className={`${
                   alertState === "Acknowledged" && "hidden"
-                } flex items-center gap-3 p-4 border hover:border-gray-300 dark:border-neutral-700/50 dark:hover:border-gray-600 rounded-lg transition-colors`}>
+                } flex items-center gap-3 p-4 border hover:border-gray-300 dark:border-neutral-700/50 dark:hover:border-gray-600 rounded-lg transition-colors`}
+              >
                 <div className="p-2 border border-gray-200 dark:border-gray-700 rounded-full">
                   <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                 </div>
@@ -236,7 +249,8 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
                   onClick={handleAcknowledge}
                   disabled={isAcknowledging || isClearing}
                   variant="outline"
-                  size="sm">
+                  size="sm"
+                >
                   {isAcknowledging ? (
                     <>
                       <div className="mr-1.5 border border-current border-t-transparent rounded-full w-3 h-3 animate-spin" />
@@ -249,7 +263,11 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
               </div>
 
               {/* Divider */}
-              <div className={`${alertState === "Acknowledged" && "hidden"} flex items-center`}>
+              <div
+                className={`${
+                  alertState === "Acknowledged" && "hidden"
+                } flex items-center`}
+              >
                 <div className="flex-1 border-gray-200 dark:border-neutral-700 border-t"></div>
                 <span className="bg-white dark:bg-neutral-900 px-3 text-neutral-600 text-xs">
                   OR
@@ -274,7 +292,8 @@ export const AlertDetailsPanel = ({ isOpen, onClose, alert }: AlertDetailsPanelP
                   onClick={handleClear}
                   disabled={isAcknowledging || isClearing}
                   variant="outline"
-                  size="sm">
+                  size="sm"
+                >
                   {isClearing ? (
                     <>
                       <div className="mr-1.5 border border-current border-t-transparent rounded-full w-3 h-3 animate-spin" />
