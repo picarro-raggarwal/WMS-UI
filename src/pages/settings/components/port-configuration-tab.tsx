@@ -480,7 +480,7 @@ export const PortConfigurationTab = () => {
                 This action will establish flow rate for all sampling lines.
                 <strong className="text-red-600">
                   {" "}
-                  All running jobs will be interrupted.
+                  Running recipe will be interrupted.
                 </strong>
               </p>
               <p className="text-gray-600 text-sm">

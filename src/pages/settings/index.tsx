@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetSystemInfoQuery } from "@/lib/services/systemInfo.slice";
-// import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { convertTimestampToTimezone, formatDateTime } from "@/utils";
 import { useLocalStorage } from "@mantine/hooks";
 import {
@@ -25,7 +24,6 @@ import { GeneralTab } from "./components/general-tab";
 import { PortConfigurationTab } from "./components/port-configuration-tab";
 import { SmartRecipeTab } from "./components/smart-recipe-tab";
 import { SpeciesThresholdTab } from "./components/species-threshold-tab";
-import { ThresholdsTab } from "./components/thresholds-tab";
 import { UsersTab } from "./components/users-tab";
 
 const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
@@ -200,13 +198,6 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
               <span>User Management</span>
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent
-            value="thresholds"
-            className="flex-1 space-y-6 mt-0 w-full"
-          >
-            <ThresholdsTab />
-          </TabsContent>
 
           <TabsContent
             value="gas-cylinders"

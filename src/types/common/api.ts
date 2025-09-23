@@ -90,15 +90,3 @@ export interface MetricData {
   unit: string;
   timestamp: number;
 }
-
-// Common threshold types
-export interface Threshold {
-  warning: number;
-  alarm: number;
-  unit: string;
-}
-
-export interface ThresholdConfig extends Threshold {
-  metric: string;
-  type: "compound" | "hardware" | "system";
-}
