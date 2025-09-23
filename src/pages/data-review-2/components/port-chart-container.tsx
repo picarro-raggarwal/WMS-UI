@@ -109,8 +109,12 @@ export const PortChartContainer = ({
               unit={null}
               showWarning={false}
               showAlarm={false}
-              onWarningToggle={() => {}}
-              onAlarmToggle={() => {}}
+              onWarningToggle={() => {
+                /* empty */
+              }}
+              onAlarmToggle={() => {
+                /* empty */
+              }}
               currentValue={null}
               isFetchingMetricsData={true}
             />
@@ -140,8 +144,12 @@ export const PortChartContainer = ({
               unit={null}
               showWarning={false}
               showAlarm={false}
-              onWarningToggle={() => {}}
-              onAlarmToggle={() => {}}
+              onWarningToggle={() => {
+                /* empty */
+              }}
+              onAlarmToggle={() => {
+                /* empty */
+              }}
               currentValue={null}
               isFetchingMetricsData={false}
             />

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import DataReviewLineChart from "./data-review-line-chart";
-import DataReviewChartHeader from "./data-review-chart-header";
-import { ChartProvider } from "./data-review-chart-context";
-import { FormattedData } from "../types";
-import { useGetMetricDataQuery } from "@/pages/live-data/data/metrics.slice";
 import { EmptyStateInfo } from "@/components/empty-state-info";
+import { useGetMetricDataQuery } from "@/pages/live-data/data/metrics.slice";
 import { AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FormattedData } from "../types";
+import { ChartProvider } from "./data-review-chart-context";
+import DataReviewChartHeader from "./data-review-chart-header";
+import DataReviewLineChart from "./data-review-line-chart";
 
 type SingleChartProps = {
   metricId: string;
@@ -23,7 +23,7 @@ export const DataReviewChartContainer = ({
   timeRange,
   // onRegionSelect,
   // isAxisLocked,
-  startEndTimeRange,
+  startEndTimeRange
 }: SingleChartProps) => {
   const [showWarning, setShowWarning] = useState(false);
   const [showAlarm, setShowAlarm] = useState(false);
@@ -31,24 +31,24 @@ export const DataReviewChartContainer = ({
     data: [],
     mean: 0,
     stdDev: 0,
-    unit: "",
+    unit: ""
   });
   const {
     data: chartData,
     isLoading: isLoadingChartData,
     isFetching: isFetchingChartData,
     isError: isErrorChartData,
-    error: errorChartData,
+    error: errorChartData
   } = useGetMetricDataQuery(
     {
       metrics: metricId,
       start: startEndTimeRange?.start,
       end: startEndTimeRange?.end,
       downsample_data: true,
-      downsample_mode: "MEAN",
+      downsample_mode: "MEAN"
     },
     {
-      refetchOnMountOrArgChange: true,
+      refetchOnMountOrArgChange: true
     }
   );
 
@@ -65,13 +65,13 @@ export const DataReviewChartContainer = ({
       mean: chartData[metricId].mean,
       stdDev: chartData[metricId].std_dev,
       unit: chartData[metricId].unit,
-      thresholds: chartData[metricId].thresholds,
+      thresholds: chartData[metricId].thresholds
     };
 
     chartData[metricId].values.forEach((value, index) => {
       finalData.data.push({
         timestamp: chartData[metricId].timestamps[index],
-        value: value,
+        value: value
       });
     });
 
@@ -83,13 +83,13 @@ export const DataReviewChartContainer = ({
         warning: {
           value: formattedData.thresholds.warning,
           color: "#f97316", // orange
-          visible: showWarning,
+          visible: showWarning
         },
         alarm: {
           value: formattedData.thresholds.alarm,
           color: "#ef4444", // red
-          visible: showAlarm,
-        },
+          visible: showAlarm
+        }
       }
     : null;
 
@@ -106,8 +106,12 @@ export const DataReviewChartContainer = ({
               unit={null}
               showWarning={false}
               showAlarm={false}
-              onWarningToggle={() => {}}
-              onAlarmToggle={() => {}}
+              onWarningToggle={() => {
+                /* empty */
+              }}
+              onAlarmToggle={() => {
+                /* empty */
+              }}
               currentValue={null}
               isFetchingMetricsData={isLoadingChartData || isFetchingChartData}
             />
@@ -117,7 +121,8 @@ export const DataReviewChartContainer = ({
                   <EmptyStateInfo
                     className="border-none w-full"
                     title={
-                      errorChartData?.data?.error?.description || `Data unavailable for ${metricId}`
+                      errorChartData?.data?.error?.description ||
+                      `Data unavailable for ${metricId}`
                     }
                     description={
                       errorChartData?.data?.error?.message ||

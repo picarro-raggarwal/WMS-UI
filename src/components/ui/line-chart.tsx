@@ -6,7 +6,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis,
+  YAxis
 } from "recharts";
 
 interface LineChartProps {
@@ -32,7 +32,7 @@ export function LineChart({
   showYAxis = true,
   showXAxis = true,
   showTooltip = true,
-  yAxisWidth = 56,
+  yAxisWidth = 56
 }: LineChartProps) {
   return (
     <ResponsiveContainer width="100%" height={350}>
@@ -91,13 +91,17 @@ export function LineChart({
             dot={false}
             activeDot={{
               r: 4,
-              className: "fill-background",
+              className: "fill-background"
             }}
             isAnimationActive={true}
             animationDuration={300}
             animationEasing="linear"
-            onAnimationStart={() => {}}
-            onAnimationEnd={() => {}}
+            onAnimationStart={() => {
+              /* empty */
+            }}
+            onAnimationEnd={() => {
+              /* empty */
+            }}
           />
         ))}
       </RechartsLineChart>

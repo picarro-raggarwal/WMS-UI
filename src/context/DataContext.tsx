@@ -104,7 +104,9 @@ const defaultContext: DataContextType = {
     gasCylinder1: null,
     gasCylinder2: null,
     systemStatus: "ok",
-    setSystemStatus: () => {}
+    setSystemStatus: () => {
+      /* empty */
+    }
   },
   sensorData: {
     TVOC: null,
@@ -120,9 +122,15 @@ const defaultContext: DataContextType = {
     currentJob: null,
     lastFetched: new Date().toISOString()
   },
-  updateSystemName: () => {},
-  updateUpsPercentage: () => {},
-  updateSystemData: () => {}
+  updateSystemName: () => {
+    /* empty */
+  },
+  updateUpsPercentage: () => {
+    /* empty */
+  },
+  updateSystemData: () => {
+    /* empty */
+  }
 };
 
 const DataContext = createContext<DataContextType>(defaultContext);
