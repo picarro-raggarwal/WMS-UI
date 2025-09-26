@@ -66,9 +66,9 @@ pipeline {
 //             }
 //         }
 
-        stage("Build Docker Image for develop") {
+        stage("Build Docker Image for develop-jvo-wms-85") {
             when {
-                environment name: 'GIT_BRANCH', value: 'develop'
+                environment name: 'GIT_BRANCH', value: 'develop-jvo-wms-85'
             }
             steps {
                 slackSend color: "good", message: "Build Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
@@ -78,9 +78,9 @@ pipeline {
             }
         }
 
-        stage("Deploy to Artifactory from develop branch") {
+        stage("Deploy to Artifactory from develop-jvo-wms-85 branch") {
             when {
-                environment name: 'GIT_BRANCH', value: 'develop'
+                environment name: 'GIT_BRANCH', value: 'develop-jvo-wms-85'
             }
             steps {
                 slackSend color: "good", message: "Deployment Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
