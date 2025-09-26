@@ -89,6 +89,7 @@ pipeline {
                 }
             }
         }
+    }
 
 //         stage("Build Docker Image for release-wms-vx.x") {
 //             when {
@@ -113,7 +114,7 @@ pipeline {
 //                 }
 //             }
 //         }
-	
+
 // 	stage("Build Docker Image for main") {
 //             when {
 //                 environment name: 'GIT_BRANCH', value: 'main'
