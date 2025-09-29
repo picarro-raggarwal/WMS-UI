@@ -1,34 +1,39 @@
-import React, { useState } from "react";
-import { CalibrationHistory } from "./components/calibration-history";
-import { GasCylinders } from "./components/gas-cylinders";
-import { SystemMetrics } from "./components/system-metrics";
-import { DataCompleteness } from "./components/data-completeness";
-import { AuditLogs } from "./components/audit-logs";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { AuditLogs } from "./components/audit-logs";
+import { CalibrationHistory } from "./components/calibration-history";
+import { DataCompleteness } from "./components/data-completeness";
+import { GasCylinders } from "./components/gas-cylinders";
+import { SystemMetrics } from "./components/system-metrics";
 
 const QAQCPage = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState<"last30" | "active">("last30");
+  const [selectedPeriod, setSelectedPeriod] = useState<"last30" | "active">(
+    "last30"
+  );
   const tabsTriggerClasses =
     "py-3 mb-1 rounded-none  data-[state=active]:bg-neutral-50  border-b-2 data-[state=active]:border-primary-500  ";
   return (
     <>
-      <PageHeader pageName="Quality Assurance & Control" />
+      <PageHeader />
       <main className="max-w-8xl mx-auto py-6 h-full overflow-y-auto w-full px-8 md:px-12 space-y-8">
         <div className=" ">
           <div className="flex justify-between items-center mb-4">
             <Select
               defaultValue="last30"
-              onValueChange={(value: "last30" | "active") => setSelectedPeriod(value)}>
+              onValueChange={(value: "last30" | "active") =>
+                setSelectedPeriod(value)
+              }
+            >
               <SelectTrigger className="w-[240px]">
                 <SelectValue placeholder="Select time period" />
               </SelectTrigger>
@@ -58,7 +63,10 @@ const QAQCPage = () => {
                 <TabsTrigger value="calibration" className={tabsTriggerClasses}>
                   Calibration History
                 </TabsTrigger>
-                <TabsTrigger value="completeness" className={tabsTriggerClasses}>
+                <TabsTrigger
+                  value="completeness"
+                  className={tabsTriggerClasses}
+                >
                   Data Completeness
                 </TabsTrigger>
                 <TabsTrigger value="audit" className={tabsTriggerClasses}>

@@ -88,7 +88,6 @@ const MeasurementState = () => {
       });
       setWsError(false);
     } catch (error) {
-      console.error("Error processing websocket data:", error);
       setWsError(true);
     }
   }, [connected, fencelineJobState]);

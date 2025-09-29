@@ -19,8 +19,6 @@ export default function TagHeatmap({ tagId }: TagHeatmapProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const data = tagHeatmapMatrixData[tagId] || [];
 
-  console.log(data);
-
   // Multi-select filter state
   const [selectedExposures, setSelectedExposures] = useState<number[]>([]);
 

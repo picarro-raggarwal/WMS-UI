@@ -47,8 +47,8 @@ const MapDisplay = () => {
   const [movingMarkers, setMovingMarkers] = useState<
     {
       id: string;
-      lat: number;
-      lng: number;
+      x: number;
+      y: number;
       deviceType: string;
     }[]
   >([]);
@@ -78,6 +78,10 @@ const MapDisplay = () => {
 
     resizeObserver.observe(mapContainerRef.current);
 
+    // Also set initial size manually as fallback
+    const rect = mapContainerRef.current.getBoundingClientRect();
+    setContainerSize({ width: rect.width, height: rect.height });
+
     return () => {
       resizeObserver.disconnect();
     };
@@ -103,9 +107,17 @@ const MapDisplay = () => {
 
   const handleAddBoundary = () => {
     setIsAddingBoundary(true);
+    // Randomly assign boundary type
+    const types: ("safe" | "warning" | "danger")[] = [
+      "safe",
+      "warning",
+      "danger"
+    ];
+    const randomType = types[Math.floor(Math.random() * types.length)];
+
     setNewBoundary({
       name: "",
-      type: "safe",
+      type: randomType,
       points: []
     });
   };
@@ -116,9 +128,9 @@ const MapDisplay = () => {
       newBoundary.points &&
       newBoundary.points.length >= 3
     ) {
-      // Filter out points where lat or lng are 0 or null
+      // Filter out points where x or y are 0 or null
       const validPoints = newBoundary.points.filter(
-        (p) => p.lat !== 0 && p.lng !== 0 && p.lat !== null && p.lng !== null
+        (p) => p.x !== 0 && p.y !== 0 && p.x !== null && p.y !== null
       );
 
       if (validPoints.length >= 3) {
@@ -152,9 +164,9 @@ const MapDisplay = () => {
       editingBoundary.points &&
       editingBoundary.points.length >= 3
     ) {
-      // Filter out points where lat or lng are 0 or null
+      // Filter out points where x or y are 0 or null
       const validPoints = editingBoundary.points.filter(
-        (p) => p.lat !== 0 && p.lng !== 0 && p.lat !== null && p.lng !== null
+        (p) => p.x !== 0 && p.y !== 0 && p.x !== null && p.y !== null
       );
 
       if (validPoints.length >= 3) {
@@ -183,7 +195,7 @@ const MapDisplay = () => {
   const handleAddPoint = () => {
     setNewBoundary((prev) => ({
       ...prev,
-      points: [...(prev.points || []), { lat: 0, lng: 0 }]
+      points: [...(prev.points || []), { x: 0, y: 0 }]
     }));
   };
 
@@ -196,7 +208,7 @@ const MapDisplay = () => {
 
   const handleCoordinateChange = (
     index: number,
-    field: "lat" | "lng",
+    field: "x" | "y",
     value: number
   ) => {
     setNewBoundary((prev) => ({
@@ -212,7 +224,7 @@ const MapDisplay = () => {
     if (editingBoundary) {
       setEditingBoundary({
         ...editingBoundary,
-        points: [...editingBoundary.points, { lat: 0, lng: 0 }]
+        points: [...editingBoundary.points, { x: 0, y: 0 }]
       });
     }
   };
@@ -228,7 +240,7 @@ const MapDisplay = () => {
 
   const handleEditCoordinateChange = (
     index: number,
-    field: "lat" | "lng",
+    field: "x" | "y",
     value: number
   ) => {
     if (editingBoundary) {
@@ -263,8 +275,10 @@ const MapDisplay = () => {
         <main className="flex flex-col mx-auto px-8 md:px-12 py-8 w-full max-w-8xl h-[calc(100vh-4rem)]">
           <div className="flex flex-1 justify-center items-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 border-gray-900 border-b-2 rounded-full w-32 h-32 animate-spin"></div>
-              <p className="text-gray-600">Loading map...</p>
+              <div className="mx-auto mb-4 border-neutral-900 dark:border-neutral-100 border-b-2 rounded-full w-32 h-32 animate-spin"></div>
+              <p className="text-neutral-600 dark:text-neutral-400">
+                Loading map...
+              </p>
             </div>
           </div>
         </main>
@@ -285,7 +299,7 @@ const MapDisplay = () => {
         {/* Left: Map Section */}
         <div
           ref={mapContainerRef}
-          className="relative flex-1 border border-gray-200 rounded-lg overflow-hidden"
+          className="relative flex-1 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden"
         >
           <MapContainer
             bounds={bounds}
@@ -308,8 +322,7 @@ const MapDisplay = () => {
             {boundaries.map((boundary) => {
               // Filter out any points with NaN values
               const validPoints = boundary.points.filter(
-                (p) =>
-                  !isNaN(p.lat) && !isNaN(p.lng) && p.lat !== 0 && p.lng !== 0
+                (p) => !isNaN(p.x) && !isNaN(p.y) && p.x !== 0 && p.y !== 0
               );
 
               if (validPoints.length < 3) return null;
@@ -317,7 +330,7 @@ const MapDisplay = () => {
               return (
                 <Polygon
                   key={boundary.id}
-                  positions={validPoints.map((p) => [p.lat, p.lng])}
+                  positions={validPoints.map((p) => [p.y, p.x])}
                   pathOptions={boundaryStyles[boundary.type]}
                   eventHandlers={{
                     click: () => handleBoundaryClick(boundary)
@@ -333,15 +346,14 @@ const MapDisplay = () => {
               (() => {
                 // Filter out any points with NaN values
                 const validPoints = newBoundary.points.filter(
-                  (p) =>
-                    !isNaN(p.lat) && !isNaN(p.lng) && p.lat !== 0 && p.lng !== 0
+                  (p) => !isNaN(p.x) && !isNaN(p.y) && p.x !== 0 && p.y !== 0
                 );
 
                 if (validPoints.length < 3) return null;
 
                 return (
                   <Polygon
-                    positions={validPoints.map((p) => [p.lat, p.lng])}
+                    positions={validPoints.map((p) => [p.y, p.x])}
                     pathOptions={{
                       color: "purple",
                       fillColor: "purple",
@@ -359,15 +371,14 @@ const MapDisplay = () => {
               (() => {
                 // Filter out any points with NaN values
                 const validPoints = editingBoundary.points.filter(
-                  (p) =>
-                    !isNaN(p.lat) && !isNaN(p.lng) && p.lat !== 0 && p.lng !== 0
+                  (p) => !isNaN(p.x) && !isNaN(p.y) && p.x !== 0 && p.y !== 0
                 );
 
                 if (validPoints.length < 3) return null;
 
                 return (
                   <Polygon
-                    positions={validPoints.map((p) => [p.lat, p.lng])}
+                    positions={validPoints.map((p) => [p.y, p.x])}
                     pathOptions={{
                       color: "orange",
                       fillColor: "orange",
@@ -384,7 +395,7 @@ const MapDisplay = () => {
                 <AnimatedMarker
                   key={marker.id}
                   id={marker.id}
-                  position={[marker.lat, marker.lng]}
+                  position={[marker.y, marker.x]}
                   deviceType={marker.deviceType}
                   tagNumber={index + 1}
                 />
@@ -399,7 +410,7 @@ const MapDisplay = () => {
         </div>
 
         {/* Right Sidebar */}
-        <aside className="flex flex-col flex-shrink-0 bg-white shadow mt-8 md:mt-0 ml-0 md:ml-4 p-6 border border-gray-200 rounded-lg w-full md:w-96 h-full overflow-y-auto">
+        <aside className="flex flex-col flex-shrink-0 bg-neutral-50 dark:bg-neutral-900 shadow mt-8 md:mt-0 ml-0 md:ml-4 p-6 border border-neutral-200 dark:border-neutral-700 rounded-lg w-full md:w-96 h-full overflow-y-auto">
           <MapControls
             showMarkers={showMarkers}
             onShowMarkersChange={setShowMarkers}
@@ -445,7 +456,7 @@ const MapDisplay = () => {
           )}
 
           {!selectedBoundary && !isAddingBoundary && !isEditingBoundary && (
-            <div className="py-8 text-gray-500 text-center">
+            <div className="py-8 text-neutral-500 dark:text-neutral-400 text-center">
               <p>Select a boundary to view details</p>
               <p className="mt-2 text-sm">
                 Or click "Add Boundary" to create a new one

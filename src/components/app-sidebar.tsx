@@ -6,6 +6,7 @@ import {
   LifeBuoy,
   Map,
   Settings2,
+  Shield,
   Table2,
   Terminal
 } from "lucide-react";
@@ -133,16 +134,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: Activity
       },
 
+      // {
+      //   title: "Data Review",
+      //   url: "/dashboard/data-review",
+      //   icon: ChartScatter
+      // },
       {
         title: "Data Review",
-        url: "/dashboard/data-review",
+        url: "/dashboard/data-review-2",
         icon: ChartScatter
       },
-      // {
-      //   title: "QA/QC",
-      //   url: "/dashboard/qa-qc",
-      //   icon: Shield,
-      // },
+      {
+        title: "QA/QC",
+        url: "/dashboard/qa-qc",
+        icon: Shield
+      },
       {
         title: "Method",
         url: "/dashboard/method",
@@ -153,16 +159,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/dashboard/settings",
         icon: Settings2
       },
+      // {
+      //   title: "Reports",
+      //   url: "/dashboard/reports",
+      //   icon: LifeBuoy
+      // },
       {
-        title: "Reports",
-        url: "/dashboard/reports",
+        title: "Service",
+        url: "/dashboard/service",
         icon: LifeBuoy
       },
-      // {
-      //   title: "Service",
-      //   url: "/dashboard/service",
-      //   icon: LifeBuoy,
-      // },
       {
         title: "Alerts",
         url: "/dashboard/alerts",
@@ -176,8 +182,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         //     : "No critical alerts in the last hour"
       },
       {
-        title: "History",
-        url: "/dashboard/history",
+        title: "Personal Exposure",
+        url: "/dashboard/personal-exposure",
         icon: Table2
       }
     ]
@@ -329,7 +335,7 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
                 </TooltipContent>
               </div>
             </Tooltip>
-            {uiVersion} | {systemInfo?.serial_number || "SYS-FMS"}
+            {uiVersion} | {systemInfo?.serial_number || "SYS-WMS"}
           </p>
         </div>
       </div>

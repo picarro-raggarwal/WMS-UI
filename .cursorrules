@@ -109,6 +109,27 @@ export const mockEntities: MockEntity[] = [
 - **ALWAYS** verify data flows correctly from data layer to components
 - **ALWAYS** test error handling and edge cases
 
+### 13. Empty Block Comments
+
+- **ALWAYS** add `{/* empty */}` comments to intentionally empty blocks
+- **ALWAYS** use this format for empty function implementations, event handlers, and conditional blocks
+- **NEVER** leave empty blocks without comments as they can be misleading
+- **ALWAYS** indicate intentional emptiness to prevent false sense of functionality
+
+Examples:
+
+```typescript
+// ✅ Correct - indicates intentional emptiness
+onClick={() => {/* empty */}}
+useEffect(() => {/* empty */}, [])
+if (condition) {/* empty */}
+
+// ❌ Incorrect - misleading empty blocks
+onClick={() => {}}
+useEffect(() => {}, [])
+if (condition) {}
+```
+
 ## Example Implementation Pattern
 
 When creating a new feature, follow this exact structure:
@@ -133,6 +154,7 @@ src/pages/new-feature/
 - ❌ Using default exports for mock data
 - ❌ Skipping loading/error states
 - ❌ Missing TypeScript interfaces
+- ❌ Empty blocks without `{/* empty */}` comments
 
 ## Compliance Checklist
 
@@ -146,3 +168,4 @@ Before committing any feature, ensure:
 - [ ] Loading and error states are implemented
 - [ ] Data flows through proper layers
 - [ ] Mock data works independently
+- [ ] Empty blocks have `{/* empty */}` comments

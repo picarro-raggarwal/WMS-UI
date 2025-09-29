@@ -5,26 +5,32 @@ import { Input } from "@/components/ui/input";
 import { AlertOctagon, AlertTriangle, Search } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { getAllCompoundNames } from "../data/species-threshold-mock-data";
+import {
+  checkAndUpdateSpeciesDefaults,
+  clearAllPortsForCompound,
+  convertApiToLegacyFormat,
+  updateAllPortsForCompound,
+  updatePortThreshold,
+  validateInlineEdit,
+  validatePortThreshold,
+  validateThresholdsWithError
+} from "../data/species-threshold-utils";
+import {
+  useGetAllSpeciesThresholdsQuery,
+  useSetAllSpeciesThresholdsMutation
+} from "../data/thresholds.slice";
 import {
   CompoundThresholds,
-  Threshold,
-  compounds,
-  generateMockCompoundThresholds,
-  portCount
-} from "../data/species-threshold-mock-data";
-import {
-  validatePortThreshold,
-  validateThreshold
-} from "./species-threshold-utils";
+  SpeciesThreshold,
+  SpeciesThresholdsResponse
+} from "../data/thresholds.types";
 
 // Port Component
 interface PortProps {
   portNumber: number;
   compound: string;
-  portThreshold: {
-    warning: number | null;
-    alarm: number | null;
-  };
+  portThreshold: SpeciesThreshold;
   inlineEditing: {
     compound: string;
     port: number;
@@ -73,11 +79,13 @@ const Port = ({
     <div
       className={`text-center p-2 border rounded transition-all cursor-pointer ${
         isUpdated
-          ? "border-green-400 bg-green-50"
-          : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100"
+          ? "border-green-400 bg-green-50 dark:bg-green-900/20"
+          : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-700"
       }`}
     >
-      <div className="mb-1 text-gray-500 text-xs">Port {portNumber}</div>
+      <div className="mb-1 text-neutral-500 dark:text-neutral-400 text-xs">
+        Port {portNumber}
+      </div>
 
       <div className="font-medium text-xs">
         <div className="flex justify-center items-center gap-1">
@@ -96,7 +104,7 @@ const Port = ({
                 }
               }}
               onBlur={onSaveInlineEdit}
-              className="border border-yellow-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-400 w-10 h-6 text-xs text-center"
+              className="border border-yellow-300 dark:border-yellow-600 rounded focus:outline-none focus:ring-1 focus:ring-yellow-400 dark:focus:ring-yellow-500 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 w-10 h-6 text-xs text-center"
               placeholder="W"
               min={0}
               max={1000}
@@ -105,7 +113,7 @@ const Port = ({
             />
           ) : (
             <span
-              className="hover:bg-gray-200 px-1 py-0.5 rounded transition-colors cursor-pointer"
+              className="hover:bg-neutral-200 dark:hover:bg-neutral-700 px-1 py-0.5 rounded transition-colors cursor-pointer text-neutral-700 dark:text-neutral-300"
               onClick={() => onStartInlineEdit(compound, portNumber, "warning")}
               onDoubleClick={() =>
                 onStartInlineEdit(compound, portNumber, "warning")
@@ -136,7 +144,7 @@ const Port = ({
                 }
               }}
               onBlur={onSaveInlineEdit}
-              className="border border-red-300 rounded focus:outline-none focus:ring-1 focus:ring-red-400 w-10 h-6 text-xs text-center"
+              className="border border-red-300 dark:border-red-600 rounded focus:outline-none focus:ring-1 focus:ring-red-400 dark:focus:ring-red-500 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 w-10 h-6 text-xs text-center"
               placeholder="A"
               min={0}
               max={1000}
@@ -145,7 +153,7 @@ const Port = ({
             />
           ) : (
             <span
-              className="hover:bg-gray-200 px-1 py-0.5 rounded transition-colors cursor-pointer"
+              className="hover:bg-neutral-200 dark:hover:bg-neutral-700 px-1 py-0.5 rounded transition-colors cursor-pointer text-neutral-700 dark:text-neutral-300"
               onClick={() => onStartInlineEdit(compound, portNumber, "alarm")}
               onDoubleClick={() =>
                 onStartInlineEdit(compound, portNumber, "alarm")
@@ -167,12 +175,12 @@ const Port = ({
 export const SpeciesThresholdTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingCompound, setEditingCompound] = useState<string | null>(null);
-  const [editingValues, setEditingValues] = useState<Threshold>({
+  const [editingValues, setEditingValues] = useState<SpeciesThreshold>({
     warning: null,
     alarm: null
   });
 
-  const [editingPortValues, setEditingPortValues] = useState<Threshold>({
+  const [editingPortValues, setEditingPortValues] = useState<SpeciesThreshold>({
     warning: null,
     alarm: null
   });
@@ -183,27 +191,30 @@ export const SpeciesThresholdTab = () => {
     value: string;
   } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // const [updatedPorts, setUpdatedPorts] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [editedPorts, setEditedPorts] = useState<Set<string>>(new Set());
 
   // Ref for the port grid container
   const portGridRef = useRef<HTMLDivElement>(null);
 
-  // Initialize port thresholds with mock data
-  const [portThresholds, setPortThresholds] = useState<CompoundThresholds>(
-    () => {
-      const mockData = generateMockCompoundThresholds();
-      return mockData;
-    }
-  );
+  // API hooks
+  const { data: apiData, isLoading, error } = useGetAllSpeciesThresholdsQuery();
+  const [updateThresholds, { isLoading: isUpdating }] =
+    useSetAllSpeciesThresholdsMutation();
 
-  // Store original values for comparison
+  // Convert API data to legacy format for component compatibility
+  const [portThresholds, setPortThresholds] = useState<CompoundThresholds>({});
   const [originalPortThresholds, setOriginalPortThresholds] =
-    useState<CompoundThresholds>(() => {
-      const mockData = generateMockCompoundThresholds();
-      return mockData;
-    });
+    useState<CompoundThresholds>({});
+
+  // Initialize data when API data is available
+  useEffect(() => {
+    if (apiData) {
+      const legacyData = convertApiToLegacyFormat(apiData);
+      setPortThresholds(legacyData);
+      setOriginalPortThresholds(legacyData);
+    }
+  }, [apiData]);
 
   // Handle clicks outside the port grid to exit edit mode
   useEffect(() => {
@@ -220,9 +231,6 @@ export const SpeciesThresholdTab = () => {
           // Validate the value using utility function
           const currentThreshold = portThresholds[compound]?.[port];
           if (!currentThreshold) {
-            console.error(
-              `No threshold data found for compound ${compound} port ${port}`
-            );
             return;
           }
           const errorMessage = validatePortThreshold(
@@ -250,9 +258,6 @@ export const SpeciesThresholdTab = () => {
           // Check if value actually changed from original
           const originalValue = portThresholds[compound]?.[port]?.[type];
           if (originalValue === undefined) {
-            console.error(
-              `No original value found for compound ${compound} port ${port} type ${type}`
-            );
             return;
           }
           const hasValueChanged = originalValue !== numValue;
@@ -301,31 +306,52 @@ export const SpeciesThresholdTab = () => {
     };
   }, [inlineEditing]); // Removed portThresholds dependency to prevent infinite re-renders
 
-  const filteredCompounds = compounds.filter((compound) =>
-    compound.toLowerCase().includes(searchQuery.toLowerCase())
+  // Get available compounds from API data or fallback to all compounds
+  const availableCompounds = React.useMemo(
+    () => apiData?.species?.map((s) => s.name) || getAllCompoundNames(),
+    [apiData]
   );
 
-  const validateThresholds = (
-    warning: number | null,
-    alarm: number | null
-  ): string | null => {
-    return validateThreshold(warning, alarm);
-  };
+  const filteredCompounds = React.useMemo(
+    () =>
+      availableCompounds.filter((compound) =>
+        compound.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [availableCompounds, searchQuery]
+  );
 
   const handleEditClick = (compound: string) => {
     setEditingCompound(compound);
-    // Initialize editing values with current compound values
-    // const currentCompound = portThresholds[compound];
-    // if (currentCompound) {
-    //   // Get the first port's values as a reference (all ports should have same values)
-    //   const firstPort = currentCompound[1];
-    //   if (firstPort) {
-    //     setEditingValues({
-    //       warning: firstPort.warning,
-    //       alarm: firstPort.alarm
-    //     });
-    //   }
-    // }
+
+    // Find the species data from API response to get default values
+    const speciesData = apiData?.species.find((s) => s.name === compound);
+
+    if (speciesData) {
+      // Use default values from API if enabled, otherwise use current port values
+      const warningValue = speciesData.warning.enabled
+        ? speciesData.warning.value
+        : speciesData.ports[0].warning.value || null;
+      const alarmValue = speciesData.alarm.enabled
+        ? speciesData.alarm.value
+        : speciesData.ports[0].alarm.value || null;
+
+      setEditingValues({
+        warning: warningValue,
+        alarm: alarmValue
+      });
+    } else {
+      // Fallback to current compound values if species data not found
+      const currentCompound = portThresholds[compound];
+      if (currentCompound) {
+        const firstPort = currentCompound[1];
+        if (firstPort) {
+          setEditingValues({
+            warning: firstPort.warning,
+            alarm: firstPort.alarm
+          });
+        }
+      }
+    }
   };
 
   const handleCancelEdit = () => {
@@ -341,40 +367,23 @@ export const SpeciesThresholdTab = () => {
   };
 
   const handlePortSave = (compound: string, portNumber: number) => {
-    // Validate and save on blur
-    const validationError = validateThresholds(
+    // Use utility function for validation
+    const validation = validateThresholdsWithError(
       editingPortValues.warning,
-      editingPortValues.alarm
+      editingPortValues.alarm,
+      compound,
+      portNumber
     );
-    console.log("validationError", validationError);
 
-    if (validationError) {
-      // Set error in state for display
-      setErrors({ ...errors, [`${compound}-${portNumber}`]: validationError });
-      return;
-    }
-
-    // Additional validation checks
-    if (
-      editingPortValues.warning !== null &&
-      editingPortValues.warning > 1000
-    ) {
+    if (!validation.isValid) {
       setErrors({
         ...errors,
-        [`${compound}-${portNumber}`]: "Warning value cannot exceed 1000"
+        [`${compound}-${portNumber}`]: validation.error!
       });
       return;
     }
 
-    if (editingPortValues.alarm !== null && editingPortValues.alarm > 1000) {
-      setErrors({
-        ...errors,
-        [`${compound}-${portNumber}`]: "Alarm value cannot exceed 1000"
-      });
-      return;
-    }
-
-    // If we reach here, validation passed - update port thresholds
+    // Update port thresholds using utility function
     setPortThresholds((prev) => ({
       ...prev,
       [portNumber]: {
@@ -425,9 +434,6 @@ export const SpeciesThresholdTab = () => {
   ) => {
     const currentValue = portThresholds[compound]?.[portNumber]?.[type];
     if (currentValue === undefined) {
-      console.error(
-        `No current value found for compound ${compound} port ${portNumber} type ${type}`
-      );
       return;
     }
     setInlineEditing({
@@ -453,27 +459,19 @@ export const SpeciesThresholdTab = () => {
     const { compound, port, type, value } = inlineEditing;
     const numValue = value === "" ? null : parseFloat(value);
 
-    // Validate the value using utility function
+    // Validate using utility function
     const currentThreshold = portThresholds[compound]?.[port];
     if (!currentThreshold) {
-      console.error(
-        `No threshold data found for compound ${compound} port ${port}`
-      );
       return;
     }
-    const errorMessage = validatePortThreshold(
-      type,
-      numValue,
-      currentThreshold
-    );
 
-    // If there's an error, show toast and reset to original value
-    if (errorMessage) {
-      toast.info(errorMessage);
+    const validation = validateInlineEdit(type, numValue, currentThreshold);
 
-      // Reset to original value with delay to prevent toast overwriting
+    if (!validation.isValid) {
+      toast.info(validation.error!);
+
+      // Reset to original value
       const originalValue = portThresholds[compound]?.[port]?.[type];
-
       setInlineEditing((prev) =>
         prev
           ? {
@@ -482,34 +480,20 @@ export const SpeciesThresholdTab = () => {
             }
           : null
       );
-
-      // Keep input open for correction
       return;
     }
 
-    // Update the threshold
-    setPortThresholds((prev) => {
-      return {
-        ...prev,
-        [compound]: {
-          ...prev[compound],
-          [port]: {
-            ...prev[compound][port],
-            [type]: numValue
-          }
-        }
-      };
-    });
+    // Update using utility function
+    setPortThresholds((prev) =>
+      updatePortThreshold(prev, compound, port, type, numValue)
+    );
 
     // Check if value actually changed from original
     const originalValue = portThresholds[compound]?.[port]?.[type];
-
     if (originalValue === undefined) {
-      console.error(
-        `No original value found for compound ${compound} port ${port} type ${type}`
-      );
       return;
     }
+
     const hasValueChanged = originalValue !== numValue;
 
     // Clear any existing errors
@@ -520,7 +504,6 @@ export const SpeciesThresholdTab = () => {
     });
 
     // Only mark as updated if value actually changed
-    console.log("hasValueChanged", hasValueChanged);
     if (hasValueChanged) {
       setEditedPorts((prev) => {
         const newSet = new Set(prev);
@@ -551,37 +534,33 @@ export const SpeciesThresholdTab = () => {
   };
 
   const handleSaveCompound = (compound: string) => {
-    const validationError = validateThresholds(
+    const validation = validateThresholdsWithError(
       editingValues.warning,
-      editingValues.alarm
+      editingValues.alarm,
+      compound
     );
 
-    if (validationError) {
-      setErrors({ ...errors, [compound]: validationError });
+    if (!validation.isValid) {
+      setErrors({ ...errors, [compound]: validation.error! });
       return;
     }
 
-    // Update all ports for this compound with the new values
-    setPortThresholds((prev) => {
-      const updated = { ...prev };
-      const compoundThresholds = { ...updated[compound] };
-
-      for (let port = 1; port <= portCount; port++) {
-        compoundThresholds[port] = {
-          warning: editingValues.warning,
-          alarm: editingValues.alarm
-        };
-      }
-
-      updated[compound] = compoundThresholds;
-      return updated;
-    });
+    // Update all ports using utility function
+    setPortThresholds((prev) =>
+      updateAllPortsForCompound(
+        prev,
+        compound,
+        editingValues.warning,
+        editingValues.alarm
+      )
+    );
 
     // Track that all ports for this compound have been edited
     const newEditedPorts = new Set(editedPorts);
-    for (let port = 1; port <= portCount; port++) {
-      newEditedPorts.add(`${compound}-${port}`);
-    }
+    Object.keys(portThresholds[compound] || {}).forEach((portIdStr) => {
+      const portId = parseInt(portIdStr, 10);
+      newEditedPorts.add(`${compound}-${portId}`);
+    });
     setEditedPorts(newEditedPorts);
 
     // Show success message
@@ -596,29 +575,16 @@ export const SpeciesThresholdTab = () => {
   };
 
   const clearAllForCompound = (compound: string) => {
-    setPortThresholds((prev) => {
-      const updated = { ...prev };
-      const compoundThresholds = { ...updated[compound] };
-
-      for (let port = 1; port <= portCount; port++) {
-        compoundThresholds[port] = {
-          warning: null,
-          alarm: null
-        };
-      }
-
-      updated[compound] = compoundThresholds;
-      return updated;
-    });
+    // Use utility function to clear all ports
+    setPortThresholds((prev) => clearAllPortsForCompound(prev, compound));
 
     // Track that all ports for this compound have been edited
     const newEditedPorts = new Set(editedPorts);
-    for (let port = 1; port <= portCount; port++) {
-      newEditedPorts.add(`${compound}-${port}`);
-    }
+    Object.keys(portThresholds[compound] || {}).forEach((portIdStr) => {
+      const portId = parseInt(portIdStr, 10);
+      newEditedPorts.add(`${compound}-${portId}`);
+    });
     setEditedPorts(newEditedPorts);
-
-    // toast.success(`All ports cleared for ${compound}`);
   };
 
   // Function to check if a port has been updated by comparing with original values
@@ -628,7 +594,6 @@ export const SpeciesThresholdTab = () => {
 
     // Safety check: ensure editedPorts is always a Set
     if (!(editedPorts instanceof Set)) {
-      console.error("editedPorts is not a Set:", editedPorts);
       // Reset to a proper Set
       setEditedPorts(new Set());
       return false;
@@ -639,31 +604,67 @@ export const SpeciesThresholdTab = () => {
     return isUpdated;
   };
 
-  // Function to check if there are any unsaved changes
-  const hasUnsavedChanges = (): boolean => {
-    // Safety check: ensure editedPorts is always a Set
-    if (!(editedPorts instanceof Set)) {
-      console.error(
-        "hasUnsavedChanges: editedPorts is not a Set:",
-        editedPorts
-      );
-      // Reset to a proper Set
-      setEditedPorts(new Set());
-      return false;
-    }
-    return editedPorts.size > 0;
-  };
+  // Function to check if there are any unsaved changes - memoized
+  const hasUnsavedChanges = React.useMemo(
+    () => (): boolean => {
+      // Safety check: ensure editedPorts is always a Set
+      if (!(editedPorts instanceof Set)) {
+        // Reset to a proper Set
+        setEditedPorts(new Set());
+        return false;
+      }
+      return editedPorts.size > 0;
+    },
+    [editedPorts]
+  );
 
   const handleSaveAll = async () => {
+    if (!apiData) return;
+
     setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Create optimized API data update
+      const updatedSpecies = apiData.species.map((species) => {
+        const compoundData = portThresholds[species.name];
+        if (!compoundData) return species;
 
-      // Update original values to current values after successful save
+        // Optimize port updates - only update ports that have data
+        const updatedPorts = species.ports.map((port) => {
+          const portData = compoundData[port.port_id];
+          return portData
+            ? {
+                ...port,
+                warning: {
+                  enabled: portData.warning !== null,
+                  value: portData.warning || 0
+                },
+                alarm: {
+                  enabled: portData.alarm !== null,
+                  value: portData.alarm || 0
+                }
+              }
+            : port;
+        });
+
+        return { ...species, ports: updatedPorts };
+      });
+
+      const updatedApiData: SpeciesThresholdsResponse = {
+        ...apiData,
+        last_modified: new Date()
+          .toISOString()
+          .replace("T", " ")
+          .replace("Z", ""),
+        species: updatedSpecies
+      };
+
+      // Check if all ports have same values and update species defaults accordingly
+      const finalApiData = checkAndUpdateSpeciesDefaults(updatedApiData);
+
+      await updateThresholds(finalApiData).unwrap();
+
+      // Batch state updates
       setOriginalPortThresholds(portThresholds);
-
-      // Clear all edited port tracking after successful save
       setEditedPorts(new Set());
 
       toast.success("All species thresholds saved successfully!");
@@ -674,6 +675,28 @@ export const SpeciesThresholdTab = () => {
     }
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-neutral-500 dark:text-neutral-400">
+          Loading species threshold configuration...
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-red-500 dark:text-red-400">
+          Failed to load species threshold configuration. Please try again.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -683,11 +706,17 @@ export const SpeciesThresholdTab = () => {
               <CardTitle className="mb-2 text-lg">
                 Species Threshold Configuration
               </CardTitle>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm">
                 Configure warning and alarm thresholds for different compounds
                 across all ports. Click on any port to edit its thresholds
                 individually.
               </p>
+              {apiData && (
+                <div className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+                  {apiData.species.length} species available • Variable ports
+                  per species
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 grid-flow-col col-span-1 justify-end">
@@ -702,15 +731,15 @@ export const SpeciesThresholdTab = () => {
                     variant="outline"
                     disabled={isSaving}
                   >
-                    Cancel
+                    Reset
                   </Button>
                   <Button
                     size="sm"
                     variant="primary"
                     onClick={handleSaveAll}
-                    disabled={isSaving || !hasUnsavedChanges()}
+                    disabled={isSaving || isUpdating || !hasUnsavedChanges()}
                   >
-                    {isSaving ? "Saving..." : "Save"}
+                    {isSaving || isUpdating ? "Saving..." : "Save"}
                   </Button>
                 </>
               )}
@@ -727,7 +756,7 @@ export const SpeciesThresholdTab = () => {
                 placeholder="Filter by compound name"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-6"
+                className="pl-6 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
               />
             </div>
           </div>
@@ -735,10 +764,34 @@ export const SpeciesThresholdTab = () => {
           {/* Compounds List */}
           <div className="space-y-6">
             {filteredCompounds.length === 0 ? (
-              <div className="py-12 text-muted-foreground text-base text-center">
-                {searchQuery
-                  ? "No compounds match your search."
-                  : "No compounds available for threshold configuration."}
+              <div className="py-12 text-neutral-500 dark:text-neutral-400 text-base text-center">
+                {searchQuery ? (
+                  <div className="space-y-2">
+                    <div>No compounds match your search.</div>
+                    <div className="text-sm">
+                      Try searching for:{" "}
+                      {availableCompounds.slice(0, 3).join(", ")}
+                    </div>
+                  </div>
+                ) : apiData?.species?.length === 0 ? (
+                  <div className="space-y-2">
+                    <div>
+                      No species data available for threshold configuration.
+                    </div>
+                    <div className="text-sm">
+                      Please check your system configuration or contact support.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div>
+                      No compounds available for threshold configuration.
+                    </div>
+                    <div className="text-sm">
+                      Available compounds: {availableCompounds.length}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               filteredCompounds.map((compound) => {
@@ -748,14 +801,18 @@ export const SpeciesThresholdTab = () => {
 
                 return (
                   <div key={compound} className="space-y-3">
-                    <div className="bg-white dark:bg-neutral-900 p-6 border dark:border-neutral-700/50 rounded-lg">
+                    <div className="bg-neutral-50 dark:bg-neutral-900 p-6 border border-neutral-200 dark:border-neutral-700 rounded-lg">
                       <div className="flex justify-between items-start mb-6">
                         <div className="flex-1">
-                          <div className="font-semibold text-base">
+                          <div className="font-semibold text-neutral-900 dark:text-neutral-100 text-base">
                             {compound}
                           </div>
-                          <div className="text-muted-foreground text-sm">
-                            Compound • ppm
+                          <div className="text-neutral-500 dark:text-neutral-400 text-sm">
+                            Compound •{" "}
+                            {portThresholds[compound]
+                              ? Object.keys(portThresholds[compound]).length
+                              : 0}{" "}
+                            ports
                           </div>
                         </div>
 
@@ -795,7 +852,7 @@ export const SpeciesThresholdTab = () => {
 
                       {editing ? (
                         <div className="space-y-4 ">
-                          <div className="bg-gray-50 p-3 border border-gray-200 rounded-lg text-gray-500 text-xs">
+                          <div className="bg-neutral-100 dark:bg-neutral-800 p-3 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-500 dark:text-neutral-400 text-xs">
                             ⚠️{" "}
                             <strong>
                               Save Changes will overwrite all port values
@@ -821,7 +878,7 @@ export const SpeciesThresholdTab = () => {
                                   )
                                 }
                                 onFocus={(e) => e.target.select()}
-                                className="w-full"
+                                className="w-full bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
                                 step="0.1"
                                 placeholder="Enter warning threshold (ppm)"
                                 min={0}
@@ -840,7 +897,7 @@ export const SpeciesThresholdTab = () => {
                                   handleThresholdChange("alarm", e.target.value)
                                 }
                                 onFocus={(e) => e.target.select()}
-                                className="w-full"
+                                className="w-full bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
                                 step="0.1"
                                 placeholder="Enter alarm threshold (ppm)"
                                 min={0}
@@ -863,11 +920,15 @@ export const SpeciesThresholdTab = () => {
                         <div className="">
                           <div className="flex justify-between items-center mb-4">
                             <div>
-                              <h4 className="font-medium text-gray-900 dark:text-white">
+                              <h4 className="font-medium text-neutral-900 dark:text-neutral-100">
                                 Port Management
                               </h4>
-                              <p className="mt-1 text-gray-500 text-xs">
-                                Managing thresholds for {portCount} ports
+                              <p className="mt-1 text-neutral-500 dark:text-neutral-400 text-xs">
+                                Managing thresholds for{" "}
+                                {portThresholds[compound]
+                                  ? Object.keys(portThresholds[compound]).length
+                                  : 0}{" "}
+                                ports
                               </p>
                             </div>
                             <div className="flex gap-2">
@@ -882,7 +943,7 @@ export const SpeciesThresholdTab = () => {
                           </div>
 
                           {/* Port Editing Instructions */}
-                          <div className="mt-2 mb-4 text-gray-500 text-xs">
+                          <div className="mt-2 mb-4 text-neutral-500 dark:text-neutral-400 text-xs">
                             💡 Click on any port to edit its thresholds
                             individually
                           </div>
@@ -892,52 +953,51 @@ export const SpeciesThresholdTab = () => {
                             ref={portGridRef}
                             className="gap-2 grid grid-cols-6 max-h-48 overflow-y-auto"
                           >
-                            {Array.from({ length: portCount }, (_, index) => {
-                              const portNumber = index + 1;
-                              const portThreshold =
-                                portThresholds[compound]?.[portNumber];
+                            {portThresholds[compound]
+                              ? Object.entries(portThresholds[compound]).map(
+                                  ([portIdStr, portThreshold]) => {
+                                    const portNumber = parseInt(portIdStr, 10);
 
-                              // Skip rendering if port threshold data is missing
-                              if (!portThreshold) {
-                                console.warn(
-                                  `Missing port threshold data for compound ${compound} port ${portNumber}`
-                                );
-                                return null;
-                              }
+                                    // Skip rendering if port threshold data is missing
+                                    if (!portThreshold) {
+                                      return null;
+                                    }
 
-                              // const isEditingPort =
-                              //   editingPort?.compound === compound &&
-                              //   editingPort?.port === portNumber;
-                              const isUpdated = isPortUpdated(
-                                compound,
-                                portNumber
-                              );
+                                    const isUpdated = isPortUpdated(
+                                      compound,
+                                      portNumber
+                                    );
 
-                              return (
-                                <Port
-                                  key={portNumber}
-                                  portNumber={portNumber}
-                                  compound={compound}
-                                  portThreshold={portThreshold}
-                                  inlineEditing={inlineEditing}
-                                  isUpdated={isUpdated}
-                                  onStartInlineEdit={startInlineEdit}
-                                  onInlineEditChange={handleInlineEditChange}
-                                  onSaveInlineEdit={saveInlineEdit}
-                                  onCancelInlineEdit={cancelInlineEdit}
-                                  onKeyDown={handlePortKeyDown}
-                                />
-                              );
-                            })}
+                                    return (
+                                      <Port
+                                        key={portNumber}
+                                        portNumber={portNumber}
+                                        compound={compound}
+                                        portThreshold={portThreshold}
+                                        inlineEditing={inlineEditing}
+                                        isUpdated={isUpdated}
+                                        onStartInlineEdit={startInlineEdit}
+                                        onInlineEditChange={
+                                          handleInlineEditChange
+                                        }
+                                        onSaveInlineEdit={saveInlineEdit}
+                                        onCancelInlineEdit={cancelInlineEdit}
+                                        onKeyDown={handlePortKeyDown}
+                                      />
+                                    );
+                                  }
+                                )
+                              : null}
                           </div>
 
-                          {/* Help text for inline editing */}
-                          {inlineEditing && (
-                            <div className="mt-3 text-gray-500 text-xs text-center">
-                              💡 Type value • Press Enter to save • Press Esc to
-                              cancel • Click outside to save
-                            </div>
-                          )}
+                          {/* Help text for inline editing - only show for current compound */}
+                          {inlineEditing &&
+                            inlineEditing.compound === compound && (
+                              <div className="mt-3 text-neutral-500 dark:text-neutral-400 text-xs text-center">
+                                💡 Type value • Press Enter to save • Press Esc
+                                to cancel • Click outside to save
+                              </div>
+                            )}
                         </div>
                       )}
                     </div>
