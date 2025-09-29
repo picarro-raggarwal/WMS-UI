@@ -22,10 +22,16 @@ export default defineConfig({
     port: 3001,
     proxy: {
       "/wms-api": {
-        target: "http://slim100-beta.corp.picarro.com:8098",
+        target: "http://slim100-beta.corp.picarro.com:8000",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace("/wms-api", "api")
+      },
+      "/auth-api": {
+        target: "http://slim100-beta.corp.picarro.com:8098",
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace("/auth-api", "api")
       },
       "/api": {
         target: "http://fenceline-dell3.corp.picarro.com:8000",

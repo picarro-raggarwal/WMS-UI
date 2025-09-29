@@ -29,7 +29,7 @@ export const protectedBaseQuery = (
   // const client_secret = import.meta.env.VITE_AUTH_CLIENT_SECRET as string;
 
   const refreshRawBaseQuery = fetchBaseQuery({
-    baseUrl: "/wms-api/v1/auth",
+    baseUrl: "/auth-api/v1/auth",
     prepareHeaders: (headers) => {
       // headers.set("Content-Type", "application/x-www-form-urlencoded");
       return headers;
@@ -58,7 +58,7 @@ export const protectedBaseQuery = (
       if (refreshToken) {
         try {
           const refreshArgs = {
-            url: "/refresh-token", // /wms-api/v1/auth/refresh-token
+            url: "/refresh-token", // /auth-api/v1/auth/refresh-token
             method: "POST",
             headers: {
               "Content-Type": "application/x-www-form-urlencoded"

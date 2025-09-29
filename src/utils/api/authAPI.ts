@@ -31,7 +31,7 @@ const client_secret = import.meta.env.VITE_AUTH_CLIENT_SECRET as string;
 
 export const authApi = createApi({
   reducerPath: "authApi",
-  baseQuery: protectedBaseQuery("/wms-api/v1/auth"),
+  baseQuery: protectedBaseQuery("/auth-api/v1/auth"),
   keepUnusedDataFor: 0,
 
   endpoints: (builder) => ({
