@@ -68,7 +68,7 @@ http {
 		}
 
         location /wms-api {
-            rewrite ^/wms-api/(.*) /$1 break;
+            rewrite ^/api/(.*) /$1 break;
 			proxy_pass ${AUTH_BASE_URL};
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
