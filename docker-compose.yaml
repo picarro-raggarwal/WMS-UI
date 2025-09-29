@@ -8,7 +8,7 @@ services:
    SSL_CERT_KEY: '/etc/nginx/nginx.key'
    WMS_BASE_URL: 'http://$host_name:8000'
    WS_BASE_URL: 'http://$host_name:8090'
-  image: 'picarro-foup-ui-dev.jfrog.io/wms-ui:$foup_ui_tag'
+  image: 'picarro-wms-ui-dev.jfrog.io/wms-ui:$wms_ui_tag'
   ports:
    - '3001:3001'
   volumes:

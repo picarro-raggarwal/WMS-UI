@@ -22,29 +22,29 @@ export default defineConfig({
     port: 3001,
     proxy: {
       "/wms-api": {
-        target: "http://slim100-beta.corp.picarro.com:8000",
+        target: "http://slim100-beta.corp.picarro.com:8098",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace("/wms-api", "api")
       },
       "/api": {
-        target: "http://fenceline-dell1.corp.picarro.com:8000",
+        target: "http://fenceline-dell3.corp.picarro.com:8000",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace("/api", "")
       },
       "/socket.io": {
-        target: "ws://fenceline-dell1.corp.picarro.com:8090",
+        target: "ws://fenceline-dell3.corp.picarro.com:8090",
         changeOrigin: true,
         secure: false,
         ws: true
-      },
-      "/realms": {
-        target: "http://slim100-beta.corp.picarro.com:8080",
-        changeOrigin: true,
-        secure: false
-        // rewrite: (path) => path.replace("/realms", "")
       }
+      // "/realms": {
+      //   target: "http://slim100-beta.corp.picarro.com:8080",
+      //   changeOrigin: true,
+      //   secure: false
+      // rewrite: (path) => path.replace("/realms", "")
+      // }
     }
   }
 });
