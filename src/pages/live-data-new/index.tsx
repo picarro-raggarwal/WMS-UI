@@ -84,18 +84,22 @@ const Card = ({ port }: { port: MockData }) => {
           isInActive
             ? "pointer-events-none opacity-40"
             : "transition-transform duration-200"
-        } flex flex-col gap-2 border rounded-md shadow-border py-4 px-3 ${
+        } flex flex-col gap-2 border border-neutral-200 dark:border-neutral-600 rounded-md shadow-border py-4 px-3 ${
           !isInActive && getBgColor(status)
         } transition-colors duration-200`}
         onClick={() => !isInActive && setOpen(true)}
       >
         <div className="flex justify-center items-center">
-          <span className={`font-semibold text-gray-800 ${labelFontClass}`}>
+          <span
+            className={`font-semibold text-neutral-800 dark:text-neutral-300 ${labelFontClass}`}
+          >
             {portNum}. {label}
           </span>
         </div>
         <div className="flex justify-center items-center">
-          <span className={`font-bold text-gray-900 ${mainFontClass}`}>
+          <span
+            className={`font-bold text-neutral-900 dark:text-neutral-200 ${mainFontClass}`}
+          >
             {conc ?? "Flow Error"}
           </span>
         </div>
@@ -103,46 +107,52 @@ const Card = ({ port }: { port: MockData }) => {
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-5xl h-[50vh] overflow-y-auto">
-          <div className="flex justify-between items-center border-zinc-300 border-b border-dashed w-full">
+          <div className="flex justify-between items-center border-zinc-300 dark:border-zinc-500 border-b border-dashed w-full">
             <div className="gap-2 grid grid-cols-6">
               {/* Sensor Name */}
-              <div className="flex flex-col pr-4 border-zinc-300 border-r border-dashed">
-                <div className="font-medium text-zinc-400 text-xs">
+              <div className="flex flex-col pr-4 border-zinc-300 dark:border-zinc-500 border-r border-dashed">
+                <div className="font-medium text-zinc-400 dark:text-zinc-400 text-xs">
                   Sensor Name
                 </div>
-                <span className="font-bold text-black text-xl">{label}</span>
+                <span className="font-bold text-neutral-900 dark:text-neutral-200 text-xl">
+                  {label}
+                </span>
               </div>
 
               {/* Status */}
-              <div className="flex flex-col items-center pr-4 border-zinc-300 border-r border-dashed">
-                <div className="font-medium text-zinc-400 text-xs">Status</div>
+              <div className="flex flex-col items-center pr-4 border-zinc-300 dark:border-zinc-500 border-r border-dashed">
+                <div className="font-medium text-zinc-400 dark:text-zinc-400 text-xs">
+                  Status
+                </div>
                 <div className={`text-lg font-bold  ${getTextColor(status)}`}>
                   {getStatusText(status)}
                 </div>
               </div>
 
               {/* Last Updated */}
-              <div className="flex flex-col pr-4 border-zinc-300 border-r border-dashed text-right">
-                <div className="font-medium text-zinc-400 text-xs">
+              <div className="flex flex-col pr-4 border-zinc-300 dark:border-zinc-500 border-r border-dashed text-right">
+                <div className="font-medium text-zinc-400 dark:text-zinc-400 text-xs">
                   Last Updated
                 </div>
-                <div className="font-bold text-black text-base">
+                <div className="font-bold text-neutral-900 dark:text-neutral-200 text-base">
                   {new Date(updatedAt).toLocaleString()}
                 </div>
               </div>
               {/* Port Number */}
-              <div className="flex flex-col items-center pr-4 border-zinc-300 border-r border-dashed">
-                <div className="font-medium text-zinc-400 text-xs">
+              <div className="flex flex-col items-center pr-4 border-zinc-300 dark:border-zinc-500 border-r border-dashed">
+                <div className="font-medium text-zinc-400 dark:text-zinc-400 text-xs">
                   Port Number
                 </div>
-                <div className="font-bold text-black text-lg">{portNum}</div>
+                <div className="font-bold text-neutral-900 dark:text-neutral-200 text-lg">
+                  {portNum}
+                </div>
               </div>
               {/* Concentration */}
-              <div className="flex flex-col items-center pr-4 border-zinc-300 border-r border-dashed">
-                <div className="font-medium text-zinc-400 text-xs">
+              <div className="flex flex-col items-center pr-4 border-zinc-300 dark:border-zinc-500 border-r border-dashed">
+                <div className="font-medium text-zinc-400 dark:text-zinc-400 text-xs">
                   Concentration
                 </div>
-                <div className="font-bold text-black text-lg">
+                <div className="font-bold text-neutral-900 dark:text-neutral-200 text-lg">
                   {conc ?? "-"}
                 </div>
               </div>
@@ -164,7 +174,7 @@ const Card = ({ port }: { port: MockData }) => {
                 />
                 <label
                   htmlFor={`threshold-${port.id}`}
-                  className="text-sm font-medium text-gray-700 cursor-pointer"
+                  className="text-sm font-medium text-neutral-700 dark:text-neutral-200 cursor-pointer"
                 >
                   Show Threshold
                 </label>
@@ -251,15 +261,15 @@ const StatusBadgeLarge = ({
 const getBgColor = (status: 0 | 1 | 2 | 3): string => {
   switch (status) {
     case 0:
-      return "bg-inherit";
+      return "bg-inherit dark:bg-neutral-900";
     case 1:
-      return "bg-amber-100";
+      return "bg-amber-200/80 dark:bg-amber-600/60";
     case 2:
-      return "bg-red-500";
+      return "bg-red-500 dark:bg-red-600";
     case 3:
-      return "bg-cyan-100"; // flow error
+      return "bg-cyan-100 dark:bg-cyan-800"; // flow error
     default:
-      return "bg-gray-400";
+      return "bg-gray-400 dark:bg-gray-600";
   }
 };
 

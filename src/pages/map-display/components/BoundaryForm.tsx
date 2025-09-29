@@ -1,13 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { Plus, X } from "lucide-react";
 import { Boundary } from "../data/mock-data";
 
@@ -19,11 +12,7 @@ interface BoundaryFormProps<T extends Partial<Boundary> | Boundary> {
   onCancel: () => void;
   onAddPoint: () => void;
   onRemovePoint: (index: number) => void;
-  onCoordinateChange: (
-    index: number,
-    field: "lat" | "lng",
-    value: number
-  ) => void;
+  onCoordinateChange: (index: number, field: "x" | "y", value: number) => void;
 }
 
 export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
@@ -46,14 +35,14 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
     boundary.name &&
     boundary.points &&
     boundary.points.length >= 3 &&
-    !boundary.points.some(
-      (p) => !p.lat || !p.lng || p.lat === 0 || p.lng === 0
-    );
+    !boundary.points.some((p) => !p.x || !p.y || p.x === 0 || p.y === 0);
 
   return (
-    <div className="mb-6 p-4 border border-gray-200 rounded-lg">
+    <div className="mb-6 p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-800">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-lg">{title}</h3>
+        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+          {title}
+        </h3>
         <Button variant="ghost" size="sm" onClick={onCancel}>
           <X className="w-4 h-4" />
         </Button>
@@ -61,7 +50,10 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor={nameInputId} className="block mb-2">
+          <Label
+            htmlFor={nameInputId}
+            className="block mb-2 text-neutral-700 dark:text-neutral-300"
+          >
             Boundary Name
           </Label>
           <Input
@@ -73,41 +65,23 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                 name: e.target.value
               })
             }
+            className="h-9 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
             placeholder="Enter boundary name"
           />
         </div>
 
         <div>
-          <Label htmlFor={typeInputId} className="block mb-2">
-            Boundary Type
-          </Label>
-          <Select
-            value={boundary.type}
-            onValueChange={(value: "safe" | "warning" | "danger") =>
-              onBoundaryChange({ ...boundary, type: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="safe">Safe</SelectItem>
-              <SelectItem value="warning">Warning</SelectItem>
-              <SelectItem value="danger">Danger</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
           <div className="flex justify-between items-center mb-3">
-            <Label className="block">Coordinates</Label>
+            <Label className="block text-neutral-700 dark:text-neutral-300">
+              Coordinates
+            </Label>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onAddPoint}
             >
-              <Plus className="w-3 h-3 mr-2" />
+              <Plus className="mr-2 w-3 h-3" />
               Add Point
             </Button>
           </div>
@@ -117,13 +91,13 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
               <Input
                 type="number"
                 inputMode="decimal"
-                placeholder="Lat"
-                value={point.lat || ""}
+                placeholder="X"
+                value={point.x || ""}
                 onChange={(e) => {
                   const value =
                     e.target.value === "" ? 0 : parseFloat(e.target.value);
                   if (!isNaN(value)) {
-                    onCoordinateChange(index, "lat", value);
+                    onCoordinateChange(index, "x", value);
                   }
                 }}
                 onWheelCapture={(e) => {
@@ -136,9 +110,9 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                     e.preventDefault();
                   }
                 }}
-                className={`flex-1 min-w-0 ${
-                  !point.lat || point.lat === 0
-                    ? "border-red-300 focus:border-red-500"
+                className={`flex-1 min-w-0 h-9 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 ${
+                  !point.x || point.x === 0
+                    ? "border-red-300 dark:border-red-600 focus:border-red-500 dark:focus:border-red-500"
                     : ""
                 }`}
                 required
@@ -147,13 +121,13 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
               <Input
                 type="number"
                 inputMode="decimal"
-                placeholder="Lng"
-                value={point.lng || ""}
+                placeholder="Y"
+                value={point.y || ""}
                 onChange={(e) => {
                   const value =
                     e.target.value === "" ? 0 : parseFloat(e.target.value);
                   if (!isNaN(value)) {
-                    onCoordinateChange(index, "lng", value);
+                    onCoordinateChange(index, "y", value);
                   }
                 }}
                 onWheelCapture={(e) => {
@@ -166,9 +140,9 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                     e.preventDefault();
                   }
                 }}
-                className={`flex-1 min-w-0 ${
-                  !point.lng || point.lng === 0
-                    ? "border-red-300 focus:border-red-500"
+                className={`flex-1 min-w-0 h-9 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 ${
+                  !point.y || point.y === 0
+                    ? "border-red-300 dark:border-red-600 focus:border-red-500 dark:focus:border-red-500"
                     : ""
                 }`}
                 required
@@ -178,7 +152,7 @@ export const BoundaryForm = <T extends Partial<Boundary> | Boundary>({
                 variant="ghost"
                 size="sm"
                 onClick={() => onRemovePoint(index)}
-                className="p-1 h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="hover:bg-red-50 dark:hover:bg-red-900/20 p-1 w-8 h-8 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                 title="Remove coordinate point"
               >
                 <X className="w-3 h-3" />

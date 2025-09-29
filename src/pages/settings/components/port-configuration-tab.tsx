@@ -1,11 +1,25 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Check, Edit3, RotateCcw, X } from "lucide-react";
+import {
+  generateAllPorts,
+  getPortsByBank,
+  mockStepNames
+} from "@/types/common/ports";
+import { Check, Edit3, RotateCcw, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { mockStepNames } from "../../method/data/mock-recipe";
 
 interface Port {
   id: string;
@@ -13,6 +27,7 @@ interface Port {
   name: string;
   bankNumber: number;
   enabled: boolean;
+  type: "regular";
 }
 
 export const PortConfigurationTab = () => {
@@ -50,6 +65,12 @@ export const PortConfigurationTab = () => {
   const [originalValue, setOriginalValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Dialog states
+  const [showEstablishFlowRateDialog, setShowEstablishFlowRateDialog] =
+    useState(false);
+  const [showSaveConfirmationDialog, setShowSaveConfirmationDialog] =
+    useState(false);
+
   // Track the last saved state to determine unsaved changes
   const [lastSavedNames, setLastSavedNames] = useState<Record<number, string>>(
     () => {
@@ -73,7 +94,9 @@ export const PortConfigurationTab = () => {
 
   // Debug portEnabled state changes
   useEffect(() => {
-    // Removed console log
+    {
+      /* empty */
+    }
   }, [portEnabled]);
 
   // Check if there are unsaved changes
@@ -98,29 +121,6 @@ export const PortConfigurationTab = () => {
 
     setIsSaving(true);
     try {
-      // Console all changes
-      console.log("🚀 Saving Port Configuration Changes:");
-      console.log("📝 Port Name Changes:", portNames);
-      console.log("🔌 Port Enable/Disable Changes:", portEnabled);
-
-      // Log what changed from last saved state
-      const nameChanges = Object.entries(portNames).filter(
-        ([portNum, name]) => name !== lastSavedNames[parseInt(portNum)]
-      );
-      const enableChanges = Object.entries(portEnabled).filter(
-        ([portNum, enabled]) => enabled !== lastSavedEnabled[parseInt(portNum)]
-      );
-
-      if (nameChanges.length > 0) {
-        console.log("✏️ Modified Port Labels:", nameChanges);
-      }
-      if (enableChanges.length > 0) {
-        console.log(
-          "🔒 Disabled Ports:",
-          enableChanges.map(([portNum]) => parseInt(portNum))
-        );
-      }
-
       // TODO: Implement network call to save changes
       // Example: await savePortConfiguration({ portNames, portEnabled })
 
@@ -128,59 +128,71 @@ export const PortConfigurationTab = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Success toast
-      console.log("✅ Port configuration saved successfully!");
       toast.success("Port configuration saved successfully!");
 
       // Update the last saved state to current values
       setLastSavedNames({ ...portNames });
       setLastSavedEnabled({ ...portEnabled });
     } catch (error) {
-      console.error("❌ Failed to save port configuration:", error);
       toast.error("Failed to save port configuration. Please try again.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Generate ports data - memoized to prevent unnecessary recalculations
-  const generatePorts = useMemo((): Port[] => {
-    const ports: Port[] = [];
-    for (let bank = 1; bank <= 4; bank++) {
-      for (let portInBank = 1; portInBank <= 16; portInBank++) {
-        const portNumber = (bank - 1) * 16 + portInBank;
+  const handleEstablishFlowRate = async () => {
+    try {
+      // TODO: Implement actual establish flow rate API call
+      // Example: await establishFlowRate()
 
-        // If this port is currently being edited, use the editValue
-        // Otherwise use the stored portNames value
-        let displayName: string;
-        if (editingPort === portNumber) {
-          displayName = editValue;
-        } else {
-          displayName = portNames[portNumber] || `Port ${portNumber}`;
-        }
+      // Simulate network call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        ports.push({
-          id: `port-${portNumber}`,
-          portNumber,
-          name: displayName,
-          bankNumber: bank,
-          enabled: portEnabled[portNumber] || true // Use portEnabled state
-        });
-      }
+      toast.success("Flow rate established successfully!");
+    } catch (error) {
+      toast.error("Failed to establish flow rate. Please try again.");
     }
-    return ports;
-  }, [editingPort, editValue, portNames, portEnabled]);
+  };
 
-  const ports = generatePorts;
-  const portsByBank = useMemo(() => {
-    return ports.reduce((acc, port) => {
-      const bankKey = port.bankNumber;
-      if (!acc[bankKey]) {
-        acc[bankKey] = [];
+  const handleSaveWithConfirmation = () => {
+    // Check if any port enabled status has changed
+    const hasPortStatusChanges = Object.entries(portEnabled).some(
+      ([portNum, enabled]) => enabled !== lastSavedEnabled[parseInt(portNum)]
+    );
+
+    if (hasPortStatusChanges) {
+      setShowSaveConfirmationDialog(true);
+    } else {
+      handleSaveAllChanges();
+    }
+  };
+
+  // Generate ports data using common configuration
+  const basePorts = useMemo(() => generateAllPorts(), []);
+
+  const ports = useMemo((): Port[] => {
+    return basePorts.map((port) => {
+      // If this port is currently being edited, use the editValue
+      // Otherwise use the stored portNames value
+      let displayName: string;
+      if (editingPort === port.portNumber) {
+        displayName = editValue;
+      } else {
+        displayName = portNames[port.portNumber] || port.name;
       }
-      acc[bankKey].push(port);
-      return acc;
-    }, {} as Record<number, Port[]>);
-  }, [ports]);
+
+      return {
+        id: port.id,
+        portNumber: port.portNumber,
+        name: displayName,
+        bankNumber: port.bankNumber,
+        enabled: portEnabled[port.portNumber] || true, // Use portEnabled state
+        type: "regular" as const
+      };
+    });
+  }, [basePorts, editingPort, editValue, portNames, portEnabled]);
+
+  const portsByBank = useMemo(() => getPortsByBank(ports), [ports]);
 
   const handleEditStart = (portNumber: number, currentName: string) => {
     setEditingPort(portNumber);
@@ -235,16 +247,25 @@ export const PortConfigurationTab = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className=" justify-between items-start gap-4 grid grid-cols-4">
+          <div className="justify-between items-start gap-4 grid grid-cols-4">
             <div className="flex flex-col grid-flow-col col-span-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 Port Configuration
               </CardTitle>
-              <p className="mt-1 text-gray-600 text-sm">
+              <p className="mt-1 text-neutral-600 dark:text-neutral-400 text-sm">
                 Edit port labels and toggle port status.
               </p>
             </div>
-            <div className="flex gap-2 grid-flow-col col-span-1 justify-end">
+            <div className="flex justify-end gap-2 grid-flow-col col-span-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEstablishFlowRateDialog(true)}
+                className="flex items-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                Establish Flow Rate
+              </Button>
               {hasUnsavedChanges && (
                 <>
                   <Button
@@ -256,10 +277,10 @@ export const PortConfigurationTab = () => {
                     }}
                     disabled={isSaving}
                   >
-                    Cancel
+                    Reset
                   </Button>
                   <Button
-                    onClick={handleSaveAllChanges}
+                    onClick={handleSaveWithConfirmation}
                     disabled={!hasUnsavedChanges || isSaving}
                     variant="primary"
                     size="sm"
@@ -276,13 +297,13 @@ export const PortConfigurationTab = () => {
             {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
               <div
                 key={bankNumber}
-                className=" p-6 border border-gray-200 rounded-xl"
+                className="p-6 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-900"
               >
-                <div className="flex justify-between items-center mb-4 pb-3 border-gray-200 border-b">
-                  <h3 className="flex items-center gap-2 font-semibold text-gray-700">
+                <div className="flex justify-between items-center mb-4 pb-3 border-neutral-200 dark:border-neutral-700 border-b">
+                  <h3 className="flex items-center gap-2 font-semibold text-neutral-700 dark:text-neutral-300">
                     Bank {bankNumber}
                   </h3>
-                  <div className="bg-white px-2 py-1 border border-gray-200 rounded-full text-gray-500 text-xs">
+                  <div className="bg-neutral-50 dark:bg-neutral-900 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded-full text-neutral-500 dark:text-neutral-400 text-xs">
                     {bankPorts.length} ports
                   </div>
                 </div>
@@ -292,17 +313,21 @@ export const PortConfigurationTab = () => {
                       key={port.id}
                       className={`border rounded-lg p-3 transition-all duration-200 ${
                         editingPort === port.portNumber
-                          ? "border-blue-300 bg-blue-50 shadow-md"
-                          : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:shadow-sm"
-                      } ${!port.enabled ? "opacity-60 bg-gray-50" : ""}`}
+                          ? "border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 shadow-md"
+                          : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-600 hover:shadow-sm"
+                      } ${
+                        !port.enabled
+                          ? "opacity-60 bg-neutral-50 dark:bg-neutral-800"
+                          : ""
+                      }`}
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 font-medium text-gray-900 text-sm">
-                            <div className="bg-gray-400 rounded-full w-2 h-2"></div>
+                          <div className="flex items-center gap-2 font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+                            <div className="bg-neutral-400 dark:bg-neutral-500 rounded-full w-2 h-2"></div>
                             Port #{port.portNumber}
                           </div>
-                          <div className="mt-1 text-gray-500 text-sm">
+                          <div className="mt-1 text-neutral-500 dark:text-neutral-400 text-sm">
                             {editingPort === port.portNumber ? (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -314,7 +339,7 @@ export const PortConfigurationTab = () => {
                                     onKeyDown={(e) =>
                                       handleKeyPress(e, port.portNumber)
                                     }
-                                    className="border-blue-200 focus:border-blue-400 focus:ring-blue-400 h-7 text-xs flex-1"
+                                    className="flex-1 border-blue-200 dark:border-blue-600 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-blue-400 dark:focus:ring-blue-500 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 h-7 text-xs"
                                     autoFocus
                                     placeholder="Enter port label..."
                                     maxLength={20}
@@ -360,7 +385,7 @@ export const PortConfigurationTab = () => {
                                     </Button>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1 text-gray-500 text-xs">
+                                <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400 text-xs">
                                   <span>
                                     Press Enter to save, Esc to cancel
                                   </span>
@@ -368,7 +393,7 @@ export const PortConfigurationTab = () => {
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-600 hover:text-gray-800 transition-colors">
+                                <span className="font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">
                                   {port.name}
                                 </span>
                                 <Button
@@ -377,9 +402,9 @@ export const PortConfigurationTab = () => {
                                   onClick={() =>
                                     handleEditStart(port.portNumber, port.name)
                                   }
-                                  className="hover:bg-blue-50 p-0 w-5 h-5 text-gray-400 hover:text-blue-600"
+                                  className="hover:bg-blue-50 dark:hover:bg-blue-900/20 p-0 w-5 h-5 text-neutral-400 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400"
                                 >
-                                  <Edit3 className="w-3 h-3" />
+                                  <Edit3 className="w-3 h-3 dark:text-yellow-500/70" />
                                 </Button>
                               </div>
                             )}
@@ -411,6 +436,89 @@ export const PortConfigurationTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Establish Flow Rate Confirmation Dialog */}
+      <AlertDialog
+        open={showEstablishFlowRateDialog}
+        onOpenChange={setShowEstablishFlowRateDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-yellow-600" />
+              Establish Flow Rate
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                This action will establish flow rate for all sampling lines.
+                <strong className="text-red-600">
+                  {" "}
+                  Running recipe will be interrupted.
+                </strong>
+              </p>
+              <p className="text-gray-600 text-sm">
+                Optimize flow rate each time the sampling line is changed.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowEstablishFlowRateDialog(false);
+                handleEstablishFlowRate();
+              }}
+              className="bg-primary-600 hover:bg-primary-700"
+            >
+              Establish Flow Rate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Save with Flow Rate Confirmation Dialog */}
+      <AlertDialog
+        open={showSaveConfirmationDialog}
+        onOpenChange={setShowSaveConfirmationDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-yellow-600" />
+              Port Status Changes Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                You have changed port status settings. Saving these changes will
+                trigger
+                <strong className="text-yellow-600">
+                  {" "}
+                  Establish Flow Rate
+                </strong>{" "}
+                to run, which will{" "}
+                <strong className="text-red-600">
+                  interrupt all running jobs.
+                </strong>
+              </p>
+              <p className="text-gray-600 text-sm">
+                Optimize flow rate each time the sampling line is changed.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowSaveConfirmationDialog(false);
+                handleSaveAllChanges();
+              }}
+              className="bg-primary-600 hover:bg-primary-700"
+            >
+              Save & Establish Flow Rate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -16,8 +16,6 @@ export interface CompoundThresholds {
  * Warning: 100-500, Alarm: 501-1000
  */
 export const generateMockPortThresholds = (): PortThresholds => {
-  console.log("Generating mock port thresholds for 64 ports");
-
   const thresholds: PortThresholds = {};
 
   for (let port = 1; port <= 64; port++) {
@@ -28,12 +26,6 @@ export const generateMockPortThresholds = (): PortThresholds => {
     thresholds[port] = { warning, alarm };
   }
 
-  console.log("Generated port thresholds sample:", {
-    port1: thresholds[1],
-    port2: thresholds[2],
-    port64: thresholds[64]
-  });
-
   return thresholds;
 };
 
@@ -43,16 +35,12 @@ export const generateMockPortThresholds = (): PortThresholds => {
 export const generateMockCompoundThresholds = (
   compounds: string[]
 ): CompoundThresholds => {
-  console.log("Generating mock data for compounds:", compounds);
-
   const compoundThresholds: CompoundThresholds = {};
 
   compounds.forEach((compound) => {
-    console.log(`Generating data for compound: ${compound}`);
     compoundThresholds[compound] = generateMockPortThresholds();
   });
 
-  console.log("Generated compound thresholds:", compoundThresholds);
   return compoundThresholds;
 };
 

@@ -51,3 +51,5 @@ export const {
   useGetSmartRecipeConfigQuery,
   useUpdateSmartRecipeConfigMutation
 } = smartRecipeApi;
+
+

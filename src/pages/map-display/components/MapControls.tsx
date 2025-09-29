@@ -21,7 +21,9 @@ export const MapControls = ({
           checked={showMarkers}
           onCheckedChange={onShowMarkersChange}
         />
-        <div className="font-medium text-sm">Show Markers</div>
+        <div className="font-medium text-sm text-neutral-700 dark:text-neutral-300">
+          Show Markers
+        </div>
       </div>
 
       <Button onClick={onAddBoundary} size="sm" variant="primary">

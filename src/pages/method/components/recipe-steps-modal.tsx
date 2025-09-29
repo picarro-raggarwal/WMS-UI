@@ -78,7 +78,7 @@ const RecipeStepsModal = ({
             <br />
             <span className="flex items-center gap-2 text-primary-500">
               {recipeName}{" "}
-              <div className="bg-neutral-100 px-2 py-1 rounded-md text-gray-500 text-xs">
+              <div className="bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-md text-neutral-500 dark:text-neutral-400 text-xs">
                 ID: {recipeId}
               </div>
             </span>
@@ -87,7 +87,7 @@ const RecipeStepsModal = ({
 
         <div className="space-y-2 my-4 pr-2 max-h-[60vh] overflow-y-auto">
           {sortedSteps.length === 0 ? (
-            <div className="py-8 text-gray-500 text-center">
+            <div className="py-8 text-neutral-500 dark:text-neutral-400 text-center">
               This recipe has no steps defined
             </div>
           ) : (
@@ -99,16 +99,16 @@ const RecipeStepsModal = ({
                   key={step.step_id}
                   className={`border rounded-lg p-4 transition-colors ${
                     isExpanded
-                      ? "border-primary-200 bg-primary-50"
-                      : "border-gray-200 bg-white hover:border-gray-300"
+                      ? "border-primary-200 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20"
+                      : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-600"
                   }`}
                 >
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <div className="flex justify-center items-center bg-neutral-100 rounded-full w-6 h-6 font-medium text-black text-sm">
+                      <div className="flex justify-center items-center bg-neutral-100 dark:bg-neutral-800 rounded-full w-6 h-6 font-medium text-neutral-900 dark:text-neutral-100 text-sm">
                         {step.step_sequence + 1}
                       </div>
-                      <h3 className="font-medium text-gray-900">
+                      <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
                         {getStepName(step.step_id)}
                       </h3>
 
@@ -118,7 +118,7 @@ const RecipeStepsModal = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="p-0 w-6 h-6 text-gray-400 hover:text-gray-700"
+                              className="p-0 w-6 h-6 text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                               onClick={() => toggleStepExpansion(step.step_id)}
                             >
                               <Settings className="w-3.5 h-3.5" />
@@ -130,39 +130,45 @@ const RecipeStepsModal = ({
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 text-sm">
                       <Clock className="w-4 h-4" />
                       <span>{formatDuration(step.duration)}</span>
                     </div>
                   </div>
 
-                  <div className="gap-2 grid grid-cols-3 mt-2 text-gray-500 text-xs">
+                  <div className="gap-2 grid grid-cols-3 mt-2 text-neutral-500 dark:text-neutral-400 text-xs">
                     <div>
-                      <span className="block text-gray-400">Step ID</span>
-                      <span className="font-medium text-gray-700">
+                      <span className="block text-neutral-400 dark:text-neutral-500">
+                        Step ID
+                      </span>
+                      <span className="font-medium text-neutral-700 dark:text-neutral-300">
                         {step.step_id}
                       </span>
                     </div>
                     <div>
-                      <span className="block text-gray-400">Duration</span>
-                      <span className="font-medium text-gray-700">
+                      <span className="block text-neutral-400 dark:text-neutral-500">
+                        Duration
+                      </span>
+                      <span className="font-medium text-neutral-700 dark:text-neutral-300">
                         {step.duration} seconds
                       </span>
                     </div>
                     <div>
-                      <span className="block text-gray-400">Sequence</span>
-                      <span className="font-medium text-gray-700">
+                      <span className="block text-neutral-400 dark:text-neutral-500">
+                        Sequence
+                      </span>
+                      <span className="font-medium text-neutral-700 dark:text-neutral-300">
                         {step.step_sequence}
                       </span>
                     </div>
                   </div>
 
                   {isExpanded && (
-                    <div className="mt-3 pt-3 border-gray-100 border-t">
-                      <h4 className="mb-2 font-medium text-gray-700 text-xs">
+                    <div className="mt-3 pt-3 border-neutral-200 dark:border-neutral-700 border-t">
+                      <h4 className="mb-2 font-medium text-neutral-700 dark:text-neutral-300 text-xs">
                         Step Details
                       </h4>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-neutral-600 dark:text-neutral-400">
                         <p>
                           Port {step.step_id} - {getStepName(step.step_id)}
                         </p>
