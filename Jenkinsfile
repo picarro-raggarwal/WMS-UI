@@ -42,33 +42,9 @@ pipeline {
             }
         } 
         
-//         stage("Build Docker Image for develop") {
-//             when {
-//                 environment name: 'GIT_BRANCH', value: 'develop'
-//             }
-//             steps {
-//                 slackSend color: "good", message: "Build Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
-//                 script {
-//                     sh "make docker_build docker_tag=$tag"
-//                 }
-//             }
-//         }
-//
-//         stage("Deploy to Artifactory from develop branch") {
-//             when {
-//                 environment name: 'GIT_BRANCH', value: 'develop'
-//             }
-//             steps {
-//                 slackSend color: "good", message: "Deployment Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
-//                 script {
-//                     sh "make docker_deploy docker_tag=$tag"
-//                 }
-//             }
-//         }
-
-        stage("Build Docker Image for develop-jvo-wms-85") {
+        stage("Build Docker Image for develop") {
             when {
-                environment name: 'GIT_BRANCH', value: 'develop-jvo-wms-85'
+                environment name: 'GIT_BRANCH', value: 'develop'
             }
             steps {
                 slackSend color: "good", message: "Build Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
@@ -78,9 +54,9 @@ pipeline {
             }
         }
 
-        stage("Deploy to Artifactory from develop-jvo-wms-85 branch") {
+        stage("Deploy to Artifactory from develop branch") {
             when {
-                environment name: 'GIT_BRANCH', value: 'develop-jvo-wms-85'
+                environment name: 'GIT_BRANCH', value: 'develop'
             }
             steps {
                 slackSend color: "good", message: "Deployment Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
@@ -89,6 +65,9 @@ pipeline {
                 }
             }
         }
+
+
+
     }
 
 //         stage("Build Docker Image for release-wms-vx.x") {
