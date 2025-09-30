@@ -41,7 +41,7 @@ type CreateUserRequest = {
 
 export const userManagementApi = createApi({
   reducerPath: "userManagementApi",
-  baseQuery: protectedBaseQuery("/wms-api/v1"),
+  baseQuery: protectedBaseQuery("/auth-api/v1"),
   tagTypes: ["UsersList"],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({

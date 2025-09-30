@@ -53,7 +53,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage("Deploy to Artifactory from develop branch") {
             when {
                 environment name: 'GIT_BRANCH', value: 'develop'
@@ -66,55 +66,59 @@ pipeline {
             }
         }
 
-        stage("Build Docker Image for release-wms-vx.x") {
-            when {
-                environment name: 'GIT_BRANCH', value: "release-wms-v$tag"
-            }
-            steps {
-                slackSend color: "good", message: "Build Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
-                script {
-                    sh "make docker_build docker_tag=$tag"
-                }
-            }
-        }
-        
-        stage("Deploy to Artifactory from release-wms-vx.x branch") {
-            when {
-                environment name: 'GIT_BRANCH', value: "release-wms-v$tag"
-            }
-            steps {
-                slackSend color: "good", message: "Deployment Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
-                script {
-                    sh "make docker_deploy docker_tag=$tag"
-                }
-            }
-        }
-	
-	stage("Build Docker Image for main") {
-            when {
-                environment name: 'GIT_BRANCH', value: 'main'
-            }
-            steps {
-                slackSend color: "good", message: "Build Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
-                script {
-                    sh "make docker_build docker_tag=$tag"
-                }
-            }
-        }
 
-        stage("Deploy to Artifactory from main branch") {
-            when {
-                environment name: 'GIT_BRANCH', value: 'main'
-            }
-            steps {
-                slackSend color: "good", message: "Deployment Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
-                script {
-                    sh "make docker_deploy docker_tag=$tag"
-                }
-            }
-        }
 
     }
+
+//         stage("Build Docker Image for release-wms-vx.x") {
+//             when {
+//                 environment name: 'GIT_BRANCH', value: "release-wms-v$tag"
+//             }
+//             steps {
+//                 slackSend color: "good", message: "Build Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
+//                 script {
+//                     sh "make docker_build docker_tag=$tag"
+//                 }
+//             }
+//         }
+//
+//         stage("Deploy to Artifactory from release-wms-vx.x branch") {
+//             when {
+//                 environment name: 'GIT_BRANCH', value: "release-wms-v$tag"
+//             }
+//             steps {
+//                 slackSend color: "good", message: "Deployment Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
+//                 script {
+//                     sh "make docker_deploy docker_tag=$tag"
+//                 }
+//             }
+//         }
+
+// 	stage("Build Docker Image for main") {
+//             when {
+//                 environment name: 'GIT_BRANCH', value: 'main'
+//             }
+//             steps {
+//                 slackSend color: "good", message: "Build Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
+//                 script {
+//                     sh "make docker_build docker_tag=$tag"
+//                 }
+//             }
+//         }
+//
+//         stage("Deploy to Artifactory from main branch") {
+//             when {
+//                 environment name: 'GIT_BRANCH', value: 'main'
+//             }
+//             steps {
+//                 slackSend color: "good", message: "Deployment Started: ${JOB_NAME} ${BUILD_DISPLAY_NAME} - ${BUILD_URL}"
+//                 script {
+//                     sh "make docker_deploy docker_tag=$tag"
+//                 }
+//             }
+//         }
+//
+//     }
     
     post {
         success {
@@ -131,5 +135,3 @@ pipeline {
         }
     }
 }
-
-
