@@ -130,6 +130,51 @@ useEffect(() => {}, [])
 if (condition) {}
 ```
 
+### 14. Boolean Variable Naming Convention
+
+- **ALWAYS** prefix boolean variables with `is`, `has`, `can`, `should`, or `will`
+- **NEVER** use other prefixes for boolean variables
+- **ALWAYS** use descriptive prefixes that clearly indicate the boolean nature
+
+Examples:
+
+```typescript
+// ✅ Correct boolean naming
+const [isVisible, setIsVisible] = useState(false);
+const [hasData, setHasData] = useState(false);
+const [canEdit, setCanEdit] = useState(false);
+const [shouldRender, setShouldRender] = useState(false);
+const [willUpdate, setWillUpdate] = useState(false);
+
+// Boolean props
+interface ComponentProps {
+  isOpen: boolean;
+  hasError: boolean;
+  canSubmit: boolean;
+  shouldShow: boolean;
+}
+
+// Boolean functions
+const isValid = (value: string) => value.length > 0;
+const hasPermission = (user: User) => user.role === "admin";
+const canAccess = (resource: string) => permissions.includes(resource);
+
+// ❌ Incorrect boolean naming
+const [visible, setVisible] = useState(false);
+const [data, setData] = useState(false);
+const [edit, setEdit] = useState(false);
+const [render, setRender] = useState(false);
+const [update, setUpdate] = useState(false);
+```
+
+Common Boolean Patterns:
+
+- `is` + adjective: `isVisible`, `isEnabled`, `isDisabled`, `isActive`
+- `has` + noun: `hasData`, `hasError`, `hasPermission`, `hasChildren`
+- `can` + verb: `canEdit`, `canDelete`, `canSubmit`, `canAccess`
+- `should` + verb: `shouldShow`, `shouldHide`, `shouldUpdate`, `shouldRender`
+- `will` + verb: `willClose`, `willOpen`, `willUpdate`, `willRefresh`
+
 ## Example Implementation Pattern
 
 When creating a new feature, follow this exact structure:
@@ -156,6 +201,53 @@ src/pages/new-feature/
 - ❌ Missing TypeScript interfaces
 - ❌ Empty blocks without `{/* empty */}` comments
 
+### 15. Import and Dependency Management
+
+- **ALWAYS** fix import errors by checking the actual file structure and exports
+- **ALWAYS** verify that imported modules exist and are properly exported
+- **ALWAYS** remove unused imports and dependencies to prevent errors
+- **ALWAYS** use proper import order: main library first, then CSS, then plugins
+- **ALWAYS** pass required props through component interfaces rather than hardcoding values
+- **ALWAYS** verify file paths and URLs exist before using them
+
+**Import Error Resolution Process:**
+
+1. **Identify the Error:** Check console for specific import/module errors
+2. **Verify File Structure:** Ensure the file exists and is in the correct location
+3. **Check Exports:** Verify the module exports what you're trying to import
+4. **Fix Import Path:** Use correct relative or absolute paths
+5. **Remove Unused Imports:** Clean up any unused dependencies
+6. **Test Resolution:** Verify the error is resolved
+
+**Examples:**
+
+```typescript
+// ✅ Correct - proper import order and verified exports
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { ComponentName } from "./ComponentName";
+
+// ✅ Correct - passing props through interface
+interface ComponentProps {
+  imageUrl: string;
+  onAction: () => void;
+}
+
+// ❌ Incorrect - hardcoded values in components
+<ImageOverlay url="/hardcoded-path.png" />
+
+// ✅ Correct - using props
+<ImageOverlay url={imageUrl} />
+```
+
+**Common Import Issues to Avoid:**
+
+- Importing from non-existent files
+- Using incorrect export names
+- Importing plugins before main library
+- Hardcoding URLs instead of using props
+- Leaving unused imports that cause conflicts
+
 ## Compliance Checklist
 
 Before committing any feature, ensure:
@@ -169,3 +261,7 @@ Before committing any feature, ensure:
 - [ ] Data flows through proper layers
 - [ ] Mock data works independently
 - [ ] Empty blocks have `{/* empty */}` comments
+- [ ] Boolean variables use `is/has/can/should/will` prefixes
+- [ ] Import errors are resolved using proper file structure verification
+- [ ] Unused imports and dependencies are removed
+- [ ] Component props are used instead of hardcoded values

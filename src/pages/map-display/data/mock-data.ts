@@ -8,6 +8,9 @@ export type Boundary = {
   markers?: { x: number; y: number }[];
 };
 
+// Import PortMarker type
+import { PortMarker } from "../types";
+
 // Image configuration
 export const imageConfig = {
   url: "/mock.svg" // dummy1.jpg | mock-map.png
@@ -72,6 +75,88 @@ export const mockBoundaries: Boundary[] = [
       { x: 892.4797, y: 1542.6836 },
       { x: 822.424, y: 1540.4944 }
     ]
+  }
+];
+
+// Default port markers placed in boundaries
+export const mockPortMarkers: PortMarker[] = [
+  {
+    id: "port-marker-1",
+    port: {
+      id: "port-1",
+      portNumber: 1,
+      name: "Initialization",
+      bankNumber: 1,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-1",
+    position: { x: 1650, y: 1550 }
+  },
+  {
+    id: "port-marker-2",
+    port: {
+      id: "port-5",
+      portNumber: 5,
+      name: "System Check",
+      bankNumber: 1,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-1",
+    position: { x: 1750, y: 1450 }
+  },
+  {
+    id: "port-marker-3",
+    port: {
+      id: "port-12",
+      portNumber: 12,
+      name: "Analysis",
+      bankNumber: 1,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-2",
+    position: { x: 1150, y: 1100 }
+  },
+  {
+    id: "port-marker-4",
+    port: {
+      id: "port-18",
+      portNumber: 18,
+      name: "Data Collection",
+      bankNumber: 2,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-3",
+    position: { x: 680, y: 1550 }
+  },
+  {
+    id: "port-marker-5",
+    port: {
+      id: "port-25",
+      portNumber: 25,
+      name: "System Status",
+      bankNumber: 2,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-4",
+    position: { x: 1050, y: 600 }
+  },
+  {
+    id: "port-marker-6",
+    port: {
+      id: "port-33",
+      portNumber: 33,
+      name: "Verification",
+      bankNumber: 3,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-5",
+    position: { x: 1060, y: 1700 }
   }
 ];
 
