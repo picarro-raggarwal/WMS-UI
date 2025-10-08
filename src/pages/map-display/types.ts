@@ -108,3 +108,11 @@ export interface PendingPortPlacement {
   boundary: Boundary;
   coordinates: { x: number; y: number };
 }
+
+export interface PreviewPortMarker {
+  id: string;
+  port: Port;
+  coordinates: { x: number; y: number };
+  boundaryId: string;
+  boundaryName: string;
+}

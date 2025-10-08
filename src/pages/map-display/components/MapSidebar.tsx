@@ -3,8 +3,8 @@ import { Info, Layers, MapPin, PenTool } from "lucide-react";
 import {
   Boundary,
   PendingBoundarySave,
-  PendingPortPlacement,
-  PortMarker
+  PortMarker,
+  PreviewPortMarker
 } from "../types";
 import { BoundaryDetails } from "./BoundaryDetails";
 import { DrawingControls } from "./DrawingControls";
@@ -21,7 +21,7 @@ interface MapSidebarProps {
   // Port state
   availablePorts: Port[];
   selectedPort: Port | null;
-  pendingPortPlacement: PendingPortPlacement | null;
+  pendingPortPlacements: PreviewPortMarker[];
 
   // Boundary state
   selectedBoundary: Boundary | null;
@@ -34,7 +34,8 @@ interface MapSidebarProps {
   onAddPortMode: () => void;
   onCancelAddPort: () => void;
   onPortSelect: (port: Port) => void;
-  onSavePortPlacement: () => void;
+  onSavePortPlacements: () => void;
+  onRemovePendingPort: (id: string) => void;
   onBoundaryNameChange: (name: string) => void;
   onConfirmBoundarySave: () => void;
   onDeleteBoundary: (id: string) => void;
@@ -48,7 +49,7 @@ export const MapSidebar = ({
   pendingBoundarySave,
   availablePorts,
   selectedPort,
-  pendingPortPlacement,
+  pendingPortPlacements,
   selectedBoundary,
   portMarkers,
   boundariesCount,
@@ -57,7 +58,8 @@ export const MapSidebar = ({
   onAddPortMode,
   onCancelAddPort,
   onPortSelect,
-  onSavePortPlacement,
+  onSavePortPlacements,
+  onRemovePendingPort,
   onBoundaryNameChange,
   onConfirmBoundarySave,
   onDeleteBoundary,
@@ -183,9 +185,10 @@ export const MapSidebar = ({
               isAddingPort={isAddingPort}
               availablePorts={availablePorts}
               selectedPort={selectedPort}
-              pendingPortPlacement={pendingPortPlacement}
+              pendingPortPlacements={pendingPortPlacements}
               onPortSelect={onPortSelect}
-              onSavePortPlacement={onSavePortPlacement}
+              onSavePortPlacements={onSavePortPlacements}
+              onRemovePendingPort={onRemovePendingPort}
               onCancelAddPort={onCancelAddPort}
             />
           </div>

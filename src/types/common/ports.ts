@@ -153,7 +153,7 @@ export const getPortByNumber = (
  * @returns Formatted string like "Port #1 - Initialization"
  */
 export const getPortDisplayName = (port: Port): string => {
-  return `Port #${port.portNumber} - ${port.name}`;
+  return `${port.name}`;
 };
 
 /**

@@ -1,7 +1,7 @@
 import L from "leaflet";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Boundary } from "../data/mock-data";
-import { PortMarker } from "../types";
+import { PortMarker, PreviewPortMarker } from "../types";
 
 /**
  * Custom hook for managing map-related state
@@ -78,12 +78,79 @@ export const usePortState = () => {
   const [isAddingPort, setIsAddingPort] = useState(false);
   const [selectedPort, setSelectedPort] = useState<any>(null);
 
-  // Pending port placement state
-  const [pendingPortPlacement, setPendingPortPlacement] = useState<{
-    port: any;
-    boundary: Boundary;
-    coordinates: { x: number; y: number };
-  } | null>(null);
+  // Multiple pending port placements state
+  const [pendingPortPlacements, setPendingPortPlacements] = useState<
+    PreviewPortMarker[]
+  >([]);
+
+  // Helper functions for managing pending ports
+  const addPendingPort = (
+    port: any,
+    coordinates: { x: number; y: number },
+    boundaryId: string,
+    boundaryName: string
+  ): void => {
+    // Use functional update to ensure we have the latest state
+    setPendingPortPlacements((prevPendingPorts) => {
+      // Check if this port is already placed or pending
+      const isAlreadyPlaced = portMarkers.some(
+        (marker) => marker.port.id === port.id
+      );
+      const isAlreadyPending = prevPendingPorts.some(
+        (marker) => marker.port.id === port.id
+      );
+
+      if (isAlreadyPlaced || isAlreadyPending) {
+        console.log(`Port ${port.id} already exists - not adding duplicate`);
+        return prevPendingPorts; // Return current state without changes
+      }
+
+      const newPreviewMarker: PreviewPortMarker = {
+        id: `preview-${Date.now()}-${Math.random()}`,
+        port,
+        coordinates,
+        boundaryId,
+        boundaryName
+      };
+
+      console.log(`Adding new port ${port.id} to pending list`);
+      return [...prevPendingPorts, newPreviewMarker];
+    });
+
+    // Note: Duplicate checking is handled in the state update
+  };
+
+  const removePendingPort = (id: string) => {
+    setPendingPortPlacements((prev) => {
+      return prev.filter((marker) => marker.id !== id);
+    });
+  };
+
+  const clearPendingPorts = () => {
+    setPendingPortPlacements([]);
+  };
+
+  // Clean up any duplicates that might have slipped through
+  useEffect(() => {
+    setPendingPortPlacements((prev) => {
+      const uniquePorts = new Map();
+      const cleaned = prev.filter((marker) => {
+        if (uniquePorts.has(marker.port.id)) {
+          console.log(`Removing duplicate port ${marker.port.id}`);
+          return false;
+        }
+        uniquePorts.set(marker.port.id, true);
+        return true;
+      });
+
+      // Only update if there were changes
+      if (cleaned.length !== prev.length) {
+        return cleaned;
+      }
+
+      return prev; // No changes needed
+    });
+  }, [portMarkers]); // Run when portMarkers change
 
   return {
     portMarkers,
@@ -92,7 +159,9 @@ export const usePortState = () => {
     setIsAddingPort,
     selectedPort,
     setSelectedPort,
-    pendingPortPlacement,
-    setPendingPortPlacement
+    pendingPortPlacements,
+    addPendingPort,
+    removePendingPort,
+    clearPendingPorts
   };
 };

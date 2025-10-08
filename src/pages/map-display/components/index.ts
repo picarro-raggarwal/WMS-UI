@@ -8,4 +8,5 @@ export { MapSidebar } from "./MapSidebar";
 export { PortControls } from "./PortControls";
 export { PortMarkerComponent } from "./PortMarker";
 export { PortSelectionComponent } from "./PortSelection";
+export { PreviewPortMarker } from "./PreviewPortMarker";
 export { ScaleIndicator } from "./ScaleIndicator";

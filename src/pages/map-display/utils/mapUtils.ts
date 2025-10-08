@@ -75,14 +75,18 @@ export const getRandomBoundaryType = (): "safe" | "warning" | "danger" => {
 };
 
 /**
- * Get available ports (not yet placed on map)
+ * Get available ports (not yet placed on map or pending)
  */
 export const getAvailablePorts = (
   allPorts: Port[],
-  portMarkers: { port: Port }[]
+  portMarkers: { port: Port }[],
+  pendingPortPlacements?: { port: Port }[]
 ): Port[] => {
   const usedPortIds = portMarkers.map((marker) => marker.port.id);
-  return allPorts.filter((port) => !usedPortIds.includes(port.id));
+  const pendingPortIds =
+    pendingPortPlacements?.map((marker) => marker.port.id) || [];
+  const allUsedIds = [...usedPortIds, ...pendingPortIds];
+  return allPorts.filter((port) => !allUsedIds.includes(port.id));
 };
 
 /**

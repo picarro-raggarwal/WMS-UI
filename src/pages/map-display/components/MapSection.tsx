@@ -1,10 +1,11 @@
 import L from "leaflet";
 import { ImageOverlay, MapContainer, Polygon } from "react-leaflet";
-import { Boundary, PortMarker } from "../types";
+import { Boundary, PortMarker, PreviewPortMarker } from "../types";
 import { MapClickHandler } from "../utils";
 import { BoundaryLabel } from "./BoundaryLabel";
 import { FitImageBoundsOnce, RecenterButton } from "./MapComponents";
 import { PortMarkerComponent } from "./PortMarker";
+import { PreviewPortMarker as PreviewPortMarkerComponent } from "./PreviewPortMarker";
 import { ScaleIndicator } from "./ScaleIndicator";
 
 interface MapSectionProps {
@@ -16,6 +17,7 @@ interface MapSectionProps {
   drawingPoints: L.LatLngTuple[];
   boundaries: Boundary[];
   portMarkers: PortMarker[];
+  previewPortMarkers: PreviewPortMarker[];
   selectedBoundary: Boundary | null;
   containerSize: { width: number; height: number } | null;
   imgSize: { width: number; height: number } | null;
@@ -33,6 +35,7 @@ export const MapSection = ({
   drawingPoints,
   boundaries,
   portMarkers,
+  previewPortMarkers,
   selectedBoundary,
   containerSize,
   imgSize,
@@ -121,6 +124,14 @@ export const MapSection = ({
         {/* Port markers */}
         {portMarkers.map((marker) => (
           <PortMarkerComponent key={marker.id} marker={marker} />
+        ))}
+
+        {/* Preview port markers */}
+        {previewPortMarkers.map((previewMarker) => (
+          <PreviewPortMarkerComponent
+            key={previewMarker.id}
+            previewMarker={previewMarker}
+          />
         ))}
 
         <RecenterButton bounds={bounds} />

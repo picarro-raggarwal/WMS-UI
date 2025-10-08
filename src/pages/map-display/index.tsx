@@ -48,8 +48,10 @@ const MapDisplay = () => {
     setIsAddingPort,
     selectedPort,
     setSelectedPort,
-    pendingPortPlacement,
-    setPendingPortPlacement
+    pendingPortPlacements,
+    addPendingPort,
+    removePendingPort,
+    clearPendingPorts
   } = usePortState();
 
   // Initialize with mock data
@@ -71,7 +73,7 @@ const MapDisplay = () => {
       drawingPoints,
       setDrawingPoints,
       setSelectedBoundary,
-      setPendingPortPlacement,
+      addPendingPort,
       isPointInPolygon
     );
 
@@ -186,8 +188,6 @@ const MapDisplay = () => {
 
   const handlePortSelection = (port: Port) => {
     setSelectedPort(port);
-    // Reset pending placement when port selection changes
-    setPendingPortPlacement(null);
   };
 
   const handleDeletePortMarker = (markerId: string) => {
@@ -197,20 +197,36 @@ const MapDisplay = () => {
   const handleCancelAddPort = () => {
     setIsAddingPort(false);
     setSelectedPort(null);
-    setPendingPortPlacement(null);
+    clearPendingPorts();
   };
 
-  const handleSavePortPlacement = () => {
-    if (pendingPortPlacement) {
-      const newPortMarker: PortMarker = {
-        id: `port-marker-${Date.now()}`,
-        port: pendingPortPlacement.port,
-        boundaryId: pendingPortPlacement.boundary.id,
-        position: pendingPortPlacement.coordinates
-      };
+  const handleSavePortPlacements = () => {
+    if (pendingPortPlacements.length > 0) {
+      // Find boundaries for each pending port placement
+      const newPortMarkers: PortMarker[] = pendingPortPlacements.map(
+        (previewMarker) => {
+          // Find which boundary contains this port
+          const containingBoundary = boundaries.find((boundary) => {
+            const validPoints = boundary.points.filter(
+              (p) => !isNaN(p.x) && !isNaN(p.y) && p.x !== 0 && p.y !== 0
+            );
 
-      setPortMarkers((prev) => [...prev, newPortMarker]);
-      setPendingPortPlacement(null);
+            if (validPoints.length < 3) return false;
+
+            return isPointInPolygon(previewMarker.coordinates, validPoints);
+          });
+
+          return {
+            id: `port-marker-${Date.now()}-${Math.random()}`,
+            port: previewMarker.port,
+            boundaryId: containingBoundary?.id || "unknown",
+            position: previewMarker.coordinates
+          };
+        }
+      );
+
+      setPortMarkers((prev) => [...prev, ...newPortMarkers]);
+      clearPendingPorts();
       setIsAddingPort(false);
       setSelectedPort(null);
     }
@@ -254,6 +270,7 @@ const MapDisplay = () => {
           drawingPoints={drawingPoints}
           boundaries={boundaries}
           portMarkers={portMarkers}
+          previewPortMarkers={pendingPortPlacements}
           selectedBoundary={selectedBoundary}
           containerSize={containerSize}
           imgSize={imgSize}
@@ -267,9 +284,13 @@ const MapDisplay = () => {
           isAddingPort={isAddingPort}
           drawingPoints={drawingPoints}
           pendingBoundarySave={pendingBoundarySave}
-          availablePorts={getAvailablePorts(allPorts, portMarkers)}
+          availablePorts={getAvailablePorts(
+            allPorts,
+            portMarkers,
+            pendingPortPlacements
+          )}
           selectedPort={selectedPort}
-          pendingPortPlacement={pendingPortPlacement}
+          pendingPortPlacements={pendingPortPlacements}
           selectedBoundary={selectedBoundary}
           portMarkers={portMarkers}
           boundariesCount={boundaries.length}
@@ -278,7 +299,8 @@ const MapDisplay = () => {
           onAddPortMode={handleAddPortMode}
           onCancelAddPort={handleCancelAddPort}
           onPortSelect={handlePortSelection}
-          onSavePortPlacement={handleSavePortPlacement}
+          onSavePortPlacements={handleSavePortPlacements}
+          onRemovePendingPort={removePendingPort}
           onBoundaryNameChange={(name) => {
             if (!pendingBoundarySave) {
               setPendingBoundarySave({

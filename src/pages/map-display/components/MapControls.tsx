@@ -22,45 +22,49 @@ export const MapControls = ({
 }: MapControlsProps) => {
   return (
     <div className="space-y-3">
-      {/* Add Boundary Button */}
-      <Button
-        variant={isDrawing ? "default" : "outline"}
-        onClick={onAddBoundary}
-        disabled={isDrawing || isAddingPort}
-        className="w-full h-12 text-sm font-medium transition-all duration-200 hover:shadow-md"
-      >
-        {isDrawing ? (
-          <div className="flex items-center gap-2">
-            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin"></div>
-            <span>Drawing Boundary...</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Pencil className="w-4 h-4" />
-            <span>Draw Boundary</span>
-          </div>
-        )}
-      </Button>
+      {/* Add Boundary Button - Hidden when adding port */}
+      {!isAddingPort && (
+        <Button
+          variant={isDrawing ? "default" : "outline"}
+          onClick={onAddBoundary}
+          disabled={isDrawing}
+          className="w-full h-12 text-sm font-medium  hover:shadow-md"
+        >
+          {isDrawing ? (
+            <div className="flex items-center gap-2">
+              <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin"></div>
+              <span>Drawing Boundary...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Pencil className="w-4 h-4" />
+              <span>Draw Boundary</span>
+            </div>
+          )}
+        </Button>
+      )}
 
-      {/* Add Port Button */}
-      <Button
-        variant={isAddingPort ? "default" : "outline"}
-        onClick={onAddPortMode}
-        disabled={isDrawing || isAddingPort}
-        className="w-full h-12 text-sm font-medium transition-all duration-200 hover:shadow-md"
-      >
-        {isAddingPort ? (
-          <div className="flex items-center gap-2">
-            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin"></div>
-            <span>Adding Port...</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            <span>Add Port</span>
-          </div>
-        )}
-      </Button>
+      {/* Add Port Button - Hidden when drawing boundary */}
+      {!isDrawing && (
+        <Button
+          variant={isAddingPort ? "default" : "outline"}
+          onClick={onAddPortMode}
+          disabled={isAddingPort}
+          className="w-full h-12 text-sm font-medium  hover:shadow-md"
+        >
+          {isAddingPort ? (
+            <div className="flex items-center gap-2">
+              <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin"></div>
+              <span>Adding Port...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              <span>Add Port</span>
+            </div>
+          )}
+        </Button>
+      )}
     </div>
   );
 };

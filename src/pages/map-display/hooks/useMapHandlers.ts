@@ -14,7 +14,12 @@ export const useMapHandlers = (
   drawingPoints: L.LatLngTuple[],
   setDrawingPoints: (points: L.LatLngTuple[]) => void,
   setSelectedBoundary: (boundary: Boundary | null) => void,
-  setPendingPortPlacement: (placement: any) => void,
+  addPendingPort: (
+    port: any,
+    coordinates: { x: number; y: number },
+    boundaryId: string,
+    boundaryName: string
+  ) => void,
   isPointInPolygon: (
     point: { x: number; y: number },
     polygon: { x: number; y: number }[]
@@ -67,12 +72,14 @@ export const useMapHandlers = (
         });
 
         if (containingBoundary) {
-          // Click is inside a boundary, allow port placement
-          setPendingPortPlacement({
-            port: selectedPort,
-            boundary: containingBoundary,
-            coordinates
-          });
+          // Click is inside a boundary, try to add to pending ports
+          addPendingPort(
+            selectedPort,
+            coordinates,
+            containingBoundary.id,
+            containingBoundary.name
+          );
+          // Note: Duplicate checking is now handled inside addPendingPort
         } else {
           // Click is outside all boundaries, reject port placement
           toast({
@@ -94,7 +101,7 @@ export const useMapHandlers = (
       drawingPoints,
       setDrawingPoints,
       setSelectedBoundary,
-      setPendingPortPlacement,
+      addPendingPort,
       isPointInPolygon,
       toast
     ]
@@ -213,11 +220,8 @@ export const useMapHandlers = (
         }
 
         // Show pending placement instead of immediately placing
-        setPendingPortPlacement({
-          port: selectedPort,
-          boundary,
-          coordinates
-        });
+        addPendingPort(selectedPort, coordinates, boundary.id, boundary.name);
+        // Note: Duplicate checking is now handled inside addPendingPort
       } else {
         handleBoundaryClick(boundary);
       }
@@ -226,7 +230,7 @@ export const useMapHandlers = (
       isDrawing,
       isAddingPort,
       selectedPort,
-      setPendingPortPlacement,
+      addPendingPort,
       handleBoundaryClick,
       toast
     ]
