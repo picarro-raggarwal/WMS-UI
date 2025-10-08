@@ -25,34 +25,34 @@ export const PortControls = ({
   if (!isAddingPort) return null;
 
   return (
-    <div className="space-y-3 w-full">
-      <PortSelectionComponent
-        availablePorts={availablePorts}
-        selectedPort={selectedPort}
-        onPortSelect={onPortSelect}
-      />
+    <div className="space-y-4">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
+        <PortSelectionComponent
+          availablePorts={availablePorts}
+          selectedPort={selectedPort}
+          onPortSelect={onPortSelect}
+        />
+      </div>
 
       {/* Pending port placement confirmation */}
       {pendingPortPlacement && (
-        <div className="space-y-3 w-full">
-          <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
-            <div className="space-y-2 text-gray-700 text-sm">
-              <div>
-                <span className="font-medium">Port:</span>{" "}
-                {getPortDisplayName(pendingPortPlacement.port)}
-              </div>
-              <div>
-                <span className="font-medium">Boundary:</span>{" "}
-                {pendingPortPlacement.boundary.name}
-              </div>
-              <div>
-                <span className="font-medium">Coordinates:</span> X:{" "}
-                {pendingPortPlacement.coordinates.x.toFixed(4)}, Y:{" "}
-                {pendingPortPlacement.coordinates.y.toFixed(4)}
-              </div>
-              <div className="text-gray-600 text-xs">
-                💡 Review the placement details and confirm
-              </div>
+        <div className="bg-white dark:bg-neutral-800 p-4 border border-gray-200 dark:border-neutral-600 rounded-lg shadow-sm">
+          <div className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
+            <div>
+              <span className="font-medium">Port:</span>{" "}
+              {getPortDisplayName(pendingPortPlacement.port)}
+            </div>
+            <div>
+              <span className="font-medium">Boundary:</span>{" "}
+              {pendingPortPlacement.boundary.name}
+            </div>
+            <div>
+              <span className="font-medium">Coordinates:</span> X:{" "}
+              {pendingPortPlacement.coordinates.x.toFixed(4)}, Y:{" "}
+              {pendingPortPlacement.coordinates.y.toFixed(4)}
+            </div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
+              💡 Review the placement details and confirm
             </div>
           </div>
         </div>

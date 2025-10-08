@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Pencil, Plus } from "lucide-react";
 
 interface MapControlsProps {
   isDrawing: boolean;
@@ -20,68 +21,44 @@ export const MapControls = ({
   onCancelAddPort
 }: MapControlsProps) => {
   return (
-    <div className="flex gap-2 w-full">
+    <div className="space-y-3">
       {/* Add Boundary Button */}
       <Button
-        variant="outline"
+        variant={isDrawing ? "default" : "outline"}
         onClick={onAddBoundary}
         disabled={isDrawing || isAddingPort}
-        className="flex-1"
+        className="w-full h-12 text-sm font-medium transition-all duration-200 hover:shadow-md"
       >
         {isDrawing ? (
-          <>
-            <div className="border-2 border-white border-t-transparent rounded-full w-3 h-3 animate-spin"></div>
-            Drawing...
-          </>
+          <div className="flex items-center gap-2">
+            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin"></div>
+            <span>Drawing Boundary...</span>
+          </div>
         ) : (
-          <>
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-              />
-            </svg>
-            Draw Boundary
-          </>
+          <div className="flex items-center gap-2">
+            <Pencil className="w-4 h-4" />
+            <span>Draw Boundary</span>
+          </div>
         )}
       </Button>
 
       {/* Add Port Button */}
       <Button
-        variant="outline"
+        variant={isAddingPort ? "default" : "outline"}
         onClick={onAddPortMode}
         disabled={isDrawing || isAddingPort}
-        className="flex-1"
+        className="w-full h-12 text-sm font-medium transition-all duration-200 hover:shadow-md"
       >
         {isAddingPort ? (
-          <>
-            <div className="border-2 border-white border-t-transparent rounded-full w-3 h-3 animate-spin"></div>
-            Adding Port...
-          </>
+          <div className="flex items-center gap-2">
+            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin"></div>
+            <span>Adding Port...</span>
+          </div>
         ) : (
-          <>
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            Add Port
-          </>
+          <div className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            <span>Add Port</span>
+          </div>
         )}
       </Button>
     </div>

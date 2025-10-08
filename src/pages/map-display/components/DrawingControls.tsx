@@ -24,9 +24,9 @@ export const DrawingControls = ({
   if (!isDrawing) return null;
 
   return (
-    <div className="space-y-3 w-full">
-      <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
-        <div className="space-y-2 text-gray-700 text-sm">
+    <div className="space-y-4">
+      <div className="bg-gray-50 dark:bg-neutral-700 p-4 border border-gray-200 dark:border-neutral-600 rounded-lg">
+        <div className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
           <div>
             <span className="font-medium">Status:</span>{" "}
             {drawingPoints.length < 3
@@ -37,7 +37,7 @@ export const DrawingControls = ({
             <span className="font-medium">Points:</span> {drawingPoints.length}{" "}
             / 3 minimum
           </div>
-          <div className="text-gray-600 text-xs">
+          <div className="text-gray-600 dark:text-gray-400 text-xs">
             Click on the map to add points for your boundary
           </div>
         </div>
@@ -45,10 +45,10 @@ export const DrawingControls = ({
 
       {/* Show confirmation card when ready to save */}
       {drawingPoints.length >= 3 && (
-        <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
-          <div className="space-y-3 text-gray-700 text-sm">
+        <div className="bg-white dark:bg-neutral-800 p-4 border border-gray-200 dark:border-neutral-600 rounded-lg shadow-sm">
+          <div className="space-y-3 text-gray-700 dark:text-gray-300 text-sm">
             <div>
-              <label className="block mb-1 font-medium text-gray-800 text-sm">
+              <label className="block mb-1 font-medium text-gray-800 dark:text-gray-200 text-sm">
                 Boundary Name *
               </label>
               <Input
@@ -68,7 +68,7 @@ export const DrawingControls = ({
 
             <div>
               <span className="font-medium">Coordinates:</span>
-              <div className="bg-gray-100 mt-1 p-2 rounded max-h-20 overflow-y-auto text-xs">
+              <div className="bg-gray-100 dark:bg-neutral-700 mt-1 p-2 rounded max-h-20 overflow-y-auto text-xs">
                 {drawingPoints.map((point, idx) => (
                   <div key={idx}>
                     Point {idx + 1}: X: {point[1].toFixed(4)}, Y:{" "}
@@ -78,7 +78,7 @@ export const DrawingControls = ({
               </div>
             </div>
 
-            <div className="text-gray-600 text-xs">
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
               💡 Review the boundary details and confirm
             </div>
           </div>
