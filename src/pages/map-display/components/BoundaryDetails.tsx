@@ -91,7 +91,15 @@ export const BoundaryDetails = ({
                     key={marker.id}
                     className="flex justify-between items-center"
                   >
-                    <span>{getPortDisplayName(marker.port)}</span>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                        {getPortDisplayName(marker.port)}
+                      </span>
+                      <span className="text-xs text-neutral-600 dark:text-neutral-400">
+                        Bank {marker.port.bankNumber} | Port #
+                        {marker.port.portNumber}
+                      </span>
+                    </div>
                     <button
                       className="text-red-600 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                       onClick={() => onDeletePortMarker(marker.id)}
