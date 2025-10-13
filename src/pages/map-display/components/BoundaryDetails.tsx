@@ -52,7 +52,7 @@ export const BoundaryDetails = ({
 
       <div className="space-y-4">
         <div className="bg-neutral-50 dark:bg-neutral-800 p-3 rounded-lg">
-          <p className="mb-2 text-neutral-600 dark:text-neutral-400 text-sm">
+          <p className=" text-neutral-600 dark:text-neutral-400 text-sm">
             Type:{" "}
             <span className="capitalize font-medium">
               {selectedBoundary.type}
