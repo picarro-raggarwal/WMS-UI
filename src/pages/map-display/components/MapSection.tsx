@@ -1,5 +1,6 @@
 import L from "leaflet";
-import { ImageOverlay, MapContainer, Polygon } from "react-leaflet";
+import { useEffect, useRef } from "react";
+import { ImageOverlay, MapContainer, Polygon, useMap } from "react-leaflet";
 import { Boundary, PortMarker, PreviewPortMarker } from "../types";
 import { MapClickHandler } from "../utils";
 import { BoundaryLabel } from "./BoundaryLabel";
@@ -8,6 +9,64 @@ import { PortMarkerComponent } from "./PortMarker";
 import { PreviewPortMarker as PreviewPortMarkerComponent } from "./PreviewPortMarker";
 import { ScaleIndicator } from "./ScaleIndicator";
 import { VertexMarker } from "./VertexMarker";
+
+// Component to handle map resize when sidebar collapses
+const MapResizeOnToggle = ({
+  isSidebarCollapsed
+}: {
+  isSidebarCollapsed: boolean;
+}) => {
+  const map = useMap();
+  const prevCollapsed = useRef(isSidebarCollapsed);
+  const prevGlobalSidebarState = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (prevCollapsed.current !== isSidebarCollapsed) {
+      // Delay to allow DOM to update
+      setTimeout(() => {
+        map.invalidateSize();
+        prevCollapsed.current = isSidebarCollapsed;
+      }, 300); // Match transition duration
+    }
+  }, [isSidebarCollapsed, map]);
+
+  // Also listen for global app sidebar state changes
+  useEffect(() => {
+    const checkGlobalSidebar = () => {
+      const currentState = localStorage.getItem("sidebar:state");
+      if (currentState !== prevGlobalSidebarState.current) {
+        prevGlobalSidebarState.current = currentState;
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 300);
+      }
+    };
+
+    // Initial check
+    checkGlobalSidebar();
+
+    // Listen for storage events
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "sidebar:state") {
+        checkGlobalSidebar();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Poll for changes (since storage events don't fire in same window)
+    const pollInterval = setInterval(() => {
+      checkGlobalSidebar();
+    }, 500);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(pollInterval);
+    };
+  }, [map]);
+
+  return null;
+};
 
 interface MapSectionProps {
   mapContainerRef: React.RefObject<HTMLDivElement>;
@@ -22,6 +81,7 @@ interface MapSectionProps {
   selectedBoundary: Boundary | null;
   containerSize: { width: number; height: number } | null;
   imgSize: { width: number; height: number } | null;
+  isSidebarCollapsed: boolean;
   onMapClick: (e: L.LeafletMouseEvent) => void;
   onBoundaryClick: (boundary: Boundary) => void;
   onBoundaryClickForPort: (boundary: Boundary, e: L.LeafletMouseEvent) => void;
@@ -40,6 +100,7 @@ export const MapSection = ({
   selectedBoundary,
   containerSize,
   imgSize,
+  isSidebarCollapsed,
   onMapClick,
   onBoundaryClick,
   onBoundaryClickForPort
@@ -155,6 +216,7 @@ export const MapSection = ({
           />
         ))}
 
+        <MapResizeOnToggle isSidebarCollapsed={isSidebarCollapsed} />
         <RecenterButton bounds={bounds} />
         <FitImageBoundsOnce bounds={bounds} />
       </MapContainer>

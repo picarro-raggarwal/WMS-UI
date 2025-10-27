@@ -21,6 +21,9 @@ import { PortMarker } from "./types";
 import { getAvailablePorts } from "./utils";
 
 const MapDisplay = () => {
+  // Sidebar collapse state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   // Custom hooks for state management
   const {
     mapContainerRef,
@@ -275,6 +278,7 @@ const MapDisplay = () => {
           selectedBoundary={selectedBoundary}
           containerSize={containerSize}
           imgSize={imgSize}
+          isSidebarCollapsed={isSidebarCollapsed}
           onMapClick={handleMapClick}
           onBoundaryClick={handleBoundaryClick}
           onBoundaryClickForPort={handleBoundaryClickForPort}
@@ -296,6 +300,8 @@ const MapDisplay = () => {
           portMarkers={portMarkers}
           boundaries={boundaries}
           boundariesCount={boundaries.length}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={setIsSidebarCollapsed}
           onAddBoundary={handleAddBoundary}
           onCancelDrawing={handleCancelDrawing}
           onAddPortMode={handleAddPortMode}
