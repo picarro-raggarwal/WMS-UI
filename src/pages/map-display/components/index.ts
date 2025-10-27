@@ -10,3 +10,4 @@ export { PortMarkerComponent } from "./PortMarker";
 export { PortSelectionComponent } from "./PortSelection";
 export { PreviewPortMarker } from "./PreviewPortMarker";
 export { ScaleIndicator } from "./ScaleIndicator";
+export { VertexMarker } from "./VertexMarker";

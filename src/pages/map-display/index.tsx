@@ -51,7 +51,8 @@ const MapDisplay = () => {
     pendingPortPlacements,
     addPendingPort,
     removePendingPort,
-    clearPendingPorts
+    clearPendingPorts,
+    updatePendingPortCoordinates
   } = usePortState();
 
   // Initialize with mock data
@@ -293,6 +294,7 @@ const MapDisplay = () => {
           pendingPortPlacements={pendingPortPlacements}
           selectedBoundary={selectedBoundary}
           portMarkers={portMarkers}
+          boundaries={boundaries}
           boundariesCount={boundaries.length}
           onAddBoundary={handleAddBoundary}
           onCancelDrawing={handleCancelDrawing}
@@ -301,6 +303,7 @@ const MapDisplay = () => {
           onPortSelect={handlePortSelection}
           onSavePortPlacements={handleSavePortPlacements}
           onRemovePendingPort={removePendingPort}
+          onUpdatePendingPortCoordinates={updatePendingPortCoordinates}
           onBoundaryNameChange={(name) => {
             if (!pendingBoundarySave) {
               setPendingBoundarySave({
@@ -315,8 +318,24 @@ const MapDisplay = () => {
             }
           }}
           onConfirmBoundarySave={handleConfirmBoundarySave}
+          onUpdateDrawingPoint={(index, coordinates) => {
+            setDrawingPoints((prev) => {
+              const newPoints = [...prev];
+              newPoints[index] = coordinates;
+              return newPoints;
+            });
+          }}
           onDeleteBoundary={handleDeleteBoundary}
           onDeletePortMarker={handleDeletePortMarker}
+          onUpdatePortMarkerCoordinates={(markerId, coordinates) => {
+            setPortMarkers((prev) =>
+              prev.map((marker) =>
+                marker.id === markerId
+                  ? { ...marker, position: coordinates }
+                  : marker
+              )
+            );
+          }}
         />
       </main>
     </div>

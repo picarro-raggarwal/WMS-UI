@@ -7,6 +7,7 @@ import { FitImageBoundsOnce, RecenterButton } from "./MapComponents";
 import { PortMarkerComponent } from "./PortMarker";
 import { PreviewPortMarker as PreviewPortMarkerComponent } from "./PreviewPortMarker";
 import { ScaleIndicator } from "./ScaleIndicator";
+import { VertexMarker } from "./VertexMarker";
 
 interface MapSectionProps {
   mapContainerRef: React.RefObject<HTMLDivElement>;
@@ -79,6 +80,8 @@ export const MapSection = ({
 
           if (validPoints.length < 3) return null;
 
+          const isSelected = selectedBoundary?.id === boundary.id;
+
           return (
             <div key={boundary.id}>
               <Polygon
@@ -92,7 +95,7 @@ export const MapSection = ({
                       : "#ef4444",
                   weight: 2,
                   fillOpacity: 0.1,
-                  ...(selectedBoundary?.id === boundary.id && {
+                  ...(isSelected && {
                     color: "#3b82f6",
                     weight: 4,
                     fillOpacity: 0.2
@@ -107,18 +110,36 @@ export const MapSection = ({
                 portMarkers={portMarkers}
                 onClick={onBoundaryClick}
                 isAddingPort={isAddingPort}
-                isSelected={selectedBoundary?.id === boundary.id}
+                isSelected={isSelected}
               />
+              {/* Show vertex markers for selected boundary */}
+              {isSelected &&
+                validPoints.map((point, idx) => (
+                  <VertexMarker
+                    key={`boundary-vertex-${boundary.id}-${idx}`}
+                    position={[point.y, point.x]}
+                    vertexNumber={idx + 1}
+                  />
+                ))}
             </div>
           );
         })}
 
         {/* Live drawing polygon */}
         {isDrawing && drawingPoints.length > 0 && (
-          <Polygon
-            positions={drawingPoints}
-            pathOptions={{ color: "purple", dashArray: "4" }}
-          />
+          <>
+            <Polygon
+              positions={drawingPoints}
+              pathOptions={{ color: "purple", dashArray: "4" }}
+            />
+            {drawingPoints.map((point, idx) => (
+              <VertexMarker
+                key={`drawing-vertex-${idx}`}
+                position={point.slice(0, 2) as [number, number]}
+                vertexNumber={idx + 1}
+              />
+            ))}
+          </>
         )}
 
         {/* Port markers */}

@@ -114,7 +114,7 @@ export const usePortState = () => {
       };
 
       console.log(`Adding new port ${port.id} to pending list`);
-      return [...prevPendingPorts, newPreviewMarker];
+      return [newPreviewMarker, ...prevPendingPorts];
     });
 
     // Note: Duplicate checking is handled in the state update
@@ -128,6 +128,17 @@ export const usePortState = () => {
 
   const clearPendingPorts = () => {
     setPendingPortPlacements([]);
+  };
+
+  const updatePendingPortCoordinates = (
+    id: string,
+    newCoordinates: { x: number; y: number }
+  ) => {
+    setPendingPortPlacements((prev) => {
+      return prev.map((marker) =>
+        marker.id === id ? { ...marker, coordinates: newCoordinates } : marker
+      );
+    });
   };
 
   // Clean up any duplicates that might have slipped through
@@ -162,6 +173,7 @@ export const usePortState = () => {
     pendingPortPlacements,
     addPendingPort,
     removePendingPort,
-    clearPendingPorts
+    clearPendingPorts,
+    updatePendingPortCoordinates
   };
 };

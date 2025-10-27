@@ -21,7 +21,7 @@ export const imageConfig = {
 export const mockBoundaries: Boundary[] = [
   {
     id: "room-1",
-    name: "Bedroom 1",
+    name: "Production Bay A",
     type: "safe",
     points: [
       { x: 1477.3463, y: 1744.6146 },
@@ -32,7 +32,7 @@ export const mockBoundaries: Boundary[] = [
   },
   {
     id: "room-2",
-    name: "Bedroom 2",
+    name: "Assembly Line 1",
     type: "warning",
     points: [
       { x: 948.3457, y: 1212.2332 },
@@ -43,7 +43,7 @@ export const mockBoundaries: Boundary[] = [
   },
   {
     id: "room-3",
-    name: "Bathroom",
+    name: "Utilities Room",
     type: "danger",
     points: [
       { x: 545.8247, y: 1745.3906 },
@@ -54,7 +54,7 @@ export const mockBoundaries: Boundary[] = [
   },
   {
     id: "room-4",
-    name: "Living Room",
+    name: "Quality Control",
     type: "safe",
     points: [
       { x: 948.4652, y: 809.8835 },
@@ -65,7 +65,7 @@ export const mockBoundaries: Boundary[] = [
   },
   {
     id: "room-5",
-    name: "Common Area",
+    name: "Storage Bay",
     type: "safe",
     points: [
       { x: 820.9646, y: 1741.1746 },

@@ -26,6 +26,7 @@ interface MapSidebarProps {
   // Boundary state
   selectedBoundary: Boundary | null;
   portMarkers: PortMarker[];
+  boundaries: Boundary[];
   boundariesCount: number;
 
   // Handlers
@@ -36,10 +37,19 @@ interface MapSidebarProps {
   onPortSelect: (port: Port) => void;
   onSavePortPlacements: () => void;
   onRemovePendingPort: (id: string) => void;
+  onUpdatePendingPortCoordinates: (
+    id: string,
+    coordinates: { x: number; y: number }
+  ) => void;
   onBoundaryNameChange: (name: string) => void;
   onConfirmBoundarySave: () => void;
+  onUpdateDrawingPoint: (index: number, coordinates: L.LatLngTuple) => void;
   onDeleteBoundary: (id: string) => void;
   onDeletePortMarker: (markerId: string) => void;
+  onUpdatePortMarkerCoordinates: (
+    markerId: string,
+    coordinates: { x: number; y: number }
+  ) => void;
 }
 
 export const MapSidebar = ({
@@ -52,6 +62,7 @@ export const MapSidebar = ({
   pendingPortPlacements,
   selectedBoundary,
   portMarkers,
+  boundaries,
   boundariesCount,
   onAddBoundary,
   onCancelDrawing,
@@ -60,10 +71,13 @@ export const MapSidebar = ({
   onPortSelect,
   onSavePortPlacements,
   onRemovePendingPort,
+  onUpdatePendingPortCoordinates,
   onBoundaryNameChange,
   onConfirmBoundarySave,
+  onUpdateDrawingPoint,
   onDeleteBoundary,
-  onDeletePortMarker
+  onDeletePortMarker,
+  onUpdatePortMarkerCoordinates
 }: MapSidebarProps) => {
   return (
     <aside className="flex flex-col flex-shrink-0 bg-gradient-to-b from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-800 shadow-md mt-8 md:mt-0 ml-0 md:ml-4 border border-neutral-200 dark:border-neutral-700 rounded-xl w-full md:w-96 h-full overflow-y-auto">
@@ -120,7 +134,7 @@ export const MapSidebar = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 pt-4 space-y-6 relative z-0">
+      <div className="flex-1 p-4 space-y-6 relative z-0">
         {/* Action Controls Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-3">
@@ -161,9 +175,11 @@ export const MapSidebar = ({
               isDrawing={isDrawing}
               drawingPoints={drawingPoints}
               pendingBoundarySave={pendingBoundarySave}
+              boundaries={boundaries}
               onBoundaryNameChange={onBoundaryNameChange}
               onConfirmBoundarySave={onConfirmBoundarySave}
               onCancelDrawing={onCancelDrawing}
+              onUpdateDrawingPoint={onUpdateDrawingPoint}
               boundariesCount={boundariesCount}
             />
           </div>
@@ -186,9 +202,11 @@ export const MapSidebar = ({
               availablePorts={availablePorts}
               selectedPort={selectedPort}
               pendingPortPlacements={pendingPortPlacements}
+              boundaries={boundaries}
               onPortSelect={onPortSelect}
               onSavePortPlacements={onSavePortPlacements}
               onRemovePendingPort={onRemovePendingPort}
+              onUpdatePendingPortCoordinates={onUpdatePendingPortCoordinates}
               onCancelAddPort={onCancelAddPort}
             />
           </div>
@@ -211,6 +229,7 @@ export const MapSidebar = ({
               portMarkers={portMarkers}
               onDeleteBoundary={onDeleteBoundary}
               onDeletePortMarker={onDeletePortMarker}
+              onUpdatePortMarkerCoordinates={onUpdatePortMarkerCoordinates}
             />
           </div>
         </div>

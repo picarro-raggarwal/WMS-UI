@@ -201,6 +201,68 @@ export const hasMinimumPoints = (points: BoundaryPoint[]): boolean => {
 };
 
 /**
+ * Check if two polygons intersect
+ */
+export const doPolygonsIntersect = (
+  polygon1: BoundaryPoint[],
+  polygon2: BoundaryPoint[]
+): boolean => {
+  // Check if any vertex of polygon1 is inside polygon2
+  for (const point of polygon1) {
+    if (isPointInPolygon(point, polygon2)) {
+      return true;
+    }
+  }
+
+  // Check if any vertex of polygon2 is inside polygon1
+  for (const point of polygon2) {
+    if (isPointInPolygon(point, polygon1)) {
+      return true;
+    }
+  }
+
+  // Check if any edge of polygon1 intersects with any edge of polygon2
+  for (let i = 0; i < polygon1.length; i++) {
+    const p1 = polygon1[i];
+    const p2 = polygon1[(i + 1) % polygon1.length];
+
+    for (let j = 0; j < polygon2.length; j++) {
+      const p3 = polygon2[j];
+      const p4 = polygon2[(j + 1) % polygon2.length];
+
+      if (doLinesIntersect(p1, p2, p3, p4)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Check if two line segments intersect
+ */
+const doLinesIntersect = (
+  p1: BoundaryPoint,
+  p2: BoundaryPoint,
+  p3: BoundaryPoint,
+  p4: BoundaryPoint
+): boolean => {
+  const denom = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
+
+  if (Math.abs(denom) < 1e-10) {
+    return false; // Lines are parallel
+  }
+
+  const ua =
+    ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / denom;
+  const ub =
+    ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / denom;
+
+  return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
+};
+
+/**
  * Find boundary containing a point
  */
 export const findContainingBoundary = (
