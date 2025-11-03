@@ -1,6 +1,12 @@
 import { Port } from "@/types/common/ports";
 import L from "leaflet";
-import { Boundary, BoundaryPoint, Coordinate, MapBounds } from "../types";
+import {
+  Boundary,
+  BoundaryPoint,
+  Coordinate,
+  MapBounds,
+  PortMarker
+} from "../types";
 
 /**
  * Map utility functions for coordinate and boundary operations
@@ -274,4 +280,166 @@ export const findContainingBoundary = (
     if (validPoints.length < 3) return false;
     return isPointInPolygon(point, validPoints);
   });
+};
+
+/**
+ * Get port status color class based on status value
+ * 0 = green (normal), 1 = amber (warning), 2 = red (critical)
+ */
+export const getPortStatusColorClass = (status?: 0 | 1 | 2): string => {
+  switch (status) {
+    case 0:
+      return "bg-green-500"; // green for normal/operational
+    case 1:
+      return "bg-yellow-500"; // amber
+    case 2:
+      return "bg-red-600"; // red/warning
+    default:
+      return "bg-slate-400"; // default gray
+  }
+};
+
+/**
+ * Get port status color (hex) for Leaflet markers
+ * Returns hex values matching Tailwind classes for consistency
+ * Use getPortStatusColorClass for React components with Tailwind classes
+ */
+export const getPortStatusColor = (status?: 0 | 1 | 2): string => {
+  switch (status) {
+    case 0:
+      return "#22c55e"; // bg-green-500 (normal/operational)
+    case 1:
+      return "#F59E0B"; // bg-yellow-500
+    case 2:
+      return "#EF4444"; // bg-red-600
+    default:
+      return "#94A3B8"; // bg-slate-400
+  }
+};
+
+/**
+ * Calculate boundary type based on port statuses
+ * If any port has status 2, boundary type is 2 (danger)
+ * If max status is 1, boundary type is 1 (warning)
+ * Otherwise, boundary type is 0 (safe)
+ */
+export const calculateBoundaryType = (
+  boundaryId: string,
+  portMarkers: PortMarker[]
+): 0 | 1 | 2 => {
+  const boundaryPorts = portMarkers.filter(
+    (marker) => marker.boundaryId === boundaryId
+  );
+
+  if (boundaryPorts.length === 0) {
+    return 0; // safe if no ports
+  }
+
+  const statuses = boundaryPorts
+    .map((marker) => marker.status ?? 0)
+    .filter((status): status is 0 | 1 | 2 => status !== undefined);
+
+  if (statuses.length === 0) {
+    return 0; // safe if no statuses
+  }
+
+  const maxStatus = Math.max(...statuses) as 0 | 1 | 2;
+
+  // If any port has status 2, return 2 (danger)
+  if (maxStatus >= 2) {
+    return 2;
+  }
+
+  // If max status is 1, return 1 (warning)
+  if (maxStatus >= 1) {
+    return 1;
+  }
+
+  // Otherwise, return 0 (safe)
+  return 0;
+};
+
+/**
+ * Check if a boundary has any ports
+ */
+export const hasBoundaryPorts = (
+  boundaryId: string,
+  portMarkers: PortMarker[]
+): boolean => {
+  return portMarkers.some((marker) => marker.boundaryId === boundaryId);
+};
+
+/**
+ * Get boundary type color class based on numeric type
+ * If no ports, returns gray
+ * 0 = green (safe), 1 = amber (warning), 2 = red (danger)
+ */
+// export const getBoundaryTypeColorClass = (
+//   type: 0 | 1 | 2,
+//   hasPorts: boolean = true
+// ): string => {
+//   if (!hasPorts) {
+//     return "bg-slate-400"; // gray for no ports
+//   }
+
+//   switch (type) {
+//     case 0:
+//       return "bg-green-500"; // green
+//     case 1:
+//       return "bg-amber-500"; // amber
+//     case 2:
+//       return "bg-red-500"; // red
+//     default:
+//       return "bg-slate-400"; // default gray
+//   }
+// };
+
+/**
+ * Get boundary type color (hex) for Leaflet polygons
+ * Returns hex values matching Tailwind classes for consistency
+ * Use getBoundaryTypeColorClass for React components with Tailwind classes
+ */
+export const getBoundaryTypeColor = (
+  type: 0 | 1 | 2,
+  hasPorts: boolean = true
+): string => {
+  if (!hasPorts) {
+    return "#94A3B8"; // bg-slate-400 (no ports)
+  }
+
+  switch (type) {
+    case 0:
+      return "#22c55e"; // bg-green-500 (normal/operational)
+    case 1:
+      return "#F59E0B"; // bg-yellow-500
+    case 2:
+      return "#EF4444"; // bg-red-600
+    default:
+      return "#94A3B8"; // bg-slate-400
+  }
+};
+
+/**
+ * Get boundary type label for display
+ * 0 = "safe", 1 = "warning", 2 = "danger"
+ * Returns "No Ports" if hasPorts is false
+ */
+export const getBoundaryTypeLabel = (
+  type: 0 | 1 | 2,
+  hasPorts: boolean = true
+): string => {
+  if (!hasPorts) {
+    return "No Ports";
+  }
+
+  switch (type) {
+    case 0:
+      return "safe";
+    case 1:
+      return "warning";
+    case 2:
+      return "danger";
+    default:
+      return "safe";
+  }
 };

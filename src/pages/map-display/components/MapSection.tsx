@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { ImageOverlay, MapContainer, Polygon, useMap } from "react-leaflet";
 import { Boundary, PortMarker, PreviewPortMarker } from "../types";
 import { MapClickHandler } from "../utils";
+import { getBoundaryTypeColor, hasBoundaryPorts } from "../utils/mapUtils";
 import { BoundaryLabel } from "./BoundaryLabel";
 import { FitImageBoundsOnce, RecenterButton } from "./MapComponents";
 import { PortMarkerComponent } from "./PortMarker";
@@ -142,18 +143,18 @@ export const MapSection = ({
           if (validPoints.length < 3) return null;
 
           const isSelected = selectedBoundary?.id === boundary.id;
+          const boundaryHasPorts = hasBoundaryPorts(boundary.id, portMarkers);
+          const boundaryColor = getBoundaryTypeColor(
+            boundary.type,
+            boundaryHasPorts
+          );
 
           return (
             <div key={boundary.id}>
               <Polygon
                 positions={validPoints.map((p) => [p.y, p.x])}
                 pathOptions={{
-                  color:
-                    boundary.type === "safe"
-                      ? "#10b981"
-                      : boundary.type === "warning"
-                      ? "#f59e0b"
-                      : "#ef4444",
+                  color: boundaryColor,
                   weight: 2,
                   fillOpacity: 0.1,
                   ...(isSelected && {

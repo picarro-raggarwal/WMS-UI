@@ -2,6 +2,7 @@ import L from "leaflet";
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import { PortMarker } from "../types";
+import { getPortStatusColor } from "../utils/mapUtils";
 
 interface PortMarkerComponentProps {
   marker: PortMarker;
@@ -9,19 +10,20 @@ interface PortMarkerComponentProps {
 
 export const PortMarkerComponent = ({ marker }: PortMarkerComponentProps) => {
   const map = useMap();
+  const portColor = getPortStatusColor(marker.status);
 
   useEffect(() => {
     // Create a custom div icon for the port marker
     const portIcon = L.divIcon({
       html: `<div style="
-        background: #3b82f6;
+        background: ${portColor};
         border-radius: 50%;
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: bold;
         color: white;
         cursor: pointer;
@@ -42,7 +44,7 @@ export const PortMarkerComponent = ({ marker }: PortMarkerComponentProps) => {
     return () => {
       map.removeLayer(portMarker);
     };
-  }, [map, marker]);
+  }, [map, marker, portColor]);
 
   return null;
 };

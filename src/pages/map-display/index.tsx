@@ -18,7 +18,7 @@ import {
   usePortState
 } from "./hooks";
 import { PortMarker } from "./types";
-import { getAvailablePorts } from "./utils";
+import { calculateBoundaryType, getAvailablePorts } from "./utils";
 
 const MapDisplay = () => {
   // Sidebar collapse state
@@ -63,6 +63,16 @@ const MapDisplay = () => {
     setBoundaries(mockBoundaries);
     setPortMarkers(mockPortMarkers);
   }, [setBoundaries, setPortMarkers]);
+
+  // Recalculate boundary types when port markers change
+  useEffect(() => {
+    setBoundaries((prevBoundaries) =>
+      prevBoundaries.map((boundary) => ({
+        ...boundary,
+        type: calculateBoundaryType(boundary.id, portMarkers)
+      }))
+    );
+  }, [portMarkers, setBoundaries]);
 
   const [allPorts] = useState<Port[]>(generateAllPorts(true));
 
@@ -141,18 +151,10 @@ const MapDisplay = () => {
       pendingBoundarySave?.boundaryName ||
       `User Boundary ${boundaries.length + 1}`;
 
-    // Randomly assign boundary type
-    const types: ("safe" | "warning" | "danger")[] = [
-      "safe",
-      "warning",
-      "danger"
-    ];
-    const randomType = types[Math.floor(Math.random() * types.length)];
-
     const boundary: Boundary = {
       id: `boundary-${Date.now()}`,
       name: boundaryName,
-      type: randomType,
+      type: 0, // Will be calculated based on port statuses
       points: drawingPoints.map(([lat, lng]) => ({
         x: lng, // Convert lat/lng to x/y
         y: lat

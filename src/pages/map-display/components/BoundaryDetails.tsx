@@ -4,7 +4,12 @@ import { getPortDisplayName } from "@/types/common/ports";
 import { Check, Edit2, Info, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Boundary, PortMarker } from "../types";
-import { isPointInPolygon } from "../utils/mapUtils";
+import {
+  getBoundaryTypeLabel,
+  getPortStatusColorClass,
+  hasBoundaryPorts,
+  isPointInPolygon
+} from "../utils/mapUtils";
 
 interface BoundaryDetailsProps {
   selectedBoundary: Boundary | null;
@@ -99,6 +104,7 @@ export const BoundaryDetails = ({
   const boundaryPorts = portMarkers.filter(
     (marker) => marker.boundaryId === selectedBoundary.id
   );
+  const boundaryHasPorts = hasBoundaryPorts(selectedBoundary.id, portMarkers);
 
   return (
     <div className="p-4">
@@ -120,7 +126,7 @@ export const BoundaryDetails = ({
           <p className=" text-neutral-600 dark:text-neutral-400 text-sm">
             Type:{" "}
             <span className="capitalize font-medium">
-              {selectedBoundary.type}
+              {getBoundaryTypeLabel(selectedBoundary.type, boundaryHasPorts)}
             </span>
           </p>
         </div>
@@ -167,8 +173,63 @@ export const BoundaryDetails = ({
                           {/* Port and Boundary Info with Action Buttons */}
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <div className="font-medium text-neutral-900 dark:text-neutral-100">
-                                {getPortDisplayName(marker.port)}
+                              <div className="flex items-center justify-start  w-full gap-2">
+                                <div
+                                  className={`w-8 h-8 flex items-center justify-center text-white text-sm font-bold rounded-full border border-white dark:border-neutral-700 shadow-sm ${getPortStatusColorClass(
+                                    marker.status
+                                  )}`}
+                                >
+                                  {marker.port.portNumber}
+                                </div>
+
+                                <div className="flex justify-between items-center flex-1">
+                                  <div className="font-medium text-neutral-900 dark:text-neutral-100">
+                                    {getPortDisplayName(marker.port)}
+                                  </div>
+
+                                  {editingPortId === marker.id ? (
+                                    <div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleSaveEdit}
+                                        disabled={isSaveDisabled()}
+                                        className="h-7 w-7 p-0 text-green-600 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900/20 dark:hover:text-green-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleCancelEdit}
+                                        className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleEditPort(marker)}
+                                        className="h-7 w-7 p-0 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                                      >
+                                        <Edit2 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          onDeletePortMarker(marker.id)
+                                        }
+                                        className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                               <div className="text-xs text-neutral-600 dark:text-neutral-400">
                                 Bank {marker.port.bankNumber} | Port #
@@ -181,50 +242,7 @@ export const BoundaryDetails = ({
                                 </div>
                               )}
                             </div>
-                            <div className="flex items-center gap-1 ml-2">
-                              {editingPortId === marker.id ? (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleSaveEdit}
-                                    disabled={isSaveDisabled()}
-                                    className="h-7 w-7 p-0 text-green-600 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900/20 dark:hover:text-green-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleCancelEdit}
-                                    className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEditPort(marker)}
-                                    className="h-7 w-7 p-0 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                                  >
-                                    <Edit2 className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      onDeletePortMarker(marker.id)
-                                    }
-                                    className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
-                            </div>
+                            <div className="flex items-center gap-1 ml-2"></div>
                           </div>
 
                           {/* Coordinate Input Fields - Only in Edit Mode */}

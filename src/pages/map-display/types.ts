@@ -7,7 +7,7 @@ export type BoundaryPoint = { x: number; y: number };
 export type Boundary = {
   id: string;
   name: string;
-  type: "safe" | "warning" | "danger";
+  type: 0 | 1 | 2; // 0 = safe, 1 = warning, 2 = danger
   points: BoundaryPoint[];
   markers?: BoundaryPoint[];
 };
@@ -18,6 +18,7 @@ export interface PortMarker {
   port: Port;
   boundaryId: string;
   position: { x: number; y: number };
+  status?: 0 | 1 | 2; // 0 = green, 1 = amber, 2 = red/warning
 }
 
 // Component prop interfaces
