@@ -225,7 +225,12 @@ export const MapSidebar = ({
 
             {/* Drawing Controls Section with Accordion */}
             {isDrawing && (
-              <Accordion type="single" collapsible className="w-full">
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full"
+                value={isDrawing ? "drawing-controls" : undefined}
+              >
                 <AccordionItem
                   value="drawing-controls"
                   className="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700"
