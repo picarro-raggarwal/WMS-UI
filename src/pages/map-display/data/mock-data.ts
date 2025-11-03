@@ -3,10 +3,14 @@ export type BoundaryPoint = { x: number; y: number };
 export type Boundary = {
   id: string;
   name: string;
-  type: "safe" | "warning" | "danger";
+  type: 0 | 1 | 2; // 0 = safe, 1 = warning, 2 = danger
   points: { x: number; y: number }[];
   markers?: { x: number; y: number }[];
 };
+
+// Import PortMarker type
+import { PortMarker } from "../types";
+import { calculateBoundaryType } from "../utils/mapUtils";
 
 // Image configuration
 export const imageConfig = {
@@ -14,12 +18,11 @@ export const imageConfig = {
   // corners and bounds will be set dynamically in the component
 };
 
-// Mock boundaries data
-export const mockBoundaries: Boundary[] = [
+// Base boundaries data (types will be calculated dynamically)
+const baseBoundaries: Omit<Boundary, "type">[] = [
   {
     id: "room-1",
-    name: "Bedroom 1",
-    type: "safe",
+    name: "Production Bay A",
     points: [
       { x: 1477.3463, y: 1744.6146 },
       { x: 1880.492, y: 1743.9736 },
@@ -29,8 +32,7 @@ export const mockBoundaries: Boundary[] = [
   },
   {
     id: "room-2",
-    name: "Bedroom 2",
-    type: "warning",
+    name: "Assembly Line 1",
     points: [
       { x: 948.3457, y: 1212.2332 },
       { x: 1351.3926, y: 1212.2332 },
@@ -40,8 +42,7 @@ export const mockBoundaries: Boundary[] = [
   },
   {
     id: "room-3",
-    name: "Bathroom",
-    type: "danger",
+    name: "Utilities Room",
     points: [
       { x: 545.8247, y: 1745.3906 },
       { x: 815.1696, y: 1743.6069 },
@@ -51,8 +52,7 @@ export const mockBoundaries: Boundary[] = [
   },
   {
     id: "room-4",
-    name: "Living Room",
-    type: "safe",
+    name: "Quality Control",
     points: [
       { x: 948.4652, y: 809.8835 },
       { x: 1350.7993, y: 812.1187 },
@@ -62,8 +62,7 @@ export const mockBoundaries: Boundary[] = [
   },
   {
     id: "room-5",
-    name: "Common Area",
-    type: "safe",
+    name: "Storage Bay",
     points: [
       { x: 820.9646, y: 1741.1746 },
       { x: 1119.4308, y: 1742.6341 },
@@ -74,6 +73,100 @@ export const mockBoundaries: Boundary[] = [
     ]
   }
 ];
+
+// Default port markers placed in boundaries
+export const mockPortMarkers: PortMarker[] = [
+  {
+    id: "port-marker-1",
+    port: {
+      id: "port-1",
+      portNumber: 1,
+      name: "Initialization",
+      bankNumber: 1,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-1",
+    position: { x: 1650, y: 1550 },
+    status: 0 // green
+  },
+  {
+    id: "port-marker-2",
+    port: {
+      id: "port-5",
+      portNumber: 5,
+      name: "System Check",
+      bankNumber: 1,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-1",
+    position: { x: 1750, y: 1450 },
+    status: 1 // amber
+  },
+  {
+    id: "port-marker-3",
+    port: {
+      id: "port-12",
+      portNumber: 12,
+      name: "Analysis",
+      bankNumber: 1,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-2",
+    position: { x: 1150, y: 1100 },
+    status: 2 // red/warning
+  },
+  {
+    id: "port-marker-4",
+    port: {
+      id: "port-18",
+      portNumber: 18,
+      name: "Data Collection",
+      bankNumber: 2,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-3",
+    position: { x: 680, y: 1550 },
+    status: 0 // green
+  },
+  {
+    id: "port-marker-5",
+    port: {
+      id: "port-25",
+      portNumber: 25,
+      name: "System Status",
+      bankNumber: 2,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-4",
+    position: { x: 1050, y: 600 },
+    status: 1 // amber
+  },
+  {
+    id: "port-marker-6",
+    port: {
+      id: "port-33",
+      portNumber: 33,
+      name: "Verification",
+      bankNumber: 3,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-5",
+    position: { x: 1060, y: 1700 },
+    status: 0 // green
+  }
+];
+
+// Calculate boundary types based on port statuses
+export const mockBoundaries: Boundary[] = baseBoundaries.map((boundary) => ({
+  ...boundary,
+  type: calculateBoundaryType(boundary.id, mockPortMarkers)
+}));
 
 // Style configurations for different boundary types
 export const boundaryStyles = {

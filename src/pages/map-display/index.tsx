@@ -1,57 +1,95 @@
 import { PageHeader } from "@/components/ui/page-header";
+import { Port, generateAllPorts } from "@/types/common/ports";
 import L from "leaflet";
-import "leaflet-imageoverlay-rotated";
 import "leaflet/dist/leaflet.css";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ImageOverlay, MapContainer, Polygon } from "react-leaflet";
-import { AnimatedMarker } from "./AnimatedMarker";
-import {
-  BoundaryDetails,
-  BoundaryForm,
-  FitImageBoundsOnce,
-  MapControls,
-  RecenterButton,
-  ScaleIndicator
-} from "./components";
+import { useEffect, useState } from "react";
+import { MapSection, MapSidebar } from "./components";
 import {
   Boundary,
-  boundaryStyles,
-  getMovingMarkers,
   imageConfig,
-  mockBoundaries
+  mockBoundaries,
+  mockPortMarkers
 } from "./data/mock-data";
+import {
+  useBoundaryState,
+  useMapHandlers,
+  useMapState,
+  useMapUtils,
+  usePortState
+} from "./hooks";
+import { PortMarker } from "./types";
+import { calculateBoundaryType, getAvailablePorts } from "./utils";
 
 const MapDisplay = () => {
-  const [selectedBoundary, setSelectedBoundary] = useState<Boundary | null>(
-    null
-  );
-  const [imgSize, setImgSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  const [isAddingBoundary, setIsAddingBoundary] = useState(false);
-  const [isEditingBoundary, setIsEditingBoundary] = useState(false);
-  const [editingBoundary, setEditingBoundary] = useState<Boundary | null>(null);
-  const [newBoundary, setNewBoundary] = useState<Partial<Boundary>>({
-    name: "",
-    type: "safe",
-    points: []
-  });
-  const [boundaries, setBoundaries] = useState<Boundary[]>(mockBoundaries);
-  const [showMarkers, setShowMarkers] = useState(false);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  const [movingMarkers, setMovingMarkers] = useState<
-    {
-      id: string;
-      x: number;
-      y: number;
-      deviceType: string;
-    }[]
-  >([]);
+  // Sidebar collapse state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Custom hooks for state management
+  const {
+    mapContainerRef,
+    imgSize,
+    setImgSize,
+    containerSize,
+    setContainerSize
+  } = useMapState();
+  const {
+    selectedBoundary,
+    setSelectedBoundary,
+    isDrawing,
+    setIsDrawing,
+    drawingPoints,
+    setDrawingPoints,
+    boundaries,
+    setBoundaries,
+    pendingBoundarySave,
+    setPendingBoundarySave
+  } = useBoundaryState();
+  const {
+    portMarkers,
+    setPortMarkers,
+    isAddingPort,
+    setIsAddingPort,
+    selectedPort,
+    setSelectedPort,
+    pendingPortPlacements,
+    addPendingPort,
+    removePendingPort,
+    clearPendingPorts,
+    updatePendingPortCoordinates
+  } = usePortState();
+
+  // Initialize with mock data
+  useEffect(() => {
+    setBoundaries(mockBoundaries);
+    setPortMarkers(mockPortMarkers);
+  }, [setBoundaries, setPortMarkers]);
+
+  // Recalculate boundary types when port markers change
+  useEffect(() => {
+    setBoundaries((prevBoundaries) =>
+      prevBoundaries.map((boundary) => ({
+        ...boundary,
+        type: calculateBoundaryType(boundary.id, portMarkers)
+      }))
+    );
+  }, [portMarkers, setBoundaries]);
+
+  const [allPorts] = useState<Port[]>(generateAllPorts(true));
+
+  // Custom hooks for utilities and handlers
+  const { isPointInPolygon } = useMapUtils();
+  const { handleMapClick, handleBoundaryClick, handleBoundaryClickForPort } =
+    useMapHandlers(
+      isDrawing,
+      isAddingPort,
+      selectedPort,
+      boundaries,
+      drawingPoints,
+      setDrawingPoints,
+      setSelectedBoundary,
+      addPendingPort,
+      isPointInPolygon
+    );
 
   // Load image and set size
   useEffect(() => {
@@ -63,7 +101,7 @@ const MapDisplay = () => {
       });
     };
     img.src = imageConfig.url;
-  }, []);
+  }, [setImgSize]);
 
   // Resize observer for container size
   useEffect(() => {
@@ -85,186 +123,119 @@ const MapDisplay = () => {
     return () => {
       resizeObserver.disconnect();
     };
-  }, []);
-
-  // Update moving markers
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMovingMarkers(getMovingMarkers(boundaries).flat());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [boundaries]);
+  }, [mapContainerRef, setContainerSize]);
 
   // Update scale info when container or image size changes
   useEffect(() => {
     // This effect ensures scale info updates when dependencies change
   }, [containerSize, imgSize]);
 
-  const handleBoundaryClick = useCallback((boundary: Boundary) => {
-    setSelectedBoundary(boundary);
-  }, []);
-
   const handleAddBoundary = () => {
-    setIsAddingBoundary(true);
-    // Randomly assign boundary type
-    const types: ("safe" | "warning" | "danger")[] = [
-      "safe",
-      "warning",
-      "danger"
-    ];
-    const randomType = types[Math.floor(Math.random() * types.length)];
-
-    setNewBoundary({
-      name: "",
-      type: randomType,
-      points: []
-    });
+    setIsDrawing(true);
+    setDrawingPoints([]);
+    setSelectedBoundary(null);
   };
 
-  const handleSaveBoundary = () => {
-    if (
-      newBoundary.name &&
-      newBoundary.points &&
-      newBoundary.points.length >= 3
-    ) {
-      // Filter out points where x or y are 0 or null
-      const validPoints = newBoundary.points.filter(
-        (p) => p.x !== 0 && p.y !== 0 && p.x !== null && p.y !== null
-      );
+  // const handleSaveBoundary = () => {
+  //   if (drawingPoints.length >= 3) {
+  //     // Show confirmation dialog instead of immediately saving
+  //     setPendingBoundarySave({
+  //       points: drawingPoints,
+  //       boundaryName: `User Boundary ${boundaries.length + 1}`
+  //     });
+  //   }
+  // };
 
-      if (validPoints.length >= 3) {
-        const boundary: Boundary = {
-          id: `boundary-${Date.now()}`,
-          name: newBoundary.name,
-          type: newBoundary.type || "safe",
-          points: validPoints
-        };
+  const handleConfirmBoundarySave = () => {
+    const boundaryName =
+      pendingBoundarySave?.boundaryName ||
+      `User Boundary ${boundaries.length + 1}`;
 
-        setBoundaries((prev) => [...prev, boundary]);
-        setIsAddingBoundary(false);
-        setNewBoundary({
-          name: "",
-          type: "safe",
-          points: []
-        });
-      }
-    }
+    const boundary: Boundary = {
+      id: `boundary-${Date.now()}`,
+      name: boundaryName,
+      type: 0, // Will be calculated based on port statuses
+      points: drawingPoints.map(([lat, lng]) => ({
+        x: lng, // Convert lat/lng to x/y
+        y: lat
+      }))
+    };
+
+    setBoundaries((prev) => [...prev, boundary]);
+    setPendingBoundarySave(null);
+    setIsDrawing(false);
+    setDrawingPoints([]);
   };
 
-  const handleEditBoundary = (boundary: Boundary) => {
-    setEditingBoundary({ ...boundary });
-    setIsEditingBoundary(true);
-  };
+  // const handleCancelBoundarySave = () => {
+  //   setPendingBoundarySave(null);
+  // };
 
-  const handleSaveEditedBoundary = () => {
-    if (
-      editingBoundary &&
-      editingBoundary.name &&
-      editingBoundary.points &&
-      editingBoundary.points.length >= 3
-    ) {
-      // Filter out points where x or y are 0 or null
-      const validPoints = editingBoundary.points.filter(
-        (p) => p.x !== 0 && p.y !== 0 && p.x !== null && p.y !== null
-      );
-
-      if (validPoints.length >= 3) {
-        const updatedBoundary = {
-          ...editingBoundary,
-          points: validPoints
-        };
-
-        setBoundaries((prev) =>
-          prev.map((b) => (b.id === editingBoundary.id ? updatedBoundary : b))
-        );
-        setIsEditingBoundary(false);
-        setEditingBoundary(null);
-        setSelectedBoundary(updatedBoundary);
-      }
-    }
+  const handleCancelDrawing = () => {
+    setIsDrawing(false);
+    setDrawingPoints([]);
   };
 
   const handleDeleteBoundary = (id: string) => {
     setBoundaries((prev) => prev.filter((b) => b.id !== id));
+    // Also delete all ports within this boundary
+    setPortMarkers((prev) => prev.filter((marker) => marker.boundaryId !== id));
     if (selectedBoundary?.id === id) {
       setSelectedBoundary(null);
     }
   };
 
-  const handleAddPoint = () => {
-    setNewBoundary((prev) => ({
-      ...prev,
-      points: [...(prev.points || []), { x: 0, y: 0 }]
-    }));
+  // Port marker handlers
+  const handleAddPortMode = () => {
+    setIsAddingPort(true);
+    setSelectedPort(null);
+    setSelectedBoundary(null);
   };
 
-  const handleRemovePoint = (index: number) => {
-    setNewBoundary((prev) => ({
-      ...prev,
-      points: prev.points?.filter((_, i) => i !== index) || []
-    }));
+  const handlePortSelection = (port: Port) => {
+    setSelectedPort(port);
   };
 
-  const handleCoordinateChange = (
-    index: number,
-    field: "x" | "y",
-    value: number
-  ) => {
-    setNewBoundary((prev) => ({
-      ...prev,
-      points:
-        prev.points?.map((p, i) =>
-          i === index ? { ...p, [field]: value } : p
-        ) || []
-    }));
+  const handleDeletePortMarker = (markerId: string) => {
+    setPortMarkers((prev) => prev.filter((m) => m.id !== markerId));
   };
 
-  const handleEditAddPoint = () => {
-    if (editingBoundary) {
-      setEditingBoundary({
-        ...editingBoundary,
-        points: [...editingBoundary.points, { x: 0, y: 0 }]
-      });
+  const handleCancelAddPort = () => {
+    setIsAddingPort(false);
+    setSelectedPort(null);
+    clearPendingPorts();
+  };
+
+  const handleSavePortPlacements = () => {
+    if (pendingPortPlacements.length > 0) {
+      // Find boundaries for each pending port placement
+      const newPortMarkers: PortMarker[] = pendingPortPlacements.map(
+        (previewMarker) => {
+          // Find which boundary contains this port
+          const containingBoundary = boundaries.find((boundary) => {
+            const validPoints = boundary.points.filter(
+              (p) => !isNaN(p.x) && !isNaN(p.y) && p.x !== 0 && p.y !== 0
+            );
+
+            if (validPoints.length < 3) return false;
+
+            return isPointInPolygon(previewMarker.coordinates, validPoints);
+          });
+
+          return {
+            id: `port-marker-${Date.now()}-${Math.random()}`,
+            port: previewMarker.port,
+            boundaryId: containingBoundary?.id || "unknown",
+            position: previewMarker.coordinates
+          };
+        }
+      );
+
+      setPortMarkers((prev) => [...prev, ...newPortMarkers]);
+      clearPendingPorts();
+      setIsAddingPort(false);
+      setSelectedPort(null);
     }
-  };
-
-  const handleEditRemovePoint = (index: number) => {
-    if (editingBoundary) {
-      setEditingBoundary({
-        ...editingBoundary,
-        points: editingBoundary.points.filter((_, i) => i !== index)
-      });
-    }
-  };
-
-  const handleEditCoordinateChange = (
-    index: number,
-    field: "x" | "y",
-    value: number
-  ) => {
-    if (editingBoundary) {
-      setEditingBoundary({
-        ...editingBoundary,
-        points: editingBoundary.points.map((p, i) =>
-          i === index ? { ...p, [field]: value } : p
-        )
-      });
-    }
-  };
-
-  const handleCancelAdd = () => {
-    setIsAddingBoundary(false);
-    setNewBoundary({
-      name: "",
-      type: "safe",
-      points: []
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditingBoundary(false);
-    setEditingBoundary(null);
   };
 
   // Early return if imgSize is not available
@@ -296,174 +267,84 @@ const MapDisplay = () => {
       <PageHeader pageName="Map Display" />
 
       <main className="flex flex-row mx-auto px-8 md:px-12 py-8 w-full max-w-8xl h-[calc(100vh-4rem)] overflow-hidden">
-        {/* Left: Map Section */}
-        <div
-          ref={mapContainerRef}
-          className="relative flex-1 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden"
-        >
-          <MapContainer
-            bounds={bounds}
-            style={{ width: "100%", height: "100%" }}
-            minZoom={-5}
-            maxZoom={2}
-            maxBounds={bounds}
-            maxBoundsViscosity={0.5}
-            crs={L.CRS.Simple}
-            dragging={true}
-            zoomSnap={0}
-            zoomDelta={0.5}
-            attributionControl={false}
-            className="w-full h-full"
-            preferCanvas={true}
-          >
-            <ImageOverlay url={imageConfig.url} bounds={bounds} />
+        <MapSection
+          mapContainerRef={mapContainerRef}
+          bounds={bounds}
+          imageUrl={imageConfig.url}
+          isDrawing={isDrawing}
+          isAddingPort={isAddingPort}
+          drawingPoints={drawingPoints}
+          boundaries={boundaries}
+          portMarkers={portMarkers}
+          previewPortMarkers={pendingPortPlacements}
+          selectedBoundary={selectedBoundary}
+          containerSize={containerSize}
+          imgSize={imgSize}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onMapClick={handleMapClick}
+          onBoundaryClick={handleBoundaryClick}
+          onBoundaryClickForPort={handleBoundaryClickForPort}
+        />
 
-            {/* Existing boundaries */}
-            {boundaries.map((boundary) => {
-              // Filter out any points with NaN values
-              const validPoints = boundary.points.filter(
-                (p) => !isNaN(p.x) && !isNaN(p.y) && p.x !== 0 && p.y !== 0
-              );
-
-              if (validPoints.length < 3) return null;
-
-              return (
-                <Polygon
-                  key={boundary.id}
-                  positions={validPoints.map((p) => [p.y, p.x])}
-                  pathOptions={boundaryStyles[boundary.type]}
-                  eventHandlers={{
-                    click: () => handleBoundaryClick(boundary)
-                  }}
-                />
-              );
-            })}
-
-            {/* New boundary preview (purple) */}
-            {isAddingBoundary &&
-              newBoundary.points &&
-              newBoundary.points.length >= 3 &&
-              (() => {
-                // Filter out any points with NaN values
-                const validPoints = newBoundary.points.filter(
-                  (p) => !isNaN(p.x) && !isNaN(p.y) && p.x !== 0 && p.y !== 0
-                );
-
-                if (validPoints.length < 3) return null;
-
-                return (
-                  <Polygon
-                    positions={validPoints.map((p) => [p.y, p.x])}
-                    pathOptions={{
-                      color: "purple",
-                      fillColor: "purple",
-                      fillOpacity: 0.3,
-                      weight: 2
-                    }}
-                  />
-                );
-              })()}
-
-            {/* Editing boundary preview (orange) */}
-            {isEditingBoundary &&
-              editingBoundary &&
-              editingBoundary.points.length >= 3 &&
-              (() => {
-                // Filter out any points with NaN values
-                const validPoints = editingBoundary.points.filter(
-                  (p) => !isNaN(p.x) && !isNaN(p.y) && p.x !== 0 && p.y !== 0
-                );
-
-                if (validPoints.length < 3) return null;
-
-                return (
-                  <Polygon
-                    positions={validPoints.map((p) => [p.y, p.x])}
-                    pathOptions={{
-                      color: "orange",
-                      fillColor: "orange",
-                      fillOpacity: 0.3,
-                      weight: 2
-                    }}
-                  />
-                );
-              })()}
-
-            {/* Show markers if enabled */}
-            {showMarkers &&
-              movingMarkers.map((marker, index) => (
-                <AnimatedMarker
-                  key={marker.id}
-                  id={marker.id}
-                  position={[marker.y, marker.x]}
-                  deviceType={marker.deviceType}
-                  tagNumber={index + 1}
-                />
-              ))}
-
-            <RecenterButton bounds={bounds} />
-            <FitImageBoundsOnce bounds={bounds} />
-          </MapContainer>
-
-          {/* Scale indicator positioned outside MapContainer */}
-          <ScaleIndicator containerSize={containerSize} imgSize={imgSize} />
-        </div>
-
-        {/* Right Sidebar */}
-        <aside className="flex flex-col flex-shrink-0 bg-neutral-50 dark:bg-neutral-900 shadow mt-8 md:mt-0 ml-0 md:ml-4 p-6 border border-neutral-200 dark:border-neutral-700 rounded-lg w-full md:w-96 h-full overflow-y-auto">
-          <MapControls
-            showMarkers={showMarkers}
-            onShowMarkersChange={setShowMarkers}
-            onAddBoundary={handleAddBoundary}
-          />
-
-          {isAddingBoundary && (
-            <BoundaryForm
-              mode="add"
-              boundary={newBoundary}
-              onBoundaryChange={setNewBoundary}
-              onSave={handleSaveBoundary}
-              onCancel={handleCancelAdd}
-              onAddPoint={handleAddPoint}
-              onRemovePoint={handleRemovePoint}
-              onCoordinateChange={handleCoordinateChange}
-            />
+        <MapSidebar
+          isDrawing={isDrawing}
+          isAddingPort={isAddingPort}
+          drawingPoints={drawingPoints}
+          pendingBoundarySave={pendingBoundarySave}
+          availablePorts={getAvailablePorts(
+            allPorts,
+            portMarkers,
+            pendingPortPlacements
           )}
-
-          {isEditingBoundary && editingBoundary && (
-            <BoundaryForm
-              mode="edit"
-              boundary={editingBoundary}
-              onBoundaryChange={(boundary) =>
-                setEditingBoundary(boundary as Boundary)
-              }
-              onSave={handleSaveEditedBoundary}
-              onCancel={handleCancelEdit}
-              onAddPoint={handleEditAddPoint}
-              onRemovePoint={handleEditRemovePoint}
-              onCoordinateChange={handleEditCoordinateChange}
-            />
-          )}
-
-          {selectedBoundary && !isAddingBoundary && !isEditingBoundary && (
-            <BoundaryDetails
-              boundary={selectedBoundary}
-              showMarkers={showMarkers}
-              movingMarkers={movingMarkers}
-              onEdit={handleEditBoundary}
-              onDelete={handleDeleteBoundary}
-            />
-          )}
-
-          {!selectedBoundary && !isAddingBoundary && !isEditingBoundary && (
-            <div className="py-8 text-neutral-500 dark:text-neutral-400 text-center">
-              <p>Select a boundary to view details</p>
-              <p className="mt-2 text-sm">
-                Or click "Add Boundary" to create a new one
-              </p>
-            </div>
-          )}
-        </aside>
+          selectedPort={selectedPort}
+          pendingPortPlacements={pendingPortPlacements}
+          selectedBoundary={selectedBoundary}
+          portMarkers={portMarkers}
+          boundaries={boundaries}
+          boundariesCount={boundaries.length}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={setIsSidebarCollapsed}
+          onAddBoundary={handleAddBoundary}
+          onCancelDrawing={handleCancelDrawing}
+          onAddPortMode={handleAddPortMode}
+          onCancelAddPort={handleCancelAddPort}
+          onPortSelect={handlePortSelection}
+          onSavePortPlacements={handleSavePortPlacements}
+          onRemovePendingPort={removePendingPort}
+          onUpdatePendingPortCoordinates={updatePendingPortCoordinates}
+          onBoundaryNameChange={(name) => {
+            if (!pendingBoundarySave) {
+              setPendingBoundarySave({
+                points: drawingPoints,
+                boundaryName: name
+              });
+            } else {
+              setPendingBoundarySave({
+                ...pendingBoundarySave,
+                boundaryName: name
+              });
+            }
+          }}
+          onConfirmBoundarySave={handleConfirmBoundarySave}
+          onUpdateDrawingPoint={(index, coordinates) => {
+            setDrawingPoints((prev) => {
+              const newPoints = [...prev];
+              newPoints[index] = coordinates;
+              return newPoints;
+            });
+          }}
+          onDeleteBoundary={handleDeleteBoundary}
+          onDeletePortMarker={handleDeletePortMarker}
+          onUpdatePortMarkerCoordinates={(markerId, coordinates) => {
+            setPortMarkers((prev) =>
+              prev.map((marker) =>
+                marker.id === markerId
+                  ? { ...marker, position: coordinates }
+                  : marker
+              )
+            );
+          }}
+        />
       </main>
     </div>
   );

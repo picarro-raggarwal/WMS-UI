@@ -9,9 +9,12 @@ export const RecenterButton = ({
   bounds: L.LatLngBoundsExpression;
 }) => {
   const map = useMap();
+
   const handleClick = () => {
-    map.fitBounds(bounds, { animate: true, padding: [0, 0] });
+    map.invalidateSize();
+    map.fitBounds(bounds, { animate: true });
   };
+
   return (
     <button
       onClick={handleClick}

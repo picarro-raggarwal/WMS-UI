@@ -17,9 +17,15 @@ import {
   getPortsByBank,
   mockStepNames
 } from "@/types/common/ports";
-import { Check, Edit3, RotateCcw, X, Zap } from "lucide-react";
+import { Check, Edit3, MapPin, RotateCcw, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+// Import mock data from map-display
+import {
+  mockBoundaries,
+  mockPortMarkers,
+  type Boundary
+} from "@/pages/map-display/data/mock-data";
 
 interface Port {
   id: string;
@@ -166,6 +172,27 @@ export const PortConfigurationTab = () => {
       handleSaveAllChanges();
     }
   };
+
+  // Create a mapping from boundary ID to boundary details
+  const boundaryMap = useMemo(() => {
+    const map = new Map<string, Boundary>();
+    mockBoundaries.forEach((boundary) => {
+      map.set(boundary.id, boundary);
+    });
+    return map;
+  }, []);
+
+  // Create a mapping from port number to boundary info
+  const portToBoundaryMap = useMemo(() => {
+    const map = new Map<number, Boundary>();
+    mockPortMarkers.forEach((marker) => {
+      const boundary = boundaryMap.get(marker.boundaryId);
+      if (boundary) {
+        map.set(marker.port.portNumber, boundary);
+      }
+    });
+    return map;
+  }, [boundaryMap]);
 
   // Generate ports data using common configuration
   const basePorts = useMemo(() => generateAllPorts(), []);
@@ -327,6 +354,51 @@ export const PortConfigurationTab = () => {
                             <div className="bg-neutral-400 dark:bg-neutral-500 rounded-full w-2 h-2"></div>
                             Port #{port.portNumber}
                           </div>
+                          {/* Show boundary mapping if available */}
+                          {portToBoundaryMap.has(port.portNumber) && (
+                            <div className="mt-2">
+                              {(() => {
+                                const boundary = portToBoundaryMap.get(
+                                  port.portNumber
+                                );
+                                if (!boundary) return null;
+                                const isSafe = boundary.type === "safe";
+                                const isWarning = boundary.type === "warning";
+                                return (
+                                  <div
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border ${
+                                      isSafe
+                                        ? "bg-primary-50 dark:bg-primary-950/20 border-primary-200 dark:border-primary-800"
+                                        : isWarning
+                                        ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
+                                        : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
+                                    }`}
+                                  >
+                                    <MapPin
+                                      className={`w-3 h-3 ${
+                                        isSafe
+                                          ? "text-primary-600 dark:text-primary-400"
+                                          : isWarning
+                                          ? "text-yellow-600 dark:text-yellow-400"
+                                          : "text-red-600 dark:text-red-400"
+                                      }`}
+                                    />
+                                    <span
+                                      className={`text-xs font-semibold tracking-wide ${
+                                        isSafe
+                                          ? "text-primary-700 dark:text-primary-400"
+                                          : isWarning
+                                          ? "text-yellow-700 dark:text-yellow-400"
+                                          : "text-red-700 dark:text-red-400"
+                                      }`}
+                                    >
+                                      {boundary.name}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
                           <div className="mt-1 text-neutral-500 dark:text-neutral-400 text-sm">
                             {editingPort === port.portNumber ? (
                               <div className="space-y-2">

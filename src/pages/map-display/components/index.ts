@@ -1,5 +1,13 @@
 export { BoundaryDetails } from "./BoundaryDetails";
-export { BoundaryForm } from "./BoundaryForm";
+export { BoundaryLabel } from "./BoundaryLabel";
+export { DrawingControls } from "./DrawingControls";
 export { FitImageBoundsOnce, RecenterButton } from "./MapComponents";
 export { MapControls } from "./MapControls";
+export { MapSection } from "./MapSection";
+export { MapSidebar } from "./MapSidebar";
+export { PortControls } from "./PortControls";
+export { PortMarkerComponent } from "./PortMarker";
+export { PortSelectionComponent } from "./PortSelection";
+export { PreviewPortMarker } from "./PreviewPortMarker";
 export { ScaleIndicator } from "./ScaleIndicator";
+export { VertexMarker } from "./VertexMarker";
