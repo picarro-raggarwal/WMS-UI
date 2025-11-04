@@ -78,12 +78,12 @@ const SystemStatus = ({
               <img
                 src="/fenceline_icon_d.png"
                 alt="Device"
-                className="hidden dark:block absolute w-64 h-40"
+                className="hidden dark:block absolute w-64 h-36"
               />
               <img
                 src="/fenceline_icon.png"
                 alt="Device"
-                className="dark:hidden block absolute w-64 h-40"
+                className="dark:hidden block absolute w-64 h-36"
               />
             </div>
           </div>
