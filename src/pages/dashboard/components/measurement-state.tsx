@@ -272,12 +272,16 @@ const MeasurementState = () => {
                     )}
                   </span>
                 </span>
-                <span>
-                  Total:{" "}
-                  {formatTimeDisplay(
-                    getJobTime(currentState.current_job).total
-                  )}
-                </span>
+                {currentState.current_job.job_type === "manual" ? (
+                  ""
+                ) : (
+                  <span>
+                    Total:{" "}
+                    {formatTimeDisplay(
+                      getJobTime(currentState.current_job).total
+                    )}
+                  </span>
+                )}
                 <span className="bg-neutral-100 dark:bg-neutral-700 px-2 py-0.5 rounded">
                   Job #{currentState.current_job.job_id}
                 </span>
