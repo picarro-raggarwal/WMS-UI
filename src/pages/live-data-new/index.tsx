@@ -65,7 +65,7 @@ const Card = ({ port }: { port: MockData }) => {
     ? {
         warning: {
           value: 50, // Set your threshold value here
-          color: "#f59e0b", // amber color
+          color: "#fbbf24", // amber-400 color - brighter yellow for better visibility
           visible: true
         },
         alarm: {

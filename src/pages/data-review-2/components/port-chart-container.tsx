@@ -84,7 +84,7 @@ export const PortChartContainer = ({
     ? {
         warning: {
           value: formattedData.thresholds.warning,
-          color: "#f97316", // orange
+          color: "#fbbf24", // amber-400
           visible: showWarning
         },
         alarm: {

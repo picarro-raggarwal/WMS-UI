@@ -68,7 +68,7 @@ const StatsBar = ({
           </span>
         </Button>
 
-        <div className="flex  justify-between items-center gap-2 pl-6 border-neutral-200 dark:border-neutral-700 border-l border-dashed divide-x divide-dashed divide-neutral-200 dark:divide-neutral-700 tabular-nums dark:text-neutral-300 text-sm">
+        <div className="flex  justify-between px-2 items-center gap-2 border-neutral-200 space-x-4 dark:border-neutral-700 border-l border-dashed divide-x divide-dashed divide-neutral-200 dark:divide-neutral-700 tabular-nums dark:text-neutral-300 text-sm">
           {currentValue ? (
             <div className="flex flex-col items-start">
               <span className="text-neutral-600 dark:text-neutral-300 text-xs">
@@ -96,7 +96,7 @@ const StatsBar = ({
             </div>
           ) : null}
           {stdDev ? (
-            <div className="flex flex-col items-start pl-6">
+            <div className="flex flex-col items-start pl-2">
               <span className="text-neutral-600 dark:text-neutral-300 text-xs">
                 σ:
               </span>
@@ -111,7 +111,7 @@ const StatsBar = ({
             <>
               <div
                 onClick={onWarningToggle}
-                className="flex flex-col items-start pl-6 !h-full cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded px-2 py-1"
+                className="flex flex-col items-start !h-full cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded px-2 py-1"
               >
                 <span className="flex flex-col items-start">
                   <span className="flex items-center gap-2 text-neutral-600 dark:text-neutral-300 text-xs">
@@ -121,9 +121,9 @@ const StatsBar = ({
                       onCheckedChange={(checked) => {
                         if (typeof checked === "boolean") onWarningToggle();
                       }}
-                      className="data-[state=checked]:bg-orange-500 border-orange-500  data-[state=checked]:border-orange-500  rounded-sm scale-[.80] pt-0.5  data-[state=checked]:text-white"
+                      className="data-[state=checked]:bg-amber-400 border-amber-400  data-[state=checked]:border-amber-400  rounded-sm scale-[.80] pt-0.5  data-[state=checked]:text-white"
                     />
-                    <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
                     Warning:
                   </span>
                   <span className="font-bold tabular-nums text-black text-lg md:text-xl tracking-tight whitespace-nowrap">
@@ -136,7 +136,7 @@ const StatsBar = ({
               </div>
               <div
                 onClick={onAlarmToggle}
-                className="flex flex-col items-start pl-6 !h-full cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded px-2 py-1"
+                className="flex flex-col items-start !h-full cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded px-2 py-1"
               >
                 <span className="flex flex-col items-start">
                   <span className="flex items-center gap-2 text-neutral-600 dark:text-neutral-300 text-xs">

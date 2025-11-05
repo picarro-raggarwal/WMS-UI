@@ -289,7 +289,7 @@ export const findContainingBoundary = (
 export const getPortStatusColorClass = (status?: 0 | 1 | 2): string => {
   switch (status) {
     case 0:
-      return "bg-green-500"; // green for normal/operational
+      return "bg-primary-500"; // primary-500 for normal/operational
     case 1:
       return "bg-yellow-500"; // amber
     case 2:
@@ -307,7 +307,7 @@ export const getPortStatusColorClass = (status?: 0 | 1 | 2): string => {
 export const getPortStatusColor = (status?: 0 | 1 | 2): string => {
   switch (status) {
     case 0:
-      return "#22c55e"; // bg-green-500 (normal/operational)
+      return "#497C32"; // bg-primary-500 (normal/operational)
     case 1:
       return "#F59E0B"; // bg-yellow-500
     case 2:
@@ -409,7 +409,7 @@ export const getBoundaryTypeColor = (
 
   switch (type) {
     case 0:
-      return "#22c55e"; // bg-green-500 (normal/operational)
+      return "#75B54D"; // bg-primary-400
     case 1:
       return "#F59E0B"; // bg-yellow-500
     case 2:

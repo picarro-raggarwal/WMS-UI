@@ -367,6 +367,46 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
 
     const isDark = theme === "dark";
 
+    // Calculate min/max for Y-axis including thresholds when visible
+    const dataValues = data.map((item) => Number(item.value));
+    let minValue: number | undefined = undefined;
+    let maxValue: number | undefined = undefined;
+
+    if (dataValues.length > 0) {
+      minValue = Math.min(...dataValues);
+      maxValue = Math.max(...dataValues);
+    }
+
+    // If thresholds are visible, include them in the range with padding
+    if (thresholds) {
+      const thresholdValues: number[] = [];
+      if (thresholds.warning.visible) {
+        thresholdValues.push(thresholds.warning.value);
+      }
+      if (thresholds.alarm.visible) {
+        thresholdValues.push(thresholds.alarm.value);
+      }
+
+      if (thresholdValues.length > 0) {
+        const minThreshold = Math.min(...thresholdValues);
+        const maxThreshold = Math.max(...thresholdValues);
+
+        if (minValue !== undefined && maxValue !== undefined) {
+          minValue = Math.min(minValue, minThreshold);
+          maxValue = Math.max(maxValue, maxThreshold);
+        } else {
+          minValue = minThreshold;
+          maxValue = maxThreshold;
+        }
+
+        // Add padding (10% of range) to ensure thresholds are fully visible
+        const range = maxValue - minValue;
+        const padding = Math.max(range * 0.1, 1); // Ensure at least 1 unit of padding
+        minValue = Math.max(0, minValue - padding);
+        maxValue = maxValue + padding;
+      }
+    }
+
     const option: EChartsOption = {
       animationDuration: 300,
       animationEasing: "linear",
@@ -481,6 +521,18 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
       yAxis: {
         type: "value",
         splitNumber: 4,
+        min:
+          thresholds &&
+          (thresholds.warning.visible || thresholds.alarm.visible) &&
+          minValue !== undefined
+            ? minValue
+            : undefined,
+        max:
+          thresholds &&
+          (thresholds.warning.visible || thresholds.alarm.visible) &&
+          maxValue !== undefined
+            ? maxValue
+            : undefined,
         axisLine: {
           show: false
         },

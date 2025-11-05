@@ -13,6 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
+  loadPortConfig,
+  savePortConfig,
+  updatePortEnabledStatuses,
+  updatePortNames,
+  type PortConfig
+} from "@/types/common/port-config";
+import {
   generateAllPorts,
   getPortsByBank,
   mockStepNames
@@ -37,6 +44,11 @@ interface Port {
 }
 
 export const PortConfigurationTab = () => {
+  // Load port configuration from shared storage
+  const [portConfig, setPortConfig] = useState<PortConfig>(() =>
+    loadPortConfig()
+  );
+
   // Store the original mock data separately
   const [originalMockNames] = useState<Record<number, string>>(() => {
     const initialNames: Record<number, string> = {};
@@ -46,25 +58,32 @@ export const PortConfigurationTab = () => {
     return initialNames;
   });
 
-  const [portNames, setPortNames] = useState<Record<number, string>>(() => {
-    // Initialize with mock data
-    const initialNames: Record<number, string> = {};
-    for (let i = 1; i <= 64; i++) {
-      initialNames[i] = mockStepNames[i] || `Port ${i}`;
-    }
-    return initialNames;
-  });
+  // Use portConfig state instead of separate portNames/portEnabled
+  const portNames = portConfig.names;
+  const portEnabled = portConfig.enabled;
 
-  const [portEnabled, setPortEnabled] = useState<Record<number, boolean>>(
-    () => {
-      // Initialize all ports as enabled
-      const initialEnabled: Record<number, boolean> = {};
-      for (let i = 1; i <= 64; i++) {
-        initialEnabled[i] = true;
-      }
-      return initialEnabled;
-    }
-  );
+  // Update port config when needed
+  const setPortNames = (
+    names:
+      | Record<number, string>
+      | ((prev: Record<number, string>) => Record<number, string>)
+  ) => {
+    const newNames =
+      typeof names === "function" ? names(portConfig.names) : names;
+    const newConfig = { ...portConfig, names: newNames };
+    setPortConfig(newConfig);
+  };
+
+  const setPortEnabled = (
+    enabled:
+      | Record<number, boolean>
+      | ((prev: Record<number, boolean>) => Record<number, boolean>)
+  ) => {
+    const newEnabled =
+      typeof enabled === "function" ? enabled(portConfig.enabled) : enabled;
+    const newConfig = { ...portConfig, enabled: newEnabled };
+    setPortConfig(newConfig);
+  };
 
   const [editingPort, setEditingPort] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -78,25 +97,9 @@ export const PortConfigurationTab = () => {
     useState(false);
 
   // Track the last saved state to determine unsaved changes
-  const [lastSavedNames, setLastSavedNames] = useState<Record<number, string>>(
-    () => {
-      const initialNames: Record<number, string> = {};
-      for (let i = 1; i <= 64; i++) {
-        initialNames[i] = mockStepNames[i] || `Port ${i}`;
-      }
-      return initialNames;
-    }
+  const [lastSavedConfig, setLastSavedConfig] = useState<PortConfig>(() =>
+    loadPortConfig()
   );
-
-  const [lastSavedEnabled, setLastSavedEnabled] = useState<
-    Record<number, boolean>
-  >(() => {
-    const initialEnabled: Record<number, boolean> = {};
-    for (let i = 1; i <= 64; i++) {
-      initialEnabled[i] = true;
-    }
-    return initialEnabled;
-  });
 
   // Debug portEnabled state changes
   useEffect(() => {
@@ -109,18 +112,18 @@ export const PortConfigurationTab = () => {
   const hasUnsavedChanges = useMemo(() => {
     // Check if any port names have changed from last saved state
     for (let i = 1; i <= 64; i++) {
-      if (portNames[i] !== lastSavedNames[i]) {
+      if (portNames[i] !== lastSavedConfig.names[i]) {
         return true;
       }
     }
     // Check if any port enabled status has changed from last saved state
     for (let i = 1; i <= 64; i++) {
-      if (portEnabled[i] !== lastSavedEnabled[i]) {
+      if (portEnabled[i] !== lastSavedConfig.enabled[i]) {
         return true;
       }
     }
     return false;
-  }, [portNames, portEnabled, lastSavedNames, lastSavedEnabled]);
+  }, [portNames, portEnabled, lastSavedConfig]);
 
   const handleSaveAllChanges = async () => {
     if (!hasUnsavedChanges) return;
@@ -133,12 +136,18 @@ export const PortConfigurationTab = () => {
       // Simulate network call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // Save to shared storage
+      savePortConfig(portConfig);
+
+      // Notify other components
+      updatePortNames(portConfig.names);
+      updatePortEnabledStatuses(portConfig.enabled);
+
       // Success toast
       toast.success("Port configuration saved successfully!");
 
       // Update the last saved state to current values
-      setLastSavedNames({ ...portNames });
-      setLastSavedEnabled({ ...portEnabled });
+      setLastSavedConfig({ ...portConfig });
     } catch (error) {
       toast.error("Failed to save port configuration. Please try again.");
     } finally {
@@ -163,7 +172,8 @@ export const PortConfigurationTab = () => {
   const handleSaveWithConfirmation = () => {
     // Check if any port enabled status has changed
     const hasPortStatusChanges = Object.entries(portEnabled).some(
-      ([portNum, enabled]) => enabled !== lastSavedEnabled[parseInt(portNum)]
+      ([portNum, enabled]) =>
+        enabled !== lastSavedConfig.enabled[parseInt(portNum)]
     );
 
     if (hasPortStatusChanges) {
@@ -299,8 +309,7 @@ export const PortConfigurationTab = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setPortNames(lastSavedNames);
-                      setPortEnabled(lastSavedEnabled);
+                      setPortConfig({ ...lastSavedConfig });
                     }}
                     disabled={isSaving}
                   >
@@ -354,51 +363,7 @@ export const PortConfigurationTab = () => {
                             <div className="bg-neutral-400 dark:bg-neutral-500 rounded-full w-2 h-2"></div>
                             Port #{port.portNumber}
                           </div>
-                          {/* Show boundary mapping if available */}
-                          {portToBoundaryMap.has(port.portNumber) && (
-                            <div className="mt-2">
-                              {(() => {
-                                const boundary = portToBoundaryMap.get(
-                                  port.portNumber
-                                );
-                                if (!boundary) return null;
-                                const isSafe = boundary.type === "safe";
-                                const isWarning = boundary.type === "warning";
-                                return (
-                                  <div
-                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border ${
-                                      isSafe
-                                        ? "bg-primary-50 dark:bg-primary-950/20 border-primary-200 dark:border-primary-800"
-                                        : isWarning
-                                        ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
-                                        : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
-                                    }`}
-                                  >
-                                    <MapPin
-                                      className={`w-3 h-3 ${
-                                        isSafe
-                                          ? "text-primary-600 dark:text-primary-400"
-                                          : isWarning
-                                          ? "text-yellow-600 dark:text-yellow-400"
-                                          : "text-red-600 dark:text-red-400"
-                                      }`}
-                                    />
-                                    <span
-                                      className={`text-xs font-semibold tracking-wide ${
-                                        isSafe
-                                          ? "text-primary-700 dark:text-primary-400"
-                                          : isWarning
-                                          ? "text-yellow-700 dark:text-yellow-400"
-                                          : "text-red-700 dark:text-red-400"
-                                      }`}
-                                    >
-                                      {boundary.name}
-                                    </span>
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          )}
+
                           <div className="mt-1 text-neutral-500 dark:text-neutral-400 text-sm">
                             {editingPort === port.portNumber ? (
                               <div className="space-y-2">
@@ -481,6 +446,26 @@ export const PortConfigurationTab = () => {
                               </div>
                             )}
                           </div>
+
+                          {/* Show room name if available */}
+                          {portToBoundaryMap.has(port.portNumber) && (
+                            <div className="mt-1.5">
+                              {(() => {
+                                const boundary = portToBoundaryMap.get(
+                                  port.portNumber
+                                );
+                                if (!boundary) return null;
+                                return (
+                                  <div className="flex items-center gap-1.5">
+                                    <MapPin className="w-3 h-3  flex-shrink-0" />
+                                    <span className=" text-xs">
+                                      {boundary.name}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           {editingPort !== port.portNumber && (

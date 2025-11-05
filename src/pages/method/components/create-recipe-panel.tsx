@@ -4,6 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DurationInput } from "@/components/ui/duration-input";
 import { Input } from "@/components/ui/input";
+import {
+  mockBoundaries,
+  mockPortMarkers
+} from "@/pages/map-display/data/mock-data";
+import { loadPortConfig } from "@/types/common/port-config";
 import { generateAllPorts, getPortsByBank } from "@/types/common/ports";
 import {
   DndContext,
@@ -51,6 +56,7 @@ interface Port {
   name: string;
   type: "regular";
   bankNumber: number;
+  enabled: boolean;
 }
 
 interface CreateRecipePanelProps {
@@ -109,10 +115,52 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
     }
   }, [initialData]);
 
-  // Generate ports data using common configuration
-  const ports = useMemo(() => generateAllPorts(), []);
+  // Load port configuration from shared storage
+  const [portConfig, setPortConfig] = useState(() => loadPortConfig());
+
+  // Listen for port config updates from settings
+  useEffect(() => {
+    const handleConfigUpdate = (event: CustomEvent) => {
+      setPortConfig(event.detail);
+    };
+    window.addEventListener(
+      "port-config-updated",
+      handleConfigUpdate as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "port-config-updated",
+        handleConfigUpdate as EventListener
+      );
+    };
+  }, []);
+
+  // Generate ports data using common configuration with shared port names
+  const ports = useMemo(() => {
+    const basePorts = generateAllPorts();
+    return basePorts.map((port) => ({
+      ...port,
+      name: portConfig.names[port.portNumber] || port.name,
+      enabled: portConfig.enabled[port.portNumber] ?? port.enabled
+    }));
+  }, [portConfig]);
 
   const portsByBank = useMemo(() => getPortsByBank(ports), [ports]);
+
+  // Create a mapping from port number to room name
+  const portToRoomMap = useMemo(() => {
+    const boundaryMap = new Map(
+      mockBoundaries.map((boundary) => [boundary.id, boundary.name])
+    );
+    const portRoomMap = new Map<number, string>();
+    mockPortMarkers.forEach((marker) => {
+      const roomName = boundaryMap.get(marker.boundaryId);
+      if (roomName) {
+        portRoomMap.set(marker.port.portNumber, roomName);
+      }
+    });
+    return portRoomMap;
+  }, []);
 
   // Update total duration when recipe steps change
   useEffect(() => {
@@ -190,9 +238,10 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   }, []);
 
   const handleAddAllPortsToRecipe = useCallback(() => {
-    // Add all available ports to the recipe
+    // Add all enabled ports to the recipe
     const allPorts = Object.values(portsByBank).flat();
-    const newSteps: RecipeStep[] = allPorts.map((port) => ({
+    const enabledPorts = allPorts.filter((port) => port.enabled);
+    const newSteps: RecipeStep[] = enabledPorts.map((port) => ({
       id: crypto.randomUUID(),
       step_id: port.portNumber,
       type: port.type,
@@ -200,7 +249,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
       duration: 120 // Default 2 minutes (120 seconds)
     }));
     setRecipeSteps((prev) => [...prev, ...newSteps]);
-    toast.success(`Added ${allPorts.length} ports to recipe`);
+    toast.success(`Added ${enabledPorts.length} ports to recipe`);
   }, [portsByBank]);
 
   const handleClearAllSteps = useCallback(() => {
@@ -329,22 +378,64 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
 
   const PortItem = useCallback(
     ({ port }: { port: Port }) => {
+      const roomName = portToRoomMap.get(port.portNumber);
+      const isDisabled = !port.enabled;
       return (
-        <div className="p-3 border border-neutral-200 dark:border-neutral-700 rounded-lg transition-colors bg-neutral-50 dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-600">
+        <div
+          className={`p-3 border rounded-lg transition-all bg-neutral-50 dark:bg-neutral-900 ${
+            isDisabled
+              ? "border-neutral-300 dark:border-neutral-700 opacity-50 cursor-not-allowed"
+              : "border-neutral-200 dark:border-neutral-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-sm"
+          }`}
+        >
           <div className="flex justify-between items-center">
-            <div className="flex-1">
-              <div className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
-                Port #{port.portNumber}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+                  Port #{port.portNumber}
+                </div>
+                {isDisabled && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400">
+                    Disabled
+                  </span>
+                )}
               </div>
-              <div className="text-neutral-500 dark:text-neutral-400 text-xs">
+              <div className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5 truncate">
                 {port.name}
               </div>
+              {roomName && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <svg
+                    className="w-3 h-3 text-neutral-400 dark:text-neutral-500 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <span className="text-neutral-400 dark:text-neutral-500 text-xs">
+                    {roomName}
+                  </span>
+                </div>
+              )}
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleAddPortToRecipe(port)}
-              className="hover:bg-neutral-100 dark:hover:bg-neutral-800 p-1 rounded-full w-8 h-8"
+              disabled={isDisabled}
+              className="hover:bg-neutral-100 dark:hover:bg-neutral-800 p-1 rounded-full w-8 h-8 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -352,7 +443,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         </div>
       );
     },
-    [handleAddPortToRecipe]
+    [handleAddPortToRecipe, portToRoomMap]
   );
 
   const RecipeStepItem = useCallback(
@@ -416,13 +507,39 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
           <div className="flex justify-center items-center bg-neutral-200 dark:bg-neutral-700 rounded-full w-6 h-6 text-sm text-neutral-900 dark:text-neutral-100">
             {index + 1}
           </div>
-          <div className="flex-grow">
+          <div className="flex-grow min-w-0">
             <div className="font-medium text-neutral-900 dark:text-neutral-100">
               Port #{step.step_id}
             </div>
-            <div className="text-neutral-500 dark:text-neutral-400 text-sm">
+            <div className="text-neutral-500 dark:text-neutral-400 text-sm truncate">
               {step.name}
             </div>
+            {portToRoomMap.get(step.step_id) && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <svg
+                  className="w-3 h-3 text-neutral-400 dark:text-neutral-500 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                <span className="text-neutral-400 dark:text-neutral-500 text-xs truncate">
+                  {portToRoomMap.get(step.step_id)}
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <DurationInput
@@ -445,7 +562,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         </div>
       );
     },
-    []
+    [portToRoomMap]
   );
 
   return (
