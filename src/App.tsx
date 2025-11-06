@@ -1,13 +1,16 @@
 import { SystemStartupModal } from "@/components/SystemStartupModal";
 import { Toaster } from "@/components/ui/sonner";
+import { useAuth } from "@/context/AuthContext";
 import { useSocket } from "@/hooks/useSocket";
-import { useGetSystemInfoQuery } from "@/lib/services/systemInfo.slice";
 // import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router";
+import { useGetSystemInfoQuery } from "./lib/services/systemInfo.slice";
 import { useGetSystemComponentsAvailabilityQuery } from "./pages/dashboard/data/systemMetrics.slice";
 
 function App() {
+  const { isAuthenticated } = useAuth();
+
   // Initialize socket connections at app level for all routes
   const { fencelineJobState, connected } = useSocket();
   const [showStartupModal, setShowStartupModal] = useState(false);
@@ -25,8 +28,10 @@ function App() {
   //   pollingInterval: 30000
   // });
 
-  // Initialize system info at root level (fetch once on app load)
-  useGetSystemInfoQuery();
+  // Initialize system info at root level - only fetch when user is authenticated
+  useGetSystemInfoQuery(undefined, {
+    skip: !isAuthenticated || !localStorage.getItem("token")
+  });
 
   // Check for SystemStartup state from websocket
   useEffect(() => {
