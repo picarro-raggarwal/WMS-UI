@@ -1,52 +1,55 @@
-import { useState, useEffect } from "react";
+import { Spinner } from "@/components/spinner";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Spinner } from "@/components/spinner";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, History, FileDown, Cog, Settings, CloudDownload } from "lucide-react";
-import { format } from "date-fns";
 import {
-  Download,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  Database,
-  Activity,
-  Check,
-  FileText,
-} from "lucide-react";
-import { formatDate, formatDateTime } from "@/utils";
-import { DateRange } from "react-day-picker";
-import { useLocalStorage } from "@mantine/hooks";
-import { toast } from "sonner";
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatDate, formatDateTime } from "@/utils";
+import { useLocalStorage } from "@mantine/hooks";
+import { format } from "date-fns";
 import {
+  AlertCircle,
+  CalendarIcon,
+  Check,
+  Clock,
+  CloudDownload,
+  FileText,
+  History,
+  Settings
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { DateRange } from "react-day-picker";
+import { toast } from "sonner";
+import {
+  useDownloadExportFileQuery,
   useExportConcentrationMutation,
   useExportSubcomponentsMutation,
-  useGetExportStatusQuery,
   useGetAllExportsQuery,
-  useDownloadExportFileQuery,
   useGetAvailableSubcomponentsQuery,
-} from "../data/dataExport.api";
+  useGetExportStatusQuery
+} from "../../data-review-2/data/dataExport.api";
 
 interface ExportDialogProps {
   timeRange: string;
@@ -61,7 +64,7 @@ type TimeRangeType = "current" | "custom" | "all";
 function PendingTaskMonitor({
   taskId,
   onCompleted,
-  onProgressUpdate,
+  onProgressUpdate
 }: {
   taskId: string;
   onCompleted: (taskId: string, fileName?: string) => void;
@@ -73,7 +76,7 @@ function PendingTaskMonitor({
     { task_id: taskId },
     {
       pollingInterval: 5000,
-      skip: isTerminal,
+      skip: isTerminal
     }
   );
 
@@ -98,29 +101,40 @@ function PendingTaskMonitor({
   return null;
 }
 
-export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDialogProps) {
+export function ExportDialog({
+  timeRange,
+  dateRange,
+  selectedMetrics
+}: ExportDialogProps) {
   const [open, setOpen] = useState(false);
   const [dataType, setDataType] = useState<DataType>("concentration");
-  const [concentrationDataType, setConcentrationDataType] = useState<ConcentrationDataType>("avg");
+  const [concentrationDataType, setConcentrationDataType] =
+    useState<ConcentrationDataType>("avg");
   const [timeRangeType, setTimeRangeType] = useState<TimeRangeType>("current");
-  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
-  const [selectedSubcomponents, setSelectedSubcomponents] = useState<string[]>([]);
+  const [customDateRange, setCustomDateRange] = useState<
+    DateRange | undefined
+  >();
+  const [selectedSubcomponents, setSelectedSubcomponents] = useState<string[]>(
+    []
+  );
   const [activeTab, setActiveTab] = useState("export");
 
   const [pendingTasks, setPendingTasks] = useLocalStorage<string[]>({
     key: "export-pending-tasks",
-    defaultValue: [],
+    defaultValue: []
   });
 
   const { data: subcomponentsData } = useGetAvailableSubcomponentsQuery();
-  const availableSubcomponents = subcomponentsData?.available_subcomponents || [];
+  const availableSubcomponents =
+    subcomponentsData?.available_subcomponents || [];
 
   const [triggerConcentrationExport, { isLoading: isExportingConcentration }] =
     useExportConcentrationMutation();
   const [triggerSubcomponentsExport, { isLoading: isExportingSubcomponents }] =
     useExportSubcomponentsMutation();
 
-  const { data: allExports, refetch: refetchAllExports } = useGetAllExportsQuery();
+  const { data: allExports, refetch: refetchAllExports } =
+    useGetAllExportsQuery();
 
   useEffect(() => {
     if (allExports?.exports) {
@@ -135,7 +149,9 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
       if (activeTasks.length > 0) {
         setPendingTasks((prev) => {
           const existingTasks = new Set(prev);
-          const newTasks = activeTasks.filter((taskId) => !existingTasks.has(taskId));
+          const newTasks = activeTasks.filter(
+            (taskId) => !existingTasks.has(taskId)
+          );
 
           if (newTasks.length > 0) {
             return [...prev, ...newTasks];
@@ -149,7 +165,7 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
   const handleProgressUpdate = (taskId: string, progress: number) => {
     setTaskProgresses((prev) => ({
       ...prev,
-      [taskId]: progress,
+      [taskId]: progress
     }));
   };
 
@@ -165,11 +181,14 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
 
     if (fileName) {
       toast.success("Export completed!", {
-        description: `${fileName} is ready for download.`,
+        description: `${fileName} is ready for download.`
       });
     } else {
       toast.error("Export failed!", {
-        description: `Task ${taskId.slice(0, 8)}... has failed. Check the history for details.`,
+        description: `Task ${taskId.slice(
+          0,
+          8
+        )}... has failed. Check the history for details.`
       });
     }
   };
@@ -179,7 +198,11 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
       return {};
     }
 
-    if (timeRangeType === "custom" && customDateRange?.from && customDateRange?.to) {
+    if (
+      timeRangeType === "custom" &&
+      customDateRange?.from &&
+      customDateRange?.to
+    ) {
       if (customDateRange.from.getTime() === customDateRange.to.getTime()) {
         throw new Error("Please select a date range, not a single day");
       }
@@ -192,7 +215,7 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
 
       return {
         start_time: startDate.getTime(),
-        end_time: endDate.getTime(),
+        end_time: endDate.getTime()
       };
     }
 
@@ -200,7 +223,7 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
       if (timeRange === "custom" && dateRange?.from && dateRange?.to) {
         return {
           start_time: dateRange.from.getTime(),
-          end_time: dateRange.to.getTime(),
+          end_time: dateRange.to.getTime()
         };
       }
 
@@ -209,12 +232,12 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
         "1h": now - 60 * 60 * 1000,
         "24h": now - 24 * 60 * 60 * 1000,
         "7d": now - 7 * 24 * 60 * 60 * 1000,
-        "30d": now - 30 * 24 * 60 * 60 * 1000,
+        "30d": now - 30 * 24 * 60 * 60 * 1000
       };
 
       return {
         start_time: ranges[timeRange as keyof typeof ranges] || ranges["24h"],
-        end_time: now,
+        end_time: now
       };
     }
 
@@ -223,7 +246,10 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
 
   // Check if export should be disabled
   const isExportDisabled = () => {
-    if (timeRangeType === "custom" && (!customDateRange?.from || !customDateRange?.to)) {
+    if (
+      timeRangeType === "custom" &&
+      (!customDateRange?.from || !customDateRange?.to)
+    ) {
       return true;
     }
     if (dataType === "telemetry" && selectedSubcomponents.length === 0) {
@@ -237,13 +263,14 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
       if (timeRangeType === "custom") {
         if (!customDateRange?.from || !customDateRange?.to) {
           toast.error("Validation Error", {
-            description: "Please select both start and end dates for custom range.",
+            description:
+              "Please select both start and end dates for custom range."
           });
           return;
         }
         if (customDateRange.from.getTime() === customDateRange.to.getTime()) {
           toast.error("Validation Error", {
-            description: "Please select a date range, not a single day.",
+            description: "Please select a date range, not a single day."
           });
           return;
         }
@@ -255,21 +282,22 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
       if (dataType === "concentration") {
         const exportParams = {
           data_type: concentrationDataType,
-          ...timeRangeParams,
+          ...timeRangeParams
         };
 
         result = await triggerConcentrationExport(exportParams).unwrap();
       } else {
         if (selectedSubcomponents.length === 0) {
           toast.error("Validation Error", {
-            description: "Please select at least one subcomponent for telemetry export.",
+            description:
+              "Please select at least one subcomponent for telemetry export."
           });
           return;
         }
 
         const exportParams = {
           subcomponents: selectedSubcomponents,
-          ...timeRangeParams,
+          ...timeRangeParams
         };
 
         result = await triggerSubcomponentsExport(exportParams).unwrap();
@@ -280,19 +308,21 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
         refetchAllExports();
         setActiveTab("history");
         toast.success("Export started!", {
-          description: `Task ID: ${result.task_id}. You can monitor progress in the History tab.`,
+          description: `Task ID: ${result.task_id}. You can monitor progress in the History tab.`
         });
       } else {
         toast.error("Export Error", {
           description:
-            "Export request completed but no task ID was returned. Please check the Export History.",
+            "Export request completed but no task ID was returned. Please check the Export History."
         });
       }
     } catch (error: unknown) {
       console.error("Export failed:", error);
       if (error && typeof error === "object" && "data" in error) {
         const rtqError = error as {
-          data?: { error?: { description?: string; name?: string; message?: string } };
+          data?: {
+            error?: { description?: string; name?: string; message?: string };
+          };
           status?: number;
           error?: string;
         };
@@ -300,32 +330,35 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
           const errorData = rtqError.data;
           if (errorData.error.description === "Invalid subcomponents") {
             toast.error("Invalid Subcomponents", {
-              description: `${errorData.error.message} Please select only valid subcomponents and try again.`,
+              description: `${errorData.error.message} Please select only valid subcomponents and try again.`
             });
           } else {
             toast.error("Export Failed", {
-              description: `${errorData.error.description || errorData.error.name}: ${
-                errorData.error.message || "Please try again."
-              }`,
+              description: `${
+                errorData.error.description || errorData.error.name
+              }: ${errorData.error.message || "Please try again."}`
             });
           }
         } else if (rtqError.status) {
           toast.error("Export Failed", {
             description: `${rtqError.status} ${
               rtqError.error || "Server Error"
-            }. Please check your parameters and try again.`,
+            }. Please check your parameters and try again.`
           });
         }
-      } else if (error instanceof TypeError && error.message.includes("fetch")) {
+      } else if (
+        error instanceof TypeError &&
+        error.message.includes("fetch")
+      ) {
         toast.error("Network Error", {
           description:
-            "Could not connect to the export service. Please check your internet connection and try again.",
+            "Could not connect to the export service. Please check your internet connection and try again."
         });
       } else {
         toast.error("Unexpected Error", {
           description: `${
             error instanceof Error ? error.message : "An unknown error occurred"
-          }. Please try again or contact support if the problem persists.`,
+          }. Please try again or contact support if the problem persists.`
         });
       }
     }
@@ -339,7 +372,9 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
 
   const isExporting = isExportingConcentration || isExportingSubcomponents;
 
-  const [taskProgresses, setTaskProgresses] = useState<Record<string, number>>({});
+  const [taskProgresses, setTaskProgresses] = useState<Record<string, number>>(
+    {}
+  );
 
   const getPendingTasksProgress = () => {
     if (pendingTasks.length === 0) return null;
@@ -350,7 +385,9 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
 
     if (progresses.length === 0) return 0;
 
-    const avgProgress = progresses.reduce((sum, progress) => sum + progress, 0) / progresses.length;
+    const avgProgress =
+      progresses.reduce((sum, progress) => sum + progress, 0) /
+      progresses.length;
     return Math.round(avgProgress);
   };
 
@@ -365,7 +402,9 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
         <Button variant="outline" size="sm">
           <CloudDownload className="mr-1 w-3 h-3" />
           Data Export {pendingTasks.length > 0 && `(${pendingTasks.length})`}
-          {pendingProgress !== null && pendingProgress > 0 && ` - ${pendingProgress}%`}
+          {pendingProgress !== null &&
+            pendingProgress > 0 &&
+            ` - ${pendingProgress}%`}
         </Button>
       </DialogTrigger>
       <DialogContent className="pb-0 max-w-4xl max-h-[95vh] overflow-y-auto">
@@ -388,7 +427,8 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="flex items-start gap-6 h-[600px]">
+          className="flex items-start gap-6 h-[600px]"
+        >
           <TabsList className="flex flex-col items-stretch bg-white dark:!bg-neutral-800 p-0 w-[200px] h-auto">
             <TabsTrigger value="export" className={tabClasnames}>
               <Settings size={16} />
@@ -412,13 +452,17 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="export" className="flex-1 mt-0 pr-2 pb-8 overflow-y-auto">
+          <TabsContent
+            value="export"
+            className="flex-1 mt-0 pr-2 pb-8 overflow-y-auto"
+          >
             <div className="space-y-4">
               <div className="space-y-3">
                 <Label className="font-medium text-sm">Data Type</Label>
                 <RadioGroup
                   value={dataType}
-                  onValueChange={(value) => setDataType(value as DataType)}>
+                  onValueChange={(value) => setDataType(value as DataType)}
+                >
                   <div className="gap-3 grid grid-cols-2">
                     <Label htmlFor="concentration">
                       <div
@@ -426,11 +470,17 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                           dataType === "concentration"
                             ? "border-primary-500   dark:bg-primary-950"
                             : "border-gray-200 hover:border-gray-300 bg-white dark:bg-neutral-800"
-                        }`}>
+                        }`}
+                      >
                         <div className="flex items-center space-x-3">
-                          <RadioGroupItem value="concentration" id="concentration" />
+                          <RadioGroupItem
+                            value="concentration"
+                            id="concentration"
+                          />
                           <div>
-                            <div className="font-medium text-sm">Measurement Data</div>
+                            <div className="font-medium text-sm">
+                              Measurement Data
+                            </div>
                             <div className="mt-1 text-muted-foreground text-xs">
                               Gas measurement data
                             </div>
@@ -445,11 +495,14 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                           dataType === "telemetry"
                             ? "border-primary-500   dark:bg-primary-950"
                             : "border-gray-200 hover:border-gray-300 bg-white dark:bg-neutral-800"
-                        }`}>
+                        }`}
+                      >
                         <div className="flex items-center space-x-3">
                           <RadioGroupItem value="telemetry" id="telemetry" />
                           <div>
-                            <div className="font-medium text-sm">Subcomponent Data</div>
+                            <div className="font-medium text-sm">
+                              Subcomponent Data
+                            </div>
                             <div className="mt-1 text-muted-foreground text-xs">
                               System subcomponent readings
                             </div>
@@ -468,7 +521,8 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                     value={concentrationDataType}
                     onValueChange={(value) =>
                       setConcentrationDataType(value as ConcentrationDataType)
-                    }>
+                    }
+                  >
                     <div className="gap-3 grid grid-cols-2">
                       <Label htmlFor="avg">
                         <div
@@ -476,11 +530,14 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                             concentrationDataType === "avg"
                               ? "border-primary-500 dark:bg-primary-950"
                               : "border-gray-200 hover:border-gray-300"
-                          }`}>
+                          }`}
+                        >
                           <div className="flex items-center space-x-3">
                             <RadioGroupItem value="avg" id="avg" />
                             <div>
-                              <div className="font-medium text-sm">Average Data</div>
+                              <div className="font-medium text-sm">
+                                Average Data
+                              </div>
                               <div className="text-muted-foreground text-xs">
                                 Averaged measurements
                               </div>
@@ -495,12 +552,20 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                             concentrationDataType === "time_series"
                               ? "border-primary-500 dark:bg-primary-950"
                               : "border-gray-200 hover:border-gray-300"
-                          }`}>
+                          }`}
+                        >
                           <div className="flex items-center space-x-3">
-                            <RadioGroupItem value="time_series" id="time_series" />
+                            <RadioGroupItem
+                              value="time_series"
+                              id="time_series"
+                            />
                             <div>
-                              <div className="font-medium text-sm">Time Series Data</div>
-                              <div className="text-muted-foreground text-xs">Raw time series</div>
+                              <div className="font-medium text-sm">
+                                Time Series Data
+                              </div>
+                              <div className="text-muted-foreground text-xs">
+                                Raw time series
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -534,15 +599,19 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                                 !selectedSubcomponents.includes(component)
                               )
                             }
-                            className="flex items-center space-x-3 hover:bg-neutral-50 dark:hover:bg-neutral-700 p-2 border rounded-lg transition-colors cursor-pointer">
+                            className="flex items-center space-x-3 hover:bg-neutral-50 dark:hover:bg-neutral-700 p-2 border rounded-lg transition-colors cursor-pointer"
+                          >
                             <Checkbox
                               id={component}
-                              checked={selectedSubcomponents.includes(component)}
+                              checked={selectedSubcomponents.includes(
+                                component
+                              )}
                               className="pointer-events-none"
                             />
                             <Label
                               htmlFor={component}
-                              className="flex-1 font-normal text-sm cursor-pointer pointer-events-none">
+                              className="flex-1 font-normal text-sm cursor-pointer pointer-events-none"
+                            >
                               {component}
                             </Label>
                           </div>
@@ -557,7 +626,10 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                 <Label className="font-medium text-sm">Time Range</Label>
                 <RadioGroup
                   value={timeRangeType}
-                  onValueChange={(value) => setTimeRangeType(value as TimeRangeType)}>
+                  onValueChange={(value) =>
+                    setTimeRangeType(value as TimeRangeType)
+                  }
+                >
                   <div className="space-y-2">
                     <Label htmlFor="current">
                       <div
@@ -565,15 +637,24 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                           timeRangeType === "current"
                             ? "border-primary-500 dark:bg-primary-950"
                             : "border-gray-200 hover:border-gray-300"
-                        }`}>
+                        }`}
+                      >
                         <div className="flex items-center space-x-3">
                           <RadioGroupItem value="current" id="current" />
                           <div>
-                            <div className="font-medium text-sm">Current View</div>
+                            <div className="font-medium text-sm">
+                              Current View
+                            </div>
                             <div className="text-muted-foreground text-xs">
                               {timeRange === "custom"
-                                ? `${dateRange?.from ? formatDate(dateRange.from) : ""} - ${
-                                    dateRange?.to ? formatDate(dateRange.to) : ""
+                                ? `${
+                                    dateRange?.from
+                                      ? formatDate(dateRange.from)
+                                      : ""
+                                  } - ${
+                                    dateRange?.to
+                                      ? formatDate(dateRange.to)
+                                      : ""
                                   }`
                                 : timeRange}
                             </div>
@@ -588,11 +669,14 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                           timeRangeType === "custom"
                             ? "border-primary-500 dark:bg-primary-950"
                             : "border-gray-200 hover:border-gray-300"
-                        }`}>
+                        }`}
+                      >
                         <div className="flex items-center space-x-3">
                           <RadioGroupItem value="custom" id="custom" />
                           <div>
-                            <div className="font-medium text-sm">Custom Date Range</div>
+                            <div className="font-medium text-sm">
+                              Custom Date Range
+                            </div>
                             <div className="text-muted-foreground text-xs">
                               Select specific start and end dates
                             </div>
@@ -607,11 +691,14 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                           timeRangeType === "all"
                             ? "border-primary-500 dark:bg-primary-950"
                             : "border-gray-200 hover:border-gray-300"
-                        }`}>
+                        }`}
+                      >
                         <div className="flex items-center space-x-3">
                           <RadioGroupItem value="all" id="all" />
                           <div>
-                            <div className="font-medium text-sm">All Available Data</div>
+                            <div className="font-medium text-sm">
+                              All Available Data
+                            </div>
                             <div className="text-muted-foreground text-xs">
                               Export complete historical dataset
                             </div>
@@ -622,29 +709,43 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
 
                     {timeRangeType === "custom" && (
                       <div className="bg-gray-50 dark:bg-neutral-800 mt-4 p-4 border rounded-lg">
-                        <Label className="block mb-3 font-medium text-sm">Select Date Range</Label>
+                        <Label className="block mb-3 font-medium text-sm">
+                          Select Date Range
+                        </Label>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
-                              className="justify-start w-full font-normal text-left">
+                              className="justify-start w-full font-normal text-left"
+                            >
                               <CalendarIcon className="mr-2 w-4 h-4" />
                               {customDateRange?.from ? (
                                 customDateRange.to ? (
                                   customDateRange.from.getTime() ===
                                   customDateRange.to.getTime() ? (
                                     <span className="text-red-500">
-                                      {format(customDateRange.from, "LLL dd, y")} - Please select a
-                                      range
+                                      {format(
+                                        customDateRange.from,
+                                        "LLL dd, y"
+                                      )}{" "}
+                                      - Please select a range
                                     </span>
                                   ) : (
                                     <>
-                                      {format(customDateRange.from, "LLL dd, y")} 00:00 -{" "}
-                                      {format(customDateRange.to, "LLL dd, y")} 23:59
+                                      {format(
+                                        customDateRange.from,
+                                        "LLL dd, y"
+                                      )}{" "}
+                                      00:00 -{" "}
+                                      {format(customDateRange.to, "LLL dd, y")}{" "}
+                                      23:59
                                     </>
                                   )
                                 ) : (
-                                  <>{format(customDateRange.from, "LLL dd, y")} - Select end date</>
+                                  <>
+                                    {format(customDateRange.from, "LLL dd, y")}{" "}
+                                    - Select end date
+                                  </>
                                 )
                               ) : (
                                 <span>Pick a date range</span>
@@ -674,14 +775,16 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
                   type="button"
                   variant="outline"
                   className="flex-1"
-                  onClick={() => setOpen(false)}>
+                  onClick={() => setOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleExport}
                   disabled={isExporting || isExportDisabled()}
                   variant="primary"
-                  className="flex-1">
+                  className="flex-1"
+                >
                   {isExporting ? (
                     <>
                       <Spinner size="4" className="mr-2" />
@@ -695,8 +798,14 @@ export function ExportDialog({ timeRange, dateRange, selectedMetrics }: ExportDi
             </div>
           </TabsContent>
 
-          <TabsContent value="history" className="flex-1 mt-0 overflow-y-auto 2">
-            <ExportHistory allExports={allExports} pendingTasks={pendingTasks} />
+          <TabsContent
+            value="history"
+            className="flex-1 mt-0 overflow-y-auto 2"
+          >
+            <ExportHistory
+              allExports={allExports}
+              pendingTasks={pendingTasks}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
@@ -736,7 +845,8 @@ function ExportHistory({ allExports, pendingTasks }: ExportHistoryProps) {
   }
 
   const exportEntries = Object.entries(allExports.exports).sort(
-    ([, a], [, b]) => new Date(b.created).getTime() - new Date(a.created).getTime()
+    ([, a], [, b]) =>
+      new Date(b.created).getTime() - new Date(a.created).getTime()
   );
 
   const activeExports = exportEntries.filter(
@@ -767,7 +877,12 @@ function ExportHistory({ allExports, pendingTasks }: ExportHistoryProps) {
           </TableHeader>
           <TableBody>
             {activeExports.map(([taskId, exportInfo], index) => (
-              <ExportTableRow key={taskId} taskId={taskId} exportInfo={exportInfo} index={index} />
+              <ExportTableRow
+                key={taskId}
+                taskId={taskId}
+                exportInfo={exportInfo}
+                index={index}
+              />
             ))}
 
             {activeExports.length > 0 && otherExports.length > 0 && (
@@ -775,7 +890,9 @@ function ExportHistory({ allExports, pendingTasks }: ExportHistoryProps) {
                 <TableCell colSpan={2} className="px-4 py-4">
                   <div className="flex items-center gap-4">
                     <hr className="flex-1 border-neutral-300 dark:border-neutral-600" />
-                    <span className="font-medium text-neutral-500 text-sm">Export History</span>
+                    <span className="font-medium text-neutral-500 text-sm">
+                      Export History
+                    </span>
                     <hr className="flex-1 border-neutral-300 dark:border-neutral-600" />
                   </div>
                 </TableCell>
@@ -787,7 +904,11 @@ function ExportHistory({ allExports, pendingTasks }: ExportHistoryProps) {
                 key={taskId}
                 taskId={taskId}
                 exportInfo={exportInfo}
-                index={index + activeExports.length + (activeExports.length > 0 ? 1 : 0)}
+                index={
+                  index +
+                  activeExports.length +
+                  (activeExports.length > 0 ? 1 : 0)
+                }
               />
             ))}
           </TableBody>
@@ -820,7 +941,7 @@ function ExportTableRow({ taskId, exportInfo, index }: ExportTableRowProps) {
     { task_id: taskId },
     {
       skip: !shouldPoll,
-      pollingInterval: shouldPoll ? 5000 : undefined,
+      pollingInterval: shouldPoll ? 5000 : undefined
     }
   );
 
@@ -871,7 +992,8 @@ function ExportTableRow({ taskId, exportInfo, index }: ExportTableRowProps) {
   };
 
   const isInProgress =
-    currentStatus.toLowerCase() === "in_progress" || currentStatus.toLowerCase() === "pending";
+    currentStatus.toLowerCase() === "in_progress" ||
+    currentStatus.toLowerCase() === "pending";
 
   return (
     <TableRow className="hover:bg-gray-50">
@@ -883,7 +1005,8 @@ function ExportTableRow({ taskId, exportInfo, index }: ExportTableRowProps) {
               <div className="flex justify-between items-center">
                 <span
                   className="block font-medium text-gray-900 text-sm cursor-help"
-                  title={`Task ID: ${taskId}`}>
+                  title={`Task ID: ${taskId}`}
+                >
                   {currentFileName || `Export ${taskId.slice(0, 8)}...`}
                 </span>
               </div>
@@ -895,7 +1018,9 @@ function ExportTableRow({ taskId, exportInfo, index }: ExportTableRowProps) {
                   ? "In Progress"
                   : currentStatus.toLowerCase()}
               </span>
-              {currentError && <span className="text-red-600 text-xs">{currentError}</span>}
+              {currentError && (
+                <span className="text-red-600 text-xs">{currentError}</span>
+              )}
             </span>
           </div>
         </div>
@@ -909,7 +1034,8 @@ function ExportTableRow({ taskId, exportInfo, index }: ExportTableRowProps) {
             onClick={handleDownload}
             loading={downloadTriggered}
             disabled={downloadTriggered}
-            className="h-8">
+            className="h-8"
+          >
             Download
           </Button>
         ) : isInProgress ? (
@@ -917,7 +1043,9 @@ function ExportTableRow({ taskId, exportInfo, index }: ExportTableRowProps) {
             <div className="bg-gray-200 rounded-full w-16 h-2">
               <div
                 className={`rounded-full h-2 transition-all duration-300 ${
-                  currentStatus.toLowerCase() === "pending" ? "bg-primary-500" : "bg-primary-500"
+                  currentStatus.toLowerCase() === "pending"
+                    ? "bg-primary-500"
+                    : "bg-primary-500"
                 }`}
                 style={{ width: `${currentProgress}%` }}
               />

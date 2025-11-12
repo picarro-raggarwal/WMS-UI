@@ -79,6 +79,14 @@ export const mockStepNames: Record<number, string> = {
 };
 
 /**
+ * Get initial port data - single source of truth for all ports
+ * This is used across Live-data, Port configuration, and Create recipe
+ */
+export const getInitialPorts = (): Port[] => {
+  return generateAllPorts(true);
+};
+
+/**
  * Generate all 64 ports with consistent structure
  * @param enabledByDefault - Whether ports should be enabled by default
  * @returns Array of 64 ports organized by banks

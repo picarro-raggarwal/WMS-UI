@@ -4,8 +4,9 @@ import { alertsApi } from "@/pages/alerts/data/alerts.slice";
 import { gasTanksApi } from "@/pages/dashboard/data/gasTanks.slice";
 import { systemMetricsApi } from "@/pages/dashboard/data/systemMetrics.slice";
 import { systemStatusApi } from "@/pages/dashboard/data/systemStatus.slice";
-import { dataExportApi } from "@/pages/data-review/data/dataExport.api";
-import { dataReviewApi } from "@/pages/data-review/data/dataReview.api";
+import { dataExportApi } from "@/pages/data-review-2/data/dataExport.api";
+
+import { dataReviewApi } from "@/pages/data-review-2/data/dataReview.api";
 import { metricsApi } from "@/pages/live-data/data/metrics.slice";
 import { fencelineJobApi } from "@/pages/method/data/fencelineJob.slice";
 import { fencelineSchedulerApi } from "@/pages/method/data/fencelineScheduler.slice";

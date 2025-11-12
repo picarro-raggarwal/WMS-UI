@@ -1,3 +1,5 @@
+import { mockStepNames } from "@/types/common/ports";
+
 export type MockData = {
   id: string;
   label: string;
@@ -5,7 +7,8 @@ export type MockData = {
   conc: string | null;
   updatedAt: string; // ISO timestamp
   isSampling: boolean;
-  isInActive: boolean;
+  isActive: boolean;
+  isDisabled: boolean;
   status: 0 | 1 | 2 | 3;
 };
 
@@ -58,18 +61,37 @@ export function generateMockData(count: number): MockData[] {
     pumpIndex = activePorts[Math.floor(Math.random() * activePorts.length)];
   } while (pumpIndex === samplingIndex); // Ensure different index
 
-  // Generate final data
+  // Generate final data using centralized port names
+  // Generate all ports from 1 to 64 consistently (no randomization of which ports exist)
   for (let i = 0; i < count; i++) {
-    const portNum = (i % 64) + 1;
+    const portNum = i + 1; // Ports 1 to 64 (not using modulo)
     const conc = getRandomConc();
+
+    // Use port number as seed for deterministic isDisabled/isActive
+    // This ensures the same port always has the same state
+    const seed = portNum;
+    const deterministicRand = ((seed * 9301 + 49297) % 233280) / 233280;
+
+    // Deterministic: 10% chance of being disabled (ports 6, 13, 20, etc.)
+    const isDisabled = deterministicRand < 0.1;
+    // Deterministic: 15% chance of being inactive (if not disabled)
+    const isActive =
+      !isDisabled && deterministicRand >= 0.1 && deterministicRand < 0.25
+        ? false
+        : true;
+
+    // Use centralized port name from mockStepNames
+    const portLabel = mockStepNames[portNum] || `Port ${portNum}`;
+
     data.push({
-      id: `id-${i + 1}`,
-      label: `Sensor ${i + 1}`,
+      id: `port-${portNum}`,
+      label: portLabel,
       portNum,
       conc,
       updatedAt: getRandomDate(),
-      isSampling: i === samplingIndex,
-      isInActive: false,
+      isSampling: i === samplingIndex && isActive && !isDisabled,
+      isActive,
+      isDisabled,
       status: getStatusFromConc(conc)
     });
   }
