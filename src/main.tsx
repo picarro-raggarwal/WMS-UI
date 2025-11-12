@@ -24,7 +24,7 @@ import AuthLayout from "./layouts/AuthLayout";
 import { store } from "./lib/store";
 import AlertsPage from "./pages/alerts";
 import DashboardPage from "./pages/dashboard";
-import DataReview2Page from "./pages/data-review-2";
+import DataReview2Page from "./pages/data-review";
 
 import HistoryPage from "./pages/history";
 import LiveDataPage from "./pages/live-data";
@@ -63,7 +63,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="map-display" element={<MapDisplay />} />
                 <Route path="live-data" element={<LiveDataPage />} />
                 {/* <Route path="data-review" element={<DataReviewPage />} /> */}
-                <Route path="data-review-2" element={<DataReview2Page />} />
+                <Route path="data-review" element={<DataReview2Page />} />
                 <Route path="method" element={<MethodPage />} />
                 <Route path="qa-qc" element={<QAQCPage />} />
                 <Route path="settings" element={<SettingsPage />} />

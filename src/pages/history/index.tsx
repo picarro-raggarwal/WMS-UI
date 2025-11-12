@@ -1,8 +1,6 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
-import RoomHistory from "./RoomHistory";
-import TagHistory from "./TagHistory";
 
 const HistoryPage = () => {
   const [tab, setTab] = useState("tag");
@@ -15,12 +13,8 @@ const HistoryPage = () => {
             <TabsTrigger value="tag">Tag History</TabsTrigger>
             <TabsTrigger value="room">Room History</TabsTrigger>
           </TabsList>
-          <TabsContent value="tag">
-            <TagHistory />
-          </TabsContent>
-          <TabsContent value="room">
-            <RoomHistory />
-          </TabsContent>
+          <TabsContent value="tag">{/* <TagHistory /> */}</TabsContent>
+          <TabsContent value="room">{/* <RoomHistory /> */}</TabsContent>
         </Tabs>
       </main>
     </div>

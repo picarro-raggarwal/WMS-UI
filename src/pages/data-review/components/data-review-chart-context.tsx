@@ -1,36 +1,36 @@
-import { createContext, useContext, ReactNode, useState } from 'react';
-import type { ECharts } from 'echarts';
+import type { ECharts } from "echarts";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 interface ChartContextType {
-    chartInstance: echarts.ECharts | null;
-    setChartInstance: (chart: ECharts | null) => void;
+  chartInstance: echarts.ECharts | null;
+  setChartInstance: (chart: ECharts | null) => void;
 }
 
 const ChartContext = createContext<ChartContextType | undefined>(undefined);
 
 interface ChartProviderProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
 export const ChartProvider = ({ children }: ChartProviderProps) => {
-    const [chartInstance, setChartInstance] = useState<ECharts | null>(null);
+  const [chartInstance, setChartInstance] = useState<ECharts | null>(null);
 
-    return (
-        <ChartContext.Provider
-            value={{
-                chartInstance,
-                setChartInstance,
-            }}
-        >
-            {children}
-        </ChartContext.Provider>
-    );
+  return (
+    <ChartContext.Provider
+      value={{
+        chartInstance,
+        setChartInstance
+      }}
+    >
+      {children}
+    </ChartContext.Provider>
+  );
 };
 
 export const useChartContext = () => {
-    const context = useContext(ChartContext);
-    if (context === undefined) {
-        throw new Error('useChartContext must be used within a ChartProvider');
-    }
-    return context;
+  const context = useContext(ChartContext);
+  if (context === undefined) {
+    throw new Error("useChartContext must be used within a ChartProvider");
+  }
+  return context;
 };

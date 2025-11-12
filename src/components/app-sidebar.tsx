@@ -141,7 +141,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       // },
       {
         title: "Data Review",
-        url: "/dashboard/data-review-2",
+        url: "/dashboard/data-review",
         icon: ChartScatter
       },
       {

@@ -1,4 +1,3 @@
-import { ChartData } from "@/types";
 import {
   formatDateTime,
   formatDate as formatDateUtil,
@@ -9,7 +8,7 @@ import * as echarts from "echarts";
 import type { LineSeriesOption } from "echarts/charts";
 import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
-import { ThresholdsConfig } from "../types";
+import { ChartData, ThresholdsConfig } from "../types";
 import { useChartContext } from "./data-review-chart-context";
 
 type DataReviewLineChartProps = {
@@ -26,6 +25,7 @@ type DataReviewLineChartProps = {
   zoomStart?: number;
   zoomEnd?: number;
   onInstance?: (instance: echarts.ECharts) => void;
+  rollingAverage?: "15min" | "1hour" | "24hour";
 };
 
 const formatDate = (
@@ -33,7 +33,19 @@ const formatDate = (
   timeRange: string,
   isTooltip = false
 ) => {
-  const date = new Date(Number(timestamp));
+  const numTimestamp = Number(timestamp);
+
+  // Check if timestamp is valid
+  if (isNaN(numTimestamp) || numTimestamp <= 0) {
+    return "Invalid Date";
+  }
+
+  const date = new Date(numTimestamp);
+
+  // Check if date is valid
+  if (isNaN(date.getTime())) {
+    return "Invalid Date";
+  }
 
   if (isTooltip) {
     // Tooltip always shows full date and time
@@ -80,10 +92,11 @@ const getIconForValue = (
   return '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd"/></svg>';
 };
 
-const formatTime = (timestamp: number): string => {
-  const date = new Date(timestamp);
-  return formatTimeUtil(date);
-};
+// Rolling average functionality can be implemented here in the future
+// const applyRollingAverage = (data: ChartData[], rollingAverage: string) => {
+//   // Implementation for rolling average calculation
+//   return data;
+// };
 
 const createLineSeries = (
   data: ChartData[],
@@ -155,21 +168,25 @@ const createLineSeries = (
     {
       name: category,
       type: "line" as const,
-      data: data.map((item, index) => ({
-        value: Number(item.value),
-        symbol: index === data.length - 1 ? "circle" : "none",
-        symbolSize: index === data.length - 1 ? 8 : 0,
-        itemStyle:
-          index === data.length - 1
-            ? {
-                color: getColorForValue(Number(item.value), thresholds),
-                borderColor: getColorForValue(Number(item.value), thresholds),
-                borderWidth: 2,
-                shadowBlur: 4,
-                shadowColor: getColorForValue(Number(item.value), thresholds)
-              }
-            : undefined
-      })),
+      data: data.map((item, index) => {
+        const categoryKey = categories[0];
+        const value = Number(item[categoryKey]) || 0;
+        return {
+          value: value,
+          symbol: index === data.length - 1 ? "circle" : "none",
+          symbolSize: index === data.length - 1 ? 8 : 0,
+          itemStyle:
+            index === data.length - 1
+              ? {
+                  color: getColorForValue(value, thresholds),
+                  borderColor: getColorForValue(value, thresholds),
+                  borderWidth: 2,
+                  shadowBlur: 4,
+                  shadowColor: getColorForValue(value, thresholds)
+                }
+              : undefined
+        };
+      }),
       showSymbol: true,
       smooth: 0,
       sampling: "average",
@@ -187,43 +204,6 @@ const createLineSeries = (
       markLine: markLine
     } satisfies LineSeriesOption
   ];
-
-  // ...(thresholds?.warning.visible
-  //   ? [
-  //     {
-  //       name: "Warning Level",
-  //       type: "line",
-  //       data: new Array(data.length).fill(thresholds.warning.value),
-  //       lineStyle: {
-  //         type: "dashed",
-  //         color: thresholds.warning.color,
-  //         width: 1,
-  //       },
-  //       symbol: "none",
-  //       emphasis: {
-  //         disabled: true,
-  //       },
-  //     } satisfies LineSeriesOption,
-  //   ]
-  //   : []),
-  // ...(thresholds?.alarm.visible
-  //   ? [
-  //     {
-  //       name: "Alarm Level",
-  //       type: "line",
-  //       data: new Array(data.length).fill(thresholds.alarm.value),
-  //       lineStyle: {
-  //         type: "dashed",
-  //         color: thresholds.alarm.color,
-  //         width: 1,
-  //       },
-  //       symbol: "none",
-  //       emphasis: {
-  //         disabled: true,
-  //       },
-  //     } satisfies LineSeriesOption,
-  //   ]
-  //   : []),
 
   return temp;
 };
@@ -311,7 +291,8 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
     units = "",
     thresholds,
     timeRange = "realtime",
-    enableZoom = false
+    enableZoom = false,
+    rollingAverage = "15min" // TODO: Implement rolling average functionality
   } = props;
   const htmlContainerRef = useRef<HTMLDivElement>();
   const chartInstanceRef = useRef<echarts.ECharts>();
@@ -363,49 +344,9 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
   }, [theme]); // ignore "setChartInstance" dependency
 
   useEffect(() => {
-    if (!chartInstanceRef.current) return;
+    if (!chartInstanceRef.current || !data || data.length === 0) return;
 
     const isDark = theme === "dark";
-
-    // Calculate min/max for Y-axis including thresholds when visible
-    const dataValues = data.map((item) => Number(item.value));
-    let minValue: number | undefined = undefined;
-    let maxValue: number | undefined = undefined;
-
-    if (dataValues.length > 0) {
-      minValue = Math.min(...dataValues);
-      maxValue = Math.max(...dataValues);
-    }
-
-    // If thresholds are visible, include them in the range with padding
-    if (thresholds) {
-      const thresholdValues: number[] = [];
-      if (thresholds.warning.visible) {
-        thresholdValues.push(thresholds.warning.value);
-      }
-      if (thresholds.alarm.visible) {
-        thresholdValues.push(thresholds.alarm.value);
-      }
-
-      if (thresholdValues.length > 0) {
-        const minThreshold = Math.min(...thresholdValues);
-        const maxThreshold = Math.max(...thresholdValues);
-
-        if (minValue !== undefined && maxValue !== undefined) {
-          minValue = Math.min(minValue, minThreshold);
-          maxValue = Math.max(maxValue, maxThreshold);
-        } else {
-          minValue = minThreshold;
-          maxValue = maxThreshold;
-        }
-
-        // Add padding (10% of range) to ensure thresholds are fully visible
-        const range = maxValue - minValue;
-        const padding = Math.max(range * 0.1, 1); // Ensure at least 1 unit of padding
-        minValue = Math.max(0, minValue - padding);
-        maxValue = maxValue + padding;
-      }
-    }
 
     const option: EChartsOption = {
       animationDuration: 300,
@@ -420,7 +361,7 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
       visualMap: createVisualMap(thresholds),
       xAxis: {
         type: "category",
-        data: data.map((item) => item.timestamp),
+        data: data.map((item) => item.timestamps),
         axisLine: {
           show: false
         },
@@ -430,7 +371,14 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
         axisLabel: {
           color: "#888888",
           fontSize: 11,
-          formatter: (value: string) => formatDate(Number(value), timeRange),
+          formatter: (value: string) => {
+            try {
+              return formatDate(Number(value), timeRange);
+            } catch (error) {
+              console.error("Error formatting date:", error, "value:", value);
+              return "Invalid Date";
+            }
+          },
           hideOverlap: true,
           padding: [8, 0, 0, 0],
           fontFamily: "Wix Madefor Text Variable, system-ui, sans-serif"
@@ -466,28 +414,36 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
           fontSize: 12
         },
         formatter: (params: echarts.DefaultLabelFormatterCallbackParams[]) => {
-          const mainParam = params[0];
-          const dataIndex = mainParam.dataIndex!;
-          const value = Number(data[dataIndex].value);
-          const dataTimestamp = data[dataIndex].timestamp;
-          const formattedDate = formatDate(dataTimestamp, timeRange, true);
+          try {
+            const mainParam = params[0];
+            const dataIndex = mainParam.dataIndex!;
+            const categoryKey = categories[0];
+            const value = Number(data[dataIndex]?.[categoryKey]) || 0;
+            const dataTimestamp = data[dataIndex]?.timestamps;
+            const formattedDate = dataTimestamp
+              ? formatDate(dataTimestamp, timeRange, true)
+              : "N/A";
 
-          return `
-            <div style="display: flex; flex-direction: column; font-family: 'DM Sans', system-ui, sans-serif; min-width: 150px; padding: 2px;">
-              <div style="font-size: .85rem; font-weight: 600; color: #fff; border-bottom: 1px solid #3c3c3c; padding-left: 8px; padding-right: 8px; padding-bottom: 8px; ">
-                ${formattedDate}
+            return `
+              <div style="display: flex; flex-direction: column; font-family: 'DM Sans', system-ui, sans-serif; min-width: 150px; padding: 2px;">
+                <div style="font-size: .85rem; font-weight: 600; color: #fff; border-bottom: 1px solid #3c3c3c; padding-left: 8px; padding-right: 8px; padding-bottom: 8px; ">
+                  ${formattedDate}
+                </div>
+                <div style="font-weight: 600; padding-top: 8px; font-size: 1rem; font-color: #fff; display: flex; align-items: center; gap: 4px; color: #fff;">
+                  <span style="background-color: ${getColorForValue(
+                    value,
+                    thresholds
+                  )}; padding: 2px; border-radius: 4px;">${getIconForValue(
+              value,
+              thresholds
+            )}</span> ${value?.toFixed(1)}${units}
+                </div>
               </div>
-              <div style="font-weight: 600; padding-top: 8px; font-size: 1rem; font-color: #fff; display: flex; align-items: center; gap: 4px; color: #fff;">
-                <span style="background-color: ${getColorForValue(
-                  value,
-                  thresholds
-                )}; padding: 2px; border-radius: 4px;">${getIconForValue(
-            value,
-            thresholds
-          )}</span> ${value?.toFixed(1)}${units}
-              </div>
-            </div>
-          `;
+            `;
+          } catch (error) {
+            console.error("Error in tooltip formatter:", error);
+            return "Error loading tooltip";
+          }
         }
       },
       toolbox: {
@@ -521,18 +477,6 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
       yAxis: {
         type: "value",
         splitNumber: 4,
-        min:
-          thresholds &&
-          (thresholds.warning.visible || thresholds.alarm.visible) &&
-          minValue !== undefined
-            ? minValue
-            : undefined,
-        max:
-          thresholds &&
-          (thresholds.warning.visible || thresholds.alarm.visible) &&
-          maxValue !== undefined
-            ? maxValue
-            : undefined,
         axisLine: {
           show: false
         },

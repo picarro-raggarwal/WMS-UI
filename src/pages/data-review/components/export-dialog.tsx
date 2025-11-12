@@ -49,7 +49,7 @@ import {
   useGetAllExportsQuery,
   useGetAvailableSubcomponentsQuery,
   useGetExportStatusQuery
-} from "../../data-review-2/data/dataExport.api";
+} from "../data/dataExport.api";
 
 interface ExportDialogProps {
   timeRange: string;
