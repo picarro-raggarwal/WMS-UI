@@ -27,7 +27,7 @@ import DashboardPage from "./pages/dashboard";
 import DataReview2Page from "./pages/data-review-2";
 
 import HistoryPage from "./pages/history";
-import LiveDataPage from "./pages/live-data-new";
+import LiveDataPage from "./pages/live-data";
 import LoginPage from "./pages/login";
 import MapDisplay from "./pages/map-display";
 import MethodPage from "./pages/method";
