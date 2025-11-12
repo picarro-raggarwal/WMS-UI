@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatLabel } from "@/utils";
 import { AlertOctagon, AlertTriangle, RotateCcw } from "lucide-react";
+import { useChartSync } from "./chart-sync-context";
 import { useChartContext } from "./data-review-chart-context";
 
 type StatsBarProps = {
@@ -40,6 +41,7 @@ const StatsBar = ({
   isFetchingMetricsData
 }: StatsBarProps) => {
   const { chartInstance } = useChartContext();
+  const { resetAllCharts, isSyncEnabled } = useChartSync();
 
   return (
     <div className="flex items-center justify-between gap-2 bg-white dark:bg-neutral-800 -m-6 mb-4 px-4 py-5 !pb-3 border-neutral-200 dark:border-neutral-700 border-b border-dashed rounded-t-xl">
@@ -172,11 +174,15 @@ const StatsBar = ({
           size="sm"
           className="flex items-center gap-2"
           onClick={() => {
-            chartInstance?.dispatchAction({
-              type: "dataZoom",
-              start: 0,
-              end: 100
-            });
+            if (isSyncEnabled) {
+              resetAllCharts();
+            } else {
+              chartInstance?.dispatchAction({
+                type: "dataZoom",
+                start: 0,
+                end: 100
+              });
+            }
           }}
         >
           <RotateCcw className="w-4 h-4" />

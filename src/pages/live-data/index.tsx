@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { loadPortConfig, type PortConfig } from "@/types/common/port-config";
 import { FlaskConical, RotateCcw } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ChartSyncProvider } from "../data-review/components/chart-sync-context";
 import { ChartProvider } from "../data-review/components/data-review-chart-context";
 import DataReviewLineChart from "../data-review/components/data-review-line-chart";
 import { ThresholdsConfig } from "../data-review/types";
@@ -170,10 +171,18 @@ const Card = ({ port, cardWidth }: { port: MockData; cardWidth: number }) => {
   const fontClasses = getFontSizeClasses(cardWidth);
 
   // Memoize time series data so it doesn't change when threshold is toggled
-  const { data: timeSeriesData, categories } = useMemo(
+  const { data: rawTimeSeriesData, categories } = useMemo(
     () => generateMockTimeSeriesData(port),
     [port.id, port.portNum] // Only regenerate if port changes
   );
+
+  // Transform data to match ChartData format
+  const timeSeriesData = useMemo(() => {
+    return rawTimeSeriesData.map((item) => ({
+      timestamps: item.timestamp,
+      [categories[0]]: item.value
+    }));
+  }, [rawTimeSeriesData, categories]);
   const [chartInstance, setChartInstance] = useState<any>(null);
 
   // Parse concentration value and unit
@@ -393,21 +402,23 @@ const Card = ({ port, cardWidth }: { port: MockData; cardWidth: number }) => {
           </div>
 
           {/* <div className="relative h-max"> */}
-          <ChartProvider>
-            <DataReviewLineChart
-              data={timeSeriesData}
-              categories={categories}
-              index={port.id}
-              units={
-                conc && typeof conc === "string" && conc.includes("ppb")
-                  ? "ppb"
-                  : ""
-              }
-              timeRange="24h"
-              onInstance={setChartInstance}
-              thresholds={thresholdConfig}
-            />
-          </ChartProvider>
+          <ChartSyncProvider>
+            <ChartProvider>
+              <DataReviewLineChart
+                data={timeSeriesData}
+                categories={categories}
+                index={port.id}
+                units={
+                  conc && typeof conc === "string" && conc.includes("ppb")
+                    ? "ppb"
+                    : ""
+                }
+                timeRange="24h"
+                onInstance={setChartInstance}
+                thresholds={thresholdConfig}
+              />
+            </ChartProvider>
+          </ChartSyncProvider>
           {/* </div> */}
         </DialogContent>
       </Dialog>

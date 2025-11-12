@@ -13,12 +13,19 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useLocalStorage } from "@mantine/hooks";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 
+import { loadPortConfig } from "@/types/common/port-config";
+import { generateAllPorts, isAmbientPort } from "@/types/common/ports";
 import { formatDate, formatDateTime } from "@/utils";
 import { ChartConfigDialog } from "./components/chart-config-dialog";
+import {
+  ChartSyncProvider,
+  useChartSync
+} from "./components/chart-sync-context";
 import { ExportDialog } from "./components/export-dialog";
 import { PortChartContainer } from "./components/port-chart-container";
 import { generateMockDataForPorts, getPortById } from "./data/mock-data";
@@ -39,14 +46,27 @@ const ROLLING_AVERAGE_OPTIONS = [
   { value: "24hour", label: "24 Hour" }
 ] as const;
 
-export const DEFAULT_SELECTED_PORTS: string[] = [
-  "port-1",
-  "port-2",
-  "port-3",
-  "port-4"
-];
+// Get default selected ports - first 4 enabled ports (excluding port #0)
+export const getDefaultSelectedPorts = (): string[] => {
+  const portConfig = loadPortConfig();
+  const allPorts = generateAllPorts();
 
-const DataReviewPage = () => {
+  // Filter to only enabled ports, excluding port #0 (Ambient)
+  const enabledPorts = allPorts
+    .filter(
+      (port) =>
+        !isAmbientPort(port.portNumber) &&
+        portConfig.enabled[port.portNumber] === true
+    )
+    .slice(0, 4); // Take first 4 ports
+
+  return enabledPorts.map((port) => port.id);
+};
+
+export const DEFAULT_SELECTED_PORTS: string[] = getDefaultSelectedPorts();
+
+const DataReviewPageContent = () => {
+  const { isSyncEnabled, setIsSyncEnabled } = useChartSync();
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(Date.now() - 24 * 60 * 60 * 1000),
@@ -145,9 +165,9 @@ const DataReviewPage = () => {
     <>
       <PageHeader />
       <main className="flex flex-col mx-auto px-8 md:px-12 py-8 w-full max-w-8xl">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
+            <div className="flex items-center shrink-0">
               <Button
                 variant="outline"
                 size="sm"
@@ -208,7 +228,7 @@ const DataReviewPage = () => {
                     }`}
                   >
                     {timeRange === "custom" && dateRange?.from ? (
-                      <span className="text-xs">
+                      <span className="text-xs whitespace-nowrap">
                         {formatDate(dateRange.from)} -{" "}
                         {dateRange.to ? formatDate(dateRange.to) : ""}
                       </span>
@@ -257,7 +277,7 @@ const DataReviewPage = () => {
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="font-bold text-black dark:text-white text-sm tracking-tight whitespace-wrap">
+            <div className="font-bold text-black dark:text-white text-xs sm:text-sm tracking-tight whitespace-nowrap shrink-0">
               {timeRange === "custom" && dateRange?.from && dateRange?.to ? (
                 <>
                   {formatDateTime(dateRange.from)} -{" "}
@@ -276,9 +296,9 @@ const DataReviewPage = () => {
               )}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
                 Rolling Avg:
               </span>
               <Select
@@ -298,6 +318,15 @@ const DataReviewPage = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Sync X:
+              </span>
+              <Switch
+                checked={isSyncEnabled}
+                onCheckedChange={setIsSyncEnabled}
+              />
             </div>
             <ChartConfigDialog
               selectedPorts={selectedPorts}
@@ -346,6 +375,14 @@ const DataReviewPage = () => {
         </div>
       </main>
     </>
+  );
+};
+
+const DataReviewPage = () => {
+  return (
+    <ChartSyncProvider>
+      <DataReviewPageContent />
+    </ChartSyncProvider>
   );
 };
 

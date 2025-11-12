@@ -7,7 +7,7 @@ export interface Port {
   name: string;
   bankNumber: number;
   enabled: boolean;
-  type: "regular";
+  type: "regular" | "ambient";
 }
 
 // Mock step names mapping - this is the source of truth for port names
@@ -76,6 +76,32 @@ export const mockStepNames: Record<number, string> = {
   62: "Calibration",
   63: "Verification",
   64: "Final Check"
+};
+
+// Special port number for Ambient port
+export const AMBIENT_PORT_NUMBER = 0;
+export const AMBIENT_PORT_NAME = "Ambient";
+
+/**
+ * Get the Ambient port
+ * @returns The Ambient port object
+ */
+export const getAmbientPort = (): Port => {
+  return {
+    id: "port-ambient",
+    portNumber: AMBIENT_PORT_NUMBER,
+    name: AMBIENT_PORT_NAME,
+    bankNumber: 0, // Special bank for Ambient
+    enabled: true, // Always enabled
+    type: "ambient"
+  };
+};
+
+/**
+ * Check if a port number is the Ambient port
+ */
+export const isAmbientPort = (portNumber: number): boolean => {
+  return portNumber === AMBIENT_PORT_NUMBER;
 };
 
 /**

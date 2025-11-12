@@ -196,6 +196,7 @@ export const PortChartContainer = ({
                     timeRange={timeRange}
                     enableZoom={true}
                     rollingAverage={rollingAverage}
+                    portId={portId}
                   />
                   {/* {isRegenerating && (
                     <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded">

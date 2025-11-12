@@ -9,6 +9,7 @@ import type { LineSeriesOption } from "echarts/charts";
 import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
 import { ChartData, ThresholdsConfig } from "../types";
+import { useChartSync } from "./chart-sync-context";
 import { useChartContext } from "./data-review-chart-context";
 
 type DataReviewLineChartProps = {
@@ -26,6 +27,7 @@ type DataReviewLineChartProps = {
   zoomEnd?: number;
   onInstance?: (instance: echarts.ECharts) => void;
   rollingAverage?: "15min" | "1hour" | "24hour";
+  portId?: string;
 };
 
 const formatDate = (
@@ -292,12 +294,17 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
     thresholds,
     timeRange = "realtime",
     enableZoom = false,
-    rollingAverage = "15min" // TODO: Implement rolling average functionality
+    rollingAverage = "15min", // TODO: Implement rolling average functionality
+    portId
   } = props;
   const htmlContainerRef = useRef<HTMLDivElement>();
   const chartInstanceRef = useRef<echarts.ECharts>();
   const { theme } = useTheme();
   const { setChartInstance } = useChartContext();
+  const { registerChart, unregisterChart, syncZoom, isSyncEnabled } =
+    useChartSync();
+  const isSyncEnabledRef = useRef(isSyncEnabled);
+  const panSyncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!htmlContainerRef.current) {
@@ -309,6 +316,14 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
     chartInstanceRef.current = chartInstance;
     setChartInstance(chartInstance);
     if (props.onInstance) props.onInstance(chartInstance);
+
+    // Register chart instance for sync
+    if (portId) {
+      registerChart(portId, chartInstance);
+    }
+
+    // Update sync enabled ref
+    isSyncEnabledRef.current = isSyncEnabled;
 
     // enable the zoom brush, remove the listener because "finished" fires many times
     new Promise((resolve) => {
@@ -324,9 +339,55 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
       chartInstance.off("finished");
     });
 
+    // Listen for dataZoom events to sync with other charts (handles zoom, pan, etc.)
+    const handleDataZoom = (params: any) => {
+      if (!portId || !isSyncEnabledRef.current) return;
+
+      // Clear any pending sync
+      if (panSyncTimeoutRef.current) {
+        clearTimeout(panSyncTimeoutRef.current);
+      }
+
+      // Always get the current zoom state from chart option
+      // This works reliably for panning, zooming, and brush selection
+      panSyncTimeoutRef.current = setTimeout(() => {
+        if (!isSyncEnabledRef.current) return;
+        const option = chartInstance.getOption() as any;
+        const dataZoom = option.dataZoom?.[0];
+        if (dataZoom) {
+          const currentStart = dataZoom.start ?? 0;
+          const currentEnd = dataZoom.end ?? 100;
+          syncZoom(portId, currentStart, currentEnd);
+        }
+      }, 16); // ~60fps for smooth panning sync
+    };
+
+    // Listen for brush selection end (dataZoomSelectEnd)
+    const handleDataZoomSelectEnd = () => {
+      if (!portId || !isSyncEnabledRef.current) return;
+
+      // Get zoom state from chart option after brush selection ends
+      setTimeout(() => {
+        if (!isSyncEnabledRef.current) return;
+        const option = chartInstance.getOption() as any;
+        const dataZoom = option.dataZoom?.[0];
+        if (dataZoom) {
+          const currentStart = dataZoom.start ?? 0;
+          const currentEnd = dataZoom.end ?? 100;
+          syncZoom(portId, currentStart, currentEnd);
+        }
+      }, 50);
+    };
+
+    chartInstance.on("dataZoom", handleDataZoom);
+    chartInstance.on("dataZoomSelectEnd", handleDataZoomSelectEnd);
+
     // enable double click to reset zoom
     const handleDoubleClick = () => {
       chartInstance?.dispatchAction({ type: "dataZoom", start: 0, end: 100 });
+      if (portId && isSyncEnabledRef.current) {
+        syncZoom(portId, 0, 100);
+      }
     };
 
     const handleResize = () => {
@@ -339,9 +400,22 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
     return () => {
       htmlContainer.removeEventListener("dblclick", handleDoubleClick);
       window.removeEventListener("resize", handleResize);
+      chartInstance.off("dataZoom", handleDataZoom);
+      chartInstance.off("dataZoomSelectEnd", handleDataZoomSelectEnd);
+      if (panSyncTimeoutRef.current) {
+        clearTimeout(panSyncTimeoutRef.current);
+      }
+      if (portId) {
+        unregisterChart(portId);
+      }
       chartInstance.dispose();
     };
-  }, [theme]); // ignore "setChartInstance" dependency
+  }, [theme, portId, registerChart, unregisterChart, syncZoom]); // ignore "setChartInstance" dependency
+
+  // Update sync enabled ref when it changes (without re-rendering chart)
+  useEffect(() => {
+    isSyncEnabledRef.current = isSyncEnabled;
+  }, [isSyncEnabled]);
 
   useEffect(() => {
     if (!chartInstanceRef.current || !data || data.length === 0) return;
@@ -359,6 +433,21 @@ const DataReviewLineChart = (props: DataReviewLineChartProps) => {
         containLabel: true
       },
       visualMap: createVisualMap(thresholds),
+      dataZoom: [
+        {
+          type: "inside",
+          xAxisIndex: 0,
+          start: 0,
+          end: 100
+        },
+        {
+          type: "slider",
+          xAxisIndex: 0,
+          start: 0,
+          end: 100,
+          show: false
+        }
+      ],
       xAxis: {
         type: "category",
         data: data.map((item) => item.timestamps),

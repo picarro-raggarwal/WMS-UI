@@ -1,7 +1,12 @@
 // Shared port configuration state management
 // This ensures port names and enabled status are synced across settings and create recipe
 
-import { mockStepNames } from "./ports";
+import {
+  AMBIENT_PORT_NAME,
+  AMBIENT_PORT_NUMBER,
+  isAmbientPort,
+  mockStepNames
+} from "./ports";
 
 export interface PortConfig {
   names: Record<number, string>;
@@ -17,6 +22,11 @@ const getDefaultConfig = (): PortConfig => {
   const names: Record<number, string> = {};
   const enabled: Record<number, boolean> = {};
 
+  // Add Ambient port (always enabled, cannot be renamed)
+  names[AMBIENT_PORT_NUMBER] = AMBIENT_PORT_NAME;
+  enabled[AMBIENT_PORT_NUMBER] = true;
+
+  // Add regular ports (1-64)
   for (let i = 1; i <= 64; i++) {
     names[i] = mockStepNames[i] || `Port ${i}`;
     enabled[i] = true;
@@ -61,6 +71,10 @@ export const savePortConfig = (config: PortConfig): void => {
  * Get port name for a specific port number
  */
 export const getPortName = (portNumber: number): string => {
+  // Always return Ambient name for Ambient port
+  if (isAmbientPort(portNumber)) {
+    return AMBIENT_PORT_NAME;
+  }
   const config = loadPortConfig();
   return (
     config.names[portNumber] ||
@@ -73,6 +87,10 @@ export const getPortName = (portNumber: number): string => {
  * Get enabled status for a specific port number
  */
 export const getPortEnabled = (portNumber: number): boolean => {
+  // Ambient port is always enabled
+  if (isAmbientPort(portNumber)) {
+    return true;
+  }
   const config = loadPortConfig();
   return config.enabled[portNumber] ?? true;
 };
@@ -81,6 +99,10 @@ export const getPortEnabled = (portNumber: number): boolean => {
  * Update port name
  */
 export const updatePortName = (portNumber: number, name: string): void => {
+  // Prevent renaming Ambient port
+  if (isAmbientPort(portNumber)) {
+    return;
+  }
   const config = loadPortConfig();
   config.names[portNumber] = name;
   savePortConfig(config);
@@ -97,6 +119,10 @@ export const updatePortEnabled = (
   portNumber: number,
   enabled: boolean
 ): void => {
+  // Prevent disabling Ambient port
+  if (isAmbientPort(portNumber)) {
+    return;
+  }
   const config = loadPortConfig();
   config.enabled[portNumber] = enabled;
   savePortConfig(config);
@@ -111,7 +137,12 @@ export const updatePortEnabled = (
  */
 export const updatePortNames = (names: Record<number, string>): void => {
   const config = loadPortConfig();
-  config.names = { ...config.names, ...names };
+  // Filter out Ambient port from updates
+  const filteredNames = { ...names };
+  delete filteredNames[AMBIENT_PORT_NUMBER];
+  config.names = { ...config.names, ...filteredNames };
+  // Ensure Ambient port name is always correct
+  config.names[AMBIENT_PORT_NUMBER] = AMBIENT_PORT_NAME;
   savePortConfig(config);
   window.dispatchEvent(
     new CustomEvent("port-config-updated", { detail: config })
@@ -125,7 +156,12 @@ export const updatePortEnabledStatuses = (
   enabled: Record<number, boolean>
 ): void => {
   const config = loadPortConfig();
-  config.enabled = { ...config.enabled, ...enabled };
+  // Filter out Ambient port from updates
+  const filteredEnabled = { ...enabled };
+  delete filteredEnabled[AMBIENT_PORT_NUMBER];
+  config.enabled = { ...config.enabled, ...filteredEnabled };
+  // Ensure Ambient port is always enabled
+  config.enabled[AMBIENT_PORT_NUMBER] = true;
   savePortConfig(config);
   window.dispatchEvent(
     new CustomEvent("port-config-updated", { detail: config })

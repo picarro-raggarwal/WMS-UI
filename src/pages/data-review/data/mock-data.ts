@@ -1,4 +1,10 @@
-import { generateAllPorts, getPortDisplayName } from "@/types/common/ports";
+import { loadPortConfig } from "@/types/common/port-config";
+import {
+  generateAllPorts,
+  getAmbientPort,
+  getPortDisplayName,
+  isAmbientPort
+} from "@/types/common/ports";
 
 export interface PortData {
   id: string;
@@ -24,16 +30,29 @@ export interface MockChartData {
   };
 }
 
-// Generate 64 generic ports using common port configuration
+// Generate ports using common port configuration
+// Only includes enabled ports and Ambient port
 export const generatePorts = (): PortData[] => {
+  const portConfig = loadPortConfig();
   const commonPorts = generateAllPorts();
 
-  return commonPorts.map((port) => ({
+  // Filter to only enabled ports
+  const enabledPorts = commonPorts.filter(
+    (port) => portConfig.enabled[port.portNumber] !== false
+  );
+
+  // Add Ambient port (always enabled)
+  const ambientPort = getAmbientPort();
+
+  // Combine Ambient port with enabled regular ports
+  const allPorts = [ambientPort, ...enabledPorts];
+
+  return allPorts.map((port) => ({
     id: port.id,
     label: getPortDisplayName(port),
     number: port.portNumber,
     unit: "ppb",
-    type: "generic"
+    type: isAmbientPort(port.portNumber) ? "ambient" : "generic"
   }));
 };
 

@@ -9,9 +9,14 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { loadPortConfig } from "@/types/common/port-config";
+import {
+  generateAllPorts,
+  getAmbientPort,
+  isAmbientPort
+} from "@/types/common/ports";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { useEffect, useState } from "react";
-import { mockPorts } from "../data/mock-data";
+import { useEffect, useMemo, useState } from "react";
 
 interface ChartConfigDialogProps {
   selectedPorts: string[];
@@ -24,6 +29,52 @@ export const ChartConfigDialog = ({
 }: ChartConfigDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [newSelectedPorts, setNewSelectedPorts] = useState<string[]>([]);
+  const [portConfig, setPortConfig] = useState(() => loadPortConfig());
+
+  // Listen for port config updates from settings
+  useEffect(() => {
+    const handleConfigUpdate = (event: CustomEvent) => {
+      setPortConfig(event.detail);
+    };
+    window.addEventListener(
+      "port-config-updated",
+      handleConfigUpdate as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "port-config-updated",
+        handleConfigUpdate as EventListener
+      );
+    };
+  }, []);
+
+  // Generate ports using same source of truth - only enabled ports
+  const availablePorts = useMemo(() => {
+    const commonPorts = generateAllPorts();
+    const ambientPort = getAmbientPort();
+
+    // Filter to only enabled ports
+    const enabledPorts = commonPorts.filter(
+      (port) => portConfig.enabled[port.portNumber] !== false
+    );
+
+    // Combine Ambient port with enabled regular ports
+    const allPorts = [ambientPort, ...enabledPorts];
+
+    return allPorts.map((port) => {
+      const portName =
+        portConfig.names[port.portNumber] ||
+        port.name ||
+        `Port ${port.portNumber}`;
+      return {
+        id: port.id,
+        label: isAmbientPort(port.portNumber) ? "Ambient" : portName,
+        number: port.portNumber,
+        unit: "ppb",
+        type: isAmbientPort(port.portNumber) ? "ambient" : "generic"
+      };
+    });
+  }, [portConfig]);
 
   useEffect(() => {
     setNewSelectedPorts(selectedPorts);
@@ -41,7 +92,7 @@ export const ChartConfigDialog = ({
     }
   };
 
-  const filteredPorts = mockPorts.filter(
+  const filteredPorts = availablePorts.filter(
     (port) =>
       port.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
       port.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -102,7 +153,7 @@ export const ChartConfigDialog = ({
                   </div>
                   <div className="mt-1">
                     <p className="text-muted-foreground text-xs truncate">
-                      {port.label.split(" - ")[1] || port.label}
+                      {port.label}
                     </p>
                   </div>
                 </div>

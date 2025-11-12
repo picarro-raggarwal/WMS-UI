@@ -9,7 +9,11 @@ import {
   mockPortMarkers
 } from "@/pages/map-display/data/mock-data";
 import { loadPortConfig } from "@/types/common/port-config";
-import { generateAllPorts, getPortsByBank } from "@/types/common/ports";
+import {
+  generateAllPorts,
+  getAmbientPort,
+  getPortsByBank
+} from "@/types/common/ports";
 import {
   DndContext,
   DragEndEvent,
@@ -54,7 +58,7 @@ interface Port {
   id: string;
   portNumber: number;
   name: string;
-  type: "regular";
+  type: "regular" | "ambient";
   bankNumber: number;
   enabled: boolean;
 }
@@ -135,17 +139,38 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
     };
   }, []);
 
-  // Generate ports data using common configuration with shared port names
+  // Generate ports data using mock data as single source of truth
+  // Only show enabled ports from port configuration
+  // Include Ambient port (always enabled)
   const ports = useMemo(() => {
     const basePorts = generateAllPorts();
-    return basePorts.map((port) => ({
-      ...port,
-      name: portConfig.names[port.portNumber] || port.name,
-      enabled: portConfig.enabled[port.portNumber] ?? port.enabled
-    }));
+    const regularPorts = basePorts
+      .map((port) => ({
+        ...port,
+        name: portConfig.names[port.portNumber] || port.name,
+        enabled: portConfig.enabled[port.portNumber] ?? port.enabled
+      }))
+      .filter((port) => port.enabled); // Only show enabled ports
+
+    // Add Ambient port (always enabled, cannot be disabled)
+    const ambientPort = getAmbientPort();
+
+    return [ambientPort, ...regularPorts];
   }, [portConfig]);
 
-  const portsByBank = useMemo(() => getPortsByBank(ports), [ports]);
+  const portsByBank = useMemo(() => {
+    const byBank = getPortsByBank(ports);
+    // Ambient port is in bank 0, ensure it's included
+    if (!byBank[0]) {
+      byBank[0] = [];
+    }
+    // Add Ambient port to bank 0 if not already there
+    const hasAmbient = byBank[0].some((p) => p.portNumber === 0);
+    if (!hasAmbient) {
+      byBank[0] = [getAmbientPort(), ...byBank[0]];
+    }
+    return byBank;
+  }, [ports]);
 
   // Create a mapping from port number to room name
   const portToRoomMap = useMemo(() => {
@@ -238,10 +263,9 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   }, []);
 
   const handleAddAllPortsToRecipe = useCallback(() => {
-    // Add all enabled ports to the recipe
+    // Add all ports to the recipe (all ports shown are enabled)
     const allPorts = Object.values(portsByBank).flat();
-    const enabledPorts = allPorts.filter((port) => port.enabled);
-    const newSteps: RecipeStep[] = enabledPorts.map((port) => ({
+    const newSteps: RecipeStep[] = allPorts.map((port) => ({
       id: crypto.randomUUID(),
       step_id: port.portNumber,
       type: port.type,
@@ -249,7 +273,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
       duration: 120 // Default 2 minutes (120 seconds)
     }));
     setRecipeSteps((prev) => [...prev, ...newSteps]);
-    toast.success(`Added ${enabledPorts.length} ports to recipe`);
+    toast.success(`Added ${allPorts.length} ports to recipe`);
   }, [portsByBank]);
 
   const handleClearAllSteps = useCallback(() => {
@@ -629,18 +653,25 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
                   Add All Ports
                 </Button>
               </div>
-              {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
-                <div key={bankNumber} className="space-y-2">
-                  <h3 className="font-semibold text-neutral-700 dark:text-neutral-300">
-                    Bank {bankNumber}
-                  </h3>
-                  <div className="gap-3 grid grid-cols-2">
-                    {bankPorts.map((port) => (
-                      <PortItem key={port.id} port={port} />
-                    ))}
+              {Object.entries(portsByBank)
+                .sort(([a], [b]) => {
+                  // Sort bank 0 (Ambient) first, then others
+                  if (a === "0") return -1;
+                  if (b === "0") return 1;
+                  return Number(a) - Number(b);
+                })
+                .map(([bankNumber, bankPorts]) => (
+                  <div key={bankNumber} className="space-y-2">
+                    <h3 className="font-semibold text-neutral-700 dark:text-neutral-300">
+                      {bankNumber === "0" ? "Special" : `Bank ${bankNumber}`}
+                    </h3>
+                    <div className="gap-3 grid grid-cols-2">
+                      {bankPorts.map((port) => (
+                        <PortItem key={port.id} port={port} />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>

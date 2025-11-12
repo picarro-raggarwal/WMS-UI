@@ -20,8 +20,11 @@ import {
   type PortConfig
 } from "@/types/common/port-config";
 import {
+  AMBIENT_PORT_NUMBER,
   generateAllPorts,
+  getAmbientPort,
   getPortsByBank,
+  isAmbientPort,
   mockStepNames
 } from "@/types/common/ports";
 import { Check, Edit3, MapPin, RotateCcw, X, Zap } from "lucide-react";
@@ -40,7 +43,7 @@ interface Port {
   name: string;
   bankNumber: number;
   enabled: boolean;
-  type: "regular";
+  type: "regular" | "ambient";
 }
 
 export const PortConfigurationTab = () => {
@@ -208,7 +211,7 @@ export const PortConfigurationTab = () => {
   const basePorts = useMemo(() => generateAllPorts(), []);
 
   const ports = useMemo((): Port[] => {
-    return basePorts.map((port) => {
+    const regularPorts = basePorts.map((port) => {
       // If this port is currently being edited, use the editValue
       // Otherwise use the stored portNames value
       let displayName: string;
@@ -227,11 +230,34 @@ export const PortConfigurationTab = () => {
         type: "regular" as const
       };
     });
+
+    // Add Ambient port (always enabled, cannot be renamed)
+    const ambientPort: Port = {
+      ...getAmbientPort(),
+      name: portNames[AMBIENT_PORT_NUMBER] || getAmbientPort().name
+    };
+
+    return [ambientPort, ...regularPorts];
   }, [basePorts, editingPort, editValue, portNames, portEnabled]);
 
-  const portsByBank = useMemo(() => getPortsByBank(ports), [ports]);
+  const portsByBank = useMemo(() => {
+    const byBank = getPortsByBank(ports);
+    // Ensure Ambient port is in bank 0
+    if (!byBank[0]) {
+      byBank[0] = [];
+    }
+    const hasAmbient = byBank[0].some((p) => p.portNumber === 0);
+    if (!hasAmbient) {
+      byBank[0] = [getAmbientPort(), ...byBank[0]];
+    }
+    return byBank;
+  }, [ports]);
 
   const handleEditStart = (portNumber: number, currentName: string) => {
+    // Prevent editing Ambient port
+    if (isAmbientPort(portNumber)) {
+      return;
+    }
     setEditingPort(portNumber);
     setEditValue(currentName);
     // Always use the original mock data value for reset
@@ -330,166 +356,183 @@ export const PortConfigurationTab = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-8">
-            {Object.entries(portsByBank).map(([bankNumber, bankPorts]) => (
-              <div
-                key={bankNumber}
-                className="p-6 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-900"
-              >
-                <div className="flex justify-between items-center mb-4 pb-3 border-neutral-200 dark:border-neutral-700 border-b">
-                  <h3 className="flex items-center gap-2 font-semibold text-neutral-700 dark:text-neutral-300">
-                    Bank {bankNumber}
-                  </h3>
-                  <div className="bg-neutral-50 dark:bg-neutral-900 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded-full text-neutral-500 dark:text-neutral-400 text-xs">
-                    {bankPorts.length} ports
+            {Object.entries(portsByBank)
+              .sort(([a], [b]) => {
+                // Sort bank 0 (Ambient) first, then others
+                if (a === "0") return -1;
+                if (b === "0") return 1;
+                return Number(a) - Number(b);
+              })
+              .map(([bankNumber, bankPorts]) => (
+                <div
+                  key={bankNumber}
+                  className="p-6 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-900"
+                >
+                  <div className="flex justify-between items-center mb-4 pb-3 border-neutral-200 dark:border-neutral-700 border-b">
+                    <h3 className="flex items-center gap-2 font-semibold text-neutral-700 dark:text-neutral-300">
+                      {bankNumber === "0" ? "Special" : `Bank ${bankNumber}`}
+                    </h3>
+                    <div className="bg-neutral-50 dark:bg-neutral-900 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded-full text-neutral-500 dark:text-neutral-400 text-xs">
+                      {bankPorts.length} ports
+                    </div>
                   </div>
-                </div>
-                <div className="gap-3 grid grid-cols-2">
-                  {bankPorts.map((port) => (
-                    <div
-                      key={port.id}
-                      className={`border rounded-lg p-3 transition-all duration-200 ${
-                        editingPort === port.portNumber
-                          ? "border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 shadow-md"
-                          : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-600 hover:shadow-sm"
-                      } ${
-                        !port.enabled
-                          ? "opacity-60 bg-neutral-50 dark:bg-neutral-800"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 font-medium text-neutral-900 dark:text-neutral-100 text-sm">
-                            <div className="bg-neutral-400 dark:bg-neutral-500 rounded-full w-2 h-2"></div>
-                            Port #{port.portNumber}
-                          </div>
+                  <div className="gap-3 grid grid-cols-2">
+                    {bankPorts.map((port) => (
+                      <div
+                        key={port.id}
+                        className={`border rounded-lg p-3 transition-all duration-200 ${
+                          editingPort === port.portNumber
+                            ? "border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 shadow-md"
+                            : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-600 hover:shadow-sm"
+                        } ${
+                          !port.enabled
+                            ? "opacity-60 bg-neutral-50 dark:bg-neutral-800"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+                              <div className="bg-neutral-400 dark:bg-neutral-500 rounded-full w-2 h-2"></div>
+                              Port #{port.portNumber}
+                            </div>
 
-                          <div className="mt-1 text-neutral-500 dark:text-neutral-400 text-sm">
-                            {editingPort === port.portNumber ? (
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <Input
-                                    value={editValue}
-                                    onChange={(e) =>
-                                      setEditValue(e.target.value)
-                                    }
-                                    onKeyDown={(e) =>
-                                      handleKeyPress(e, port.portNumber)
-                                    }
-                                    className="flex-1 border-blue-200 dark:border-blue-600 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-blue-400 dark:focus:ring-blue-500 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 h-7 text-xs"
-                                    autoFocus
-                                    placeholder="Enter port label..."
-                                    maxLength={20}
-                                  />
-                                  <div className="flex gap-1">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        handleEditSave(port.portNumber);
-                                      }}
-                                      disabled={
-                                        !editValue ||
-                                        editValue === "" ||
-                                        editValue === originalValue
+                            <div className="mt-1 text-neutral-500 dark:text-neutral-400 text-sm">
+                              {editingPort === port.portNumber ? (
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      value={editValue}
+                                      onChange={(e) =>
+                                        setEditValue(e.target.value)
                                       }
-                                      className="hover:bg-primary-50 p-0 border-primary-200 hover:border-primary-300 w-7 h-7 text-primary-600"
-                                      title="Save changes"
-                                    >
-                                      <Check className="w-3 h-3" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        handleResetToOriginal();
-                                      }}
-                                      className="hover:bg-yellow-50 p-0 border-yellow-200 hover:border-yellow-300 w-7 h-7 text-yellow-600"
-                                      title="Reset to original"
-                                    >
-                                      <RotateCcw className="w-3 h-3" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        handleEditCancel();
-                                      }}
-                                      className="hover:bg-red-50 p-0 border-red-200 hover:border-red-300 w-7 h-7 text-red-600"
-                                      title="Cancel editing"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </Button>
+                                      onKeyDown={(e) =>
+                                        handleKeyPress(e, port.portNumber)
+                                      }
+                                      className="flex-1 border-blue-200 dark:border-blue-600 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-blue-400 dark:focus:ring-blue-500 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 h-7 text-xs"
+                                      autoFocus
+                                      placeholder="Enter port label..."
+                                      maxLength={20}
+                                    />
+                                    <div className="flex gap-1">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          handleEditSave(port.portNumber);
+                                        }}
+                                        disabled={
+                                          !editValue ||
+                                          editValue === "" ||
+                                          editValue === originalValue
+                                        }
+                                        className="hover:bg-primary-50 p-0 border-primary-200 hover:border-primary-300 w-7 h-7 text-primary-600"
+                                        title="Save changes"
+                                      >
+                                        <Check className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          handleResetToOriginal();
+                                        }}
+                                        className="hover:bg-yellow-50 p-0 border-yellow-200 hover:border-yellow-300 w-7 h-7 text-yellow-600"
+                                        title="Reset to original"
+                                      >
+                                        <RotateCcw className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          handleEditCancel();
+                                        }}
+                                        className="hover:bg-red-50 p-0 border-red-200 hover:border-red-300 w-7 h-7 text-red-600"
+                                        title="Cancel editing"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400 text-xs">
+                                    <span>
+                                      Press Enter to save, Esc to cancel
+                                    </span>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400 text-xs">
-                                  <span>
-                                    Press Enter to save, Esc to cancel
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">
+                                    {port.name}
                                   </span>
+                                  {!isAmbientPort(port.portNumber) && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        handleEditStart(
+                                          port.portNumber,
+                                          port.name
+                                        )
+                                      }
+                                      className="hover:bg-blue-50 dark:hover:bg-blue-900/20 p-0 w-5 h-5 text-neutral-400 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400"
+                                    >
+                                      <Edit3 className="w-3 h-3 dark:text-yellow-500/70" />
+                                    </Button>
+                                  )}
                                 </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">
-                                  {port.name}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleEditStart(port.portNumber, port.name)
-                                  }
-                                  className="hover:bg-blue-50 dark:hover:bg-blue-900/20 p-0 w-5 h-5 text-neutral-400 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400"
-                                >
-                                  <Edit3 className="w-3 h-3 dark:text-yellow-500/70" />
-                                </Button>
+                              )}
+                            </div>
+
+                            {/* Show room name if available */}
+                            {portToBoundaryMap.has(port.portNumber) && (
+                              <div className="mt-1.5">
+                                {(() => {
+                                  const boundary = portToBoundaryMap.get(
+                                    port.portNumber
+                                  );
+                                  if (!boundary) return null;
+                                  return (
+                                    <div className="flex items-center gap-1.5">
+                                      <MapPin className="w-3 h-3  flex-shrink-0" />
+                                      <span className=" text-xs">
+                                        {boundary.name}
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             )}
                           </div>
-
-                          {/* Show room name if available */}
-                          {portToBoundaryMap.has(port.portNumber) && (
-                            <div className="mt-1.5">
-                              {(() => {
-                                const boundary = portToBoundaryMap.get(
-                                  port.portNumber
-                                );
-                                if (!boundary) return null;
-                                return (
-                                  <div className="flex items-center gap-1.5">
-                                    <MapPin className="w-3 h-3  flex-shrink-0" />
-                                    <span className=" text-xs">
-                                      {boundary.name}
-                                    </span>
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {editingPort !== port.portNumber && (
-                            <Switch
-                              checked={portEnabled[port.portNumber] === true}
-                              onCheckedChange={(checked) => {
-                                setPortEnabled((prev) => {
-                                  const newState = {
-                                    ...prev,
-                                    [port.portNumber]: checked
-                                  };
-                                  return newState;
-                                });
-                              }}
-                              className="data-[state=checked]:bg-primary-500"
-                            />
-                          )}
+                          <div className="flex items-center gap-2">
+                            {editingPort !== port.portNumber && (
+                              <Switch
+                                checked={portEnabled[port.portNumber] === true}
+                                onCheckedChange={(checked) => {
+                                  // Prevent disabling Ambient port
+                                  if (isAmbientPort(port.portNumber)) {
+                                    return;
+                                  }
+                                  setPortEnabled((prev) => {
+                                    const newState = {
+                                      ...prev,
+                                      [port.portNumber]: checked
+                                    };
+                                    return newState;
+                                  });
+                                }}
+                                disabled={isAmbientPort(port.portNumber)}
+                                className="data-[state=checked]:bg-primary-500"
+                              />
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </CardContent>
       </Card>

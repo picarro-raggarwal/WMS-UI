@@ -25,13 +25,12 @@ import { store } from "./lib/store";
 import AlertsPage from "./pages/alerts";
 import DashboardPage from "./pages/dashboard";
 import DataReview2Page from "./pages/data-review";
-
-import HistoryPage from "./pages/history";
 import LiveDataPage from "./pages/live-data";
 import LoginPage from "./pages/login";
 import MapDisplay from "./pages/map-display";
 import MethodPage from "./pages/method";
 import NotFoundPage from "./pages/NotFoundPage";
+import PersonalExposurePage from "./pages/personal-exposure";
 import QAQCPage from "./pages/qa-qc";
 import ServicePage from "./pages/service";
 import SettingsPage from "./pages/settings";
@@ -70,7 +69,10 @@ createRoot(document.getElementById("root")!).render(
                 {/* <Route path="reports" element={<ReportsPage />} /> */}
                 <Route path="service" element={<ServicePage />} />
                 <Route path="alerts" element={<AlertsPage />} />
-                <Route path="personal-exposure" element={<HistoryPage />} />
+                <Route
+                  path="personal-exposure"
+                  element={<PersonalExposurePage />}
+                />
                 {/* Catch-all route for unmatched URLs inside /dashboard */}
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
