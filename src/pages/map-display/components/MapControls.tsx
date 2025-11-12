@@ -1,10 +1,16 @@
+import { Spinner } from "@/components/spinner";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Pencil, Plus } from "lucide-react";
 
 interface MapControlsProps {
   isDrawing: boolean;
   isAddingPort: boolean;
   drawingPoints: L.LatLngTuple[];
+  isColorBlendingEnabled: boolean;
+  isColorBlendingCalculating: boolean;
+  onToggleColorBlending: (enabled: boolean) => void;
   onAddBoundary: () => void;
   onCancelDrawing: () => void;
   onAddPortMode: () => void;
@@ -15,6 +21,9 @@ export const MapControls = ({
   isDrawing,
   isAddingPort,
   drawingPoints,
+  isColorBlendingEnabled,
+  isColorBlendingCalculating,
+  onToggleColorBlending,
   onAddBoundary,
   onCancelDrawing,
   onAddPortMode,
@@ -22,6 +31,36 @@ export const MapControls = ({
 }: MapControlsProps) => {
   return (
     <div className="space-y-3">
+      {/* Color Blending Toggle */}
+      <div className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg border border-neutral-200 dark:border-neutral-700">
+        <div className="flex flex-col space-y-0.5 flex-1">
+          <div className="flex items-center gap-2">
+            <Label
+              htmlFor="color-blending-switch"
+              className="text-sm font-medium text-neutral-900 dark:text-neutral-100 cursor-pointer"
+            >
+              Color Blending
+            </Label>
+            {isColorBlendingCalculating && isColorBlendingEnabled && (
+              <Spinner size="4" />
+            )}
+          </div>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            {isColorBlendingCalculating && isColorBlendingEnabled
+              ? "Calculating gradients..."
+              : isColorBlendingEnabled
+              ? "Gradient blending enabled"
+              : "High precedence mode"}
+          </p>
+        </div>
+        <Switch
+          id="color-blending-switch"
+          checked={isColorBlendingEnabled}
+          onCheckedChange={onToggleColorBlending}
+          disabled={isColorBlendingCalculating}
+        />
+      </div>
+
       {/* Add Boundary Button - Hidden when adding port */}
       {!isAddingPort && (
         <Button

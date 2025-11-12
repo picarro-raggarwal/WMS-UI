@@ -29,6 +29,11 @@ interface MapSidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: (collapsed: boolean) => void;
 
+  // Color blending state
+  isColorBlendingEnabled: boolean;
+  isColorBlendingCalculating: boolean;
+  onToggleColorBlending: (enabled: boolean) => void;
+
   // Drawing state
   isDrawing: boolean;
   isAddingPort: boolean;
@@ -72,6 +77,9 @@ interface MapSidebarProps {
 export const MapSidebar = ({
   isCollapsed,
   onToggleCollapse,
+  isColorBlendingEnabled,
+  isColorBlendingCalculating,
+  onToggleColorBlending,
   isDrawing,
   isAddingPort,
   drawingPoints,
@@ -215,6 +223,9 @@ export const MapSidebar = ({
                   isDrawing={isDrawing}
                   isAddingPort={isAddingPort}
                   drawingPoints={drawingPoints}
+                  isColorBlendingEnabled={isColorBlendingEnabled}
+                  isColorBlendingCalculating={isColorBlendingCalculating}
+                  onToggleColorBlending={onToggleColorBlending}
                   onAddBoundary={onAddBoundary}
                   onCancelDrawing={onCancelDrawing}
                   onAddPortMode={onAddPortMode}

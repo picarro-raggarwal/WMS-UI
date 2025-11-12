@@ -23,6 +23,11 @@ import { calculateBoundaryType, getAvailablePorts } from "./utils";
 const MapDisplay = () => {
   // Sidebar collapse state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // Color blending toggle state
+  const [isColorBlendingEnabled, setIsColorBlendingEnabled] = useState(true);
+  // Color blending calculation loading state
+  const [isColorBlendingCalculating, setIsColorBlendingCalculating] =
+    useState(false);
 
   // Custom hooks for state management
   const {
@@ -136,6 +141,25 @@ const MapDisplay = () => {
     setSelectedBoundary(null);
   };
 
+  const handleToggleColorBlending = (enabled: boolean) => {
+    setIsColorBlendingEnabled(enabled);
+    // Immediately show loading state when enabling, if there are boundaries with ports
+    if (enabled) {
+      const hasBoundariesWithPorts = boundaries.some((boundary) => {
+        return portMarkers.some(
+          (marker) =>
+            marker.boundaryId === boundary.id && marker.status !== undefined
+        );
+      });
+      if (hasBoundariesWithPorts) {
+        setIsColorBlendingCalculating(true);
+      }
+    } else {
+      // Clear loading state when disabling
+      setIsColorBlendingCalculating(false);
+    }
+  };
+
   // const handleSaveBoundary = () => {
   //   if (drawingPoints.length >= 3) {
   //     // Show confirmation dialog instead of immediately saving
@@ -208,9 +232,9 @@ const MapDisplay = () => {
 
   const handleSavePortPlacements = () => {
     if (pendingPortPlacements.length > 0) {
-      // Find boundaries for each pending port placement
-      const newPortMarkers: PortMarker[] = pendingPortPlacements.map(
-        (previewMarker) => {
+      // Find boundaries for each pending port placement and validate they're inside
+      const newPortMarkers: PortMarker[] = pendingPortPlacements
+        .map((previewMarker) => {
           // Find which boundary contains this port
           const containingBoundary = boundaries.find((boundary) => {
             const validPoints = boundary.points.filter(
@@ -222,14 +246,18 @@ const MapDisplay = () => {
             return isPointInPolygon(previewMarker.coordinates, validPoints);
           });
 
-          return {
-            id: `port-marker-${Date.now()}-${Math.random()}`,
-            port: previewMarker.port,
-            boundaryId: containingBoundary?.id || "unknown",
-            position: previewMarker.coordinates
-          };
-        }
-      );
+          // Only create marker if port is inside a valid boundary
+          if (containingBoundary) {
+            return {
+              id: `port-marker-${Date.now()}-${Math.random()}`,
+              port: previewMarker.port,
+              boundaryId: containingBoundary.id,
+              position: previewMarker.coordinates
+            };
+          }
+          return null;
+        })
+        .filter((marker): marker is PortMarker => marker !== null); // Filter out nulls
 
       setPortMarkers((prev) => [...prev, ...newPortMarkers]);
       clearPendingPorts();
@@ -281,6 +309,9 @@ const MapDisplay = () => {
           containerSize={containerSize}
           imgSize={imgSize}
           isSidebarCollapsed={isSidebarCollapsed}
+          isColorBlendingEnabled={isColorBlendingEnabled}
+          isColorBlendingCalculating={isColorBlendingCalculating}
+          onColorBlendingCalculatingChange={setIsColorBlendingCalculating}
           onMapClick={handleMapClick}
           onBoundaryClick={handleBoundaryClick}
           onBoundaryClickForPort={handleBoundaryClickForPort}
@@ -303,7 +334,10 @@ const MapDisplay = () => {
           boundaries={boundaries}
           boundariesCount={boundaries.length}
           isCollapsed={isSidebarCollapsed}
+          isColorBlendingEnabled={isColorBlendingEnabled}
+          isColorBlendingCalculating={isColorBlendingCalculating}
           onToggleCollapse={setIsSidebarCollapsed}
+          onToggleColorBlending={handleToggleColorBlending}
           onAddBoundary={handleAddBoundary}
           onCancelDrawing={handleCancelDrawing}
           onAddPortMode={handleAddPortMode}
@@ -337,11 +371,29 @@ const MapDisplay = () => {
           onDeletePortMarker={handleDeletePortMarker}
           onUpdatePortMarkerCoordinates={(markerId, coordinates) => {
             setPortMarkers((prev) =>
-              prev.map((marker) =>
-                marker.id === markerId
-                  ? { ...marker, position: coordinates }
-                  : marker
-              )
+              prev.map((marker) => {
+                if (marker.id === markerId) {
+                  // Validate that new coordinates are inside the boundary
+                  const boundary = boundaries.find(
+                    (b) => b.id === marker.boundaryId
+                  );
+                  if (boundary) {
+                    const validPoints = boundary.points.filter(
+                      (p) =>
+                        !isNaN(p.x) && !isNaN(p.y) && p.x !== 0 && p.y !== 0
+                    );
+                    if (
+                      validPoints.length >= 3 &&
+                      isPointInPolygon(coordinates, validPoints)
+                    ) {
+                      return { ...marker, position: coordinates };
+                    }
+                    // If outside boundary, keep original position
+                    return marker;
+                  }
+                }
+                return marker;
+              })
             );
           }}
         />

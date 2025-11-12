@@ -1,9 +1,11 @@
+import { Spinner } from "@/components/spinner";
 import L from "leaflet";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { ImageOverlay, MapContainer, Polygon, useMap } from "react-leaflet";
 import { Boundary, PortMarker, PreviewPortMarker } from "../types";
 import { MapClickHandler } from "../utils";
 import { getBoundaryTypeColor, hasBoundaryPorts } from "../utils/mapUtils";
+import { BoundaryColorGradient } from "./BoundaryColorGradient";
 import { BoundaryLabel } from "./BoundaryLabel";
 import { FitImageBoundsOnce, RecenterButton } from "./MapComponents";
 import { PortMarkerComponent } from "./PortMarker";
@@ -83,6 +85,9 @@ interface MapSectionProps {
   containerSize: { width: number; height: number } | null;
   imgSize: { width: number; height: number } | null;
   isSidebarCollapsed: boolean;
+  isColorBlendingEnabled: boolean;
+  isColorBlendingCalculating?: boolean;
+  onColorBlendingCalculatingChange?: (isCalculating: boolean) => void;
   onMapClick: (e: L.LeafletMouseEvent) => void;
   onBoundaryClick: (boundary: Boundary) => void;
   onBoundaryClickForPort: (boundary: Boundary, e: L.LeafletMouseEvent) => void;
@@ -102,15 +107,48 @@ export const MapSection = ({
   containerSize,
   imgSize,
   isSidebarCollapsed,
+  isColorBlendingEnabled,
+  isColorBlendingCalculating = false,
+  onColorBlendingCalculatingChange,
   onMapClick,
   onBoundaryClick,
   onBoundaryClickForPort
 }: MapSectionProps) => {
+  // Track calculating boundaries
+  const calculatingBoundariesRef = React.useRef<Set<string>>(new Set());
+
+  const handleBoundaryCalculatingChange = React.useCallback(
+    (boundaryId: string, isCalculating: boolean) => {
+      if (isCalculating) {
+        calculatingBoundariesRef.current.add(boundaryId);
+      } else {
+        calculatingBoundariesRef.current.delete(boundaryId);
+      }
+
+      const hasAnyCalculating = calculatingBoundariesRef.current.size > 0;
+
+      if (onColorBlendingCalculatingChange) {
+        onColorBlendingCalculatingChange(hasAnyCalculating);
+      }
+    },
+    [onColorBlendingCalculatingChange]
+  );
   return (
     <div
       ref={mapContainerRef}
       className="relative flex-1 border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden"
     >
+      {/* Loading overlay for color blending calculations */}
+      {isColorBlendingCalculating && isColorBlendingEnabled && (
+        <div className="absolute inset-0 bg-black/20 dark:bg-black/40 z-[1000] flex items-center justify-center pointer-events-none">
+          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg px-6 py-4 flex items-center gap-3 border border-neutral-200 dark:border-neutral-700">
+            <Spinner size="5" />
+            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+              Calculating color gradients...
+            </span>
+          </div>
+        </div>
+      )}
       <MapContainer
         bounds={bounds}
         style={{ width: "100%", height: "100%" }}
@@ -151,12 +189,24 @@ export const MapSection = ({
 
           return (
             <div key={boundary.id}>
+              {/* Color gradient overlay - only render when blending is enabled */}
+              {boundaryHasPorts && isColorBlendingEnabled && (
+                <BoundaryColorGradient
+                  boundary={boundary}
+                  portMarkers={portMarkers}
+                  bounds={bounds}
+                  onCalculatingChange={(isCalculating) =>
+                    handleBoundaryCalculatingChange(boundary.id, isCalculating)
+                  }
+                />
+              )}
               <Polygon
                 positions={validPoints.map((p) => [p.y, p.x])}
                 pathOptions={{
                   color: boundaryColor,
                   weight: 2,
-                  fillOpacity: 0.1,
+                  // When blending is disabled, use higher fill opacity to show high-precedence color
+                  fillOpacity: isColorBlendingEnabled ? 0.1 : 0.3,
                   ...(isSelected && {
                     color: "#3b82f6",
                     weight: 4,

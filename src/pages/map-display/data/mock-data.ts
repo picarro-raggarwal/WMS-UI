@@ -10,7 +10,10 @@ export type Boundary = {
 
 // Import PortMarker type
 import { PortMarker } from "../types";
-import { calculateBoundaryType } from "../utils/mapUtils";
+import {
+  calculateBoundaryType,
+  filterPortsInBoundaries
+} from "../utils/mapUtils";
 
 // Image configuration
 export const imageConfig = {
@@ -74,8 +77,9 @@ const baseBoundaries: Omit<Boundary, "type">[] = [
   }
 ];
 
-// Default port markers placed in boundaries
-export const mockPortMarkers: PortMarker[] = [
+// Default port markers placed in boundaries - 3 ports per boundary
+const baseMockPortMarkers: PortMarker[] = [
+  // Room 1: Production Bay A - 3 ports
   {
     id: "port-marker-1",
     port: {
@@ -87,7 +91,7 @@ export const mockPortMarkers: PortMarker[] = [
       type: "regular"
     },
     boundaryId: "room-1",
-    position: { x: 1650, y: 1550 },
+    position: { x: 1600, y: 1600 },
     status: 0 // green
   },
   {
@@ -107,6 +111,21 @@ export const mockPortMarkers: PortMarker[] = [
   {
     id: "port-marker-3",
     port: {
+      id: "port-8",
+      portNumber: 8,
+      name: "Purge",
+      bankNumber: 1,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-1",
+    position: { x: 1700, y: 1550 },
+    status: 2 // red
+  },
+  // Room 2: Assembly Line 1 - 3 ports
+  {
+    id: "port-marker-4",
+    port: {
       id: "port-12",
       portNumber: 12,
       name: "Analysis",
@@ -115,11 +134,40 @@ export const mockPortMarkers: PortMarker[] = [
       type: "regular"
     },
     boundaryId: "room-2",
-    position: { x: 1150, y: 1100 },
-    status: 2 // red/warning
+    position: { x: 1000, y: 1000 },
+    status: 0 // green
   },
   {
-    id: "port-marker-4",
+    id: "port-marker-5",
+    port: {
+      id: "port-15",
+      portNumber: 15,
+      name: "Validation",
+      bankNumber: 1,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-2",
+    position: { x: 1150, y: 1100 },
+    status: 1 // amber
+  },
+  {
+    id: "port-marker-6",
+    port: {
+      id: "port-20",
+      portNumber: 20,
+      name: "Verification",
+      bankNumber: 2,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-2",
+    position: { x: 1300, y: 900 },
+    status: 2 // red
+  },
+  // Room 3: Utilities Room - 3 ports
+  {
+    id: "port-marker-7",
     port: {
       id: "port-18",
       portNumber: 18,
@@ -129,11 +177,40 @@ export const mockPortMarkers: PortMarker[] = [
       type: "regular"
     },
     boundaryId: "room-3",
-    position: { x: 680, y: 1550 },
+    position: { x: 600, y: 1600 },
     status: 0 // green
   },
   {
-    id: "port-marker-5",
+    id: "port-marker-8",
+    port: {
+      id: "port-22",
+      portNumber: 22,
+      name: "Final Review",
+      bankNumber: 2,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-3",
+    position: { x: 680, y: 1550 },
+    status: 1 // amber
+  },
+  {
+    id: "port-marker-9",
+    port: {
+      id: "port-26",
+      portNumber: 26,
+      name: "Data Init",
+      bankNumber: 2,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-3",
+    position: { x: 750, y: 1500 },
+    status: 0 // green
+  },
+  // Room 4: Quality Control - 3 ports
+  {
+    id: "port-marker-10",
     port: {
       id: "port-25",
       portNumber: 25,
@@ -143,11 +220,40 @@ export const mockPortMarkers: PortMarker[] = [
       type: "regular"
     },
     boundaryId: "room-4",
-    position: { x: 1050, y: 600 },
+    position: { x: 1000, y: 500 },
     status: 1 // amber
   },
   {
-    id: "port-marker-6",
+    id: "port-marker-11",
+    port: {
+      id: "port-30",
+      portNumber: 30,
+      name: "Final Report",
+      bankNumber: 2,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-4",
+    position: { x: 1150, y: 600 },
+    status: 2 // red
+  },
+  {
+    id: "port-marker-12",
+    port: {
+      id: "port-35",
+      portNumber: 35,
+      name: "System Check",
+      bankNumber: 3,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-4",
+    position: { x: 1200, y: 700 },
+    status: 0 // green
+  },
+  // Room 5: Storage Bay - 3 ports
+  {
+    id: "port-marker-13",
     port: {
       id: "port-33",
       portNumber: 33,
@@ -157,12 +263,46 @@ export const mockPortMarkers: PortMarker[] = [
       type: "regular"
     },
     boundaryId: "room-5",
-    position: { x: 1060, y: 1700 },
+    position: { x: 950, y: 1650 },
     status: 0 // green
+  },
+  {
+    id: "port-marker-14",
+    port: {
+      id: "port-40",
+      portNumber: 40,
+      name: "Sample Collection",
+      bankNumber: 3,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-5",
+    position: { x: 1000, y: 1600 },
+    status: 1 // amber
+  },
+  {
+    id: "port-marker-15",
+    port: {
+      id: "port-45",
+      portNumber: 45,
+      name: "Validation",
+      bankNumber: 3,
+      enabled: true,
+      type: "regular"
+    },
+    boundaryId: "room-5",
+    position: { x: 1060, y: 1700 },
+    status: 2 // red
   }
 ];
 
-// Calculate boundary types based on port statuses
+// Filter mock port markers to ensure all ports are inside their boundaries
+export const mockPortMarkers: PortMarker[] = filterPortsInBoundaries(
+  baseMockPortMarkers,
+  baseBoundaries.map((b) => ({ ...b, type: 0 as 0 | 1 | 2 }))
+);
+
+// Calculate boundary types based on validated port statuses
 export const mockBoundaries: Boundary[] = baseBoundaries.map((boundary) => ({
   ...boundary,
   type: calculateBoundaryType(boundary.id, mockPortMarkers)

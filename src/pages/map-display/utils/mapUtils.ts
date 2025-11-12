@@ -443,3 +443,161 @@ export const getBoundaryTypeLabel = (
       return "safe";
   }
 };
+
+/**
+ * Convert hex color to RGB object
+ */
+export const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      }
+    : { r: 0, g: 0, b: 0 };
+};
+
+/**
+ * Convert RGB values to hex color string
+ */
+export const rgbToHex = (r: number, g: number, b: number): string => {
+  const toHex = (n: number) => {
+    const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+/**
+ * Interpolate between two colors
+ * @param color1 - First color in hex format
+ * @param color2 - Second color in hex format
+ * @param factor - Interpolation factor (0 = color1, 1 = color2)
+ * @returns Interpolated color in hex format
+ */
+export const interpolateColor = (
+  color1: string,
+  color2: string,
+  factor: number
+): string => {
+  const rgb1 = hexToRgb(color1);
+  const rgb2 = hexToRgb(color2);
+
+  const r = rgb1.r + (rgb2.r - rgb1.r) * factor;
+  const g = rgb1.g + (rgb2.g - rgb1.g) * factor;
+  const b = rgb1.b + (rgb2.b - rgb1.b) * factor;
+
+  return rgbToHex(r, g, b);
+};
+
+/**
+ * Calculate distance between two points
+ */
+const calculateDistance = (p1: Coordinate, p2: Coordinate): number => {
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  return Math.sqrt(dx * dx + dy * dy);
+};
+
+/**
+ * Calculate color at a point using Inverse Distance Weighting (IDW)
+ * @param point - The point to calculate color for
+ * @param ports - Array of port markers with positions and status
+ * @param power - Power parameter for IDW (default 2, higher = steeper falloff)
+ * @param coreRadius - Radius around each port where color is solid (default 20)
+ * @returns Interpolated color in hex format
+ */
+export const calculateIDWColor = (
+  point: Coordinate,
+  ports: PortMarker[],
+  power: number = 2,
+  coreRadius: number = 20
+): string => {
+  // Filter ports that have status defined
+  const portsWithStatus = ports.filter(
+    (port) => port.status !== undefined
+  ) as Array<PortMarker & { status: 0 | 1 | 2 }>;
+
+  if (portsWithStatus.length === 0) {
+    return "#94A3B8"; // Default gray if no ports with status
+  }
+
+  // Check if point is within core radius of any port
+  for (const port of portsWithStatus) {
+    const distance = calculateDistance(point, port.position);
+    if (distance <= coreRadius) {
+      // Within core radius - return solid port color
+      return getPortStatusColor(port.status);
+    }
+  }
+
+  if (portsWithStatus.length === 1) {
+    // If only one port and outside core radius, return its color (shouldn't happen but safe)
+    return getPortStatusColor(portsWithStatus[0].status);
+  }
+
+  // Calculate weights and weighted RGB values for IDW blending
+  let totalWeight = 0;
+  let weightedR = 0;
+  let weightedG = 0;
+  let weightedB = 0;
+
+  for (const port of portsWithStatus) {
+    const distance = calculateDistance(point, port.position);
+
+    // Use distance from core radius edge for weighting
+    const effectiveDistance = Math.max(0.001, distance - coreRadius);
+    const weight = 1 / Math.pow(effectiveDistance, power);
+    const portColor = getPortStatusColor(port.status);
+    const rgb = hexToRgb(portColor);
+
+    totalWeight += weight;
+    weightedR += rgb.r * weight;
+    weightedG += rgb.g * weight;
+    weightedB += rgb.b * weight;
+  }
+
+  // Normalize by total weight
+  const finalR = weightedR / totalWeight;
+  const finalG = weightedG / totalWeight;
+  const finalB = weightedB / totalWeight;
+
+  return rgbToHex(finalR, finalG, finalB);
+};
+
+/**
+ * Validate that a port position is inside its boundary
+ * @param portPosition - The port's position coordinates
+ * @param boundary - The boundary the port should be in
+ * @returns true if port is inside boundary, false otherwise
+ */
+export const isPortInBoundary = (
+  portPosition: Coordinate,
+  boundary: Boundary
+): boolean => {
+  const validPoints = getValidPoints(boundary.points);
+  if (validPoints.length < 3) {
+    return false;
+  }
+  return isPointInPolygon(portPosition, validPoints);
+};
+
+/**
+ * Filter ports to only include those that are actually inside their assigned boundary
+ * @param portMarkers - Array of port markers to validate
+ * @param boundaries - Array of boundaries to check against
+ * @returns Array of valid port markers (those inside their boundaries)
+ */
+export const filterPortsInBoundaries = (
+  portMarkers: PortMarker[],
+  boundaries: Boundary[]
+): PortMarker[] => {
+  return portMarkers.filter((marker) => {
+    const boundary = boundaries.find((b) => b.id === marker.boundaryId);
+    if (!boundary) {
+      return false; // Port has no valid boundary
+    }
+    return isPortInBoundary(marker.position, boundary);
+  });
+};

@@ -1,3 +1,4 @@
+export { BoundaryColorGradient } from "./BoundaryColorGradient";
 export { BoundaryDetails } from "./BoundaryDetails";
 export { BoundaryLabel } from "./BoundaryLabel";
 export { DrawingControls } from "./DrawingControls";
