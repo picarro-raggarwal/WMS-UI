@@ -83,7 +83,7 @@ const QAQCPage = () => {
               </TabsContent>
 
               <TabsContent value="completeness">
-                <DataCompleteness />
+                <DataCompleteness selectedPeriod={selectedPeriod} />
               </TabsContent>
 
               <TabsContent value="audit">

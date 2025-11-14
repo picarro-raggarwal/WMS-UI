@@ -12,6 +12,8 @@ import { fencelineJobApi } from "@/pages/method/data/fencelineJob.slice";
 import { fencelineSchedulerApi } from "@/pages/method/data/fencelineScheduler.slice";
 import { fencelineStateMachineApi } from "@/pages/method/data/fencelineStateMachine.slice";
 import { recipesApi } from "@/pages/method/data/recipes.slice";
+import { qaqcApi } from "@/pages/qa-qc/data/qaqc.slice";
+import { qaqcDataApi } from "@/pages/qa-qc/data/qaqcData.slice";
 import { settingsApi } from "@/pages/settings/data/settings.slice";
 import { smartRecipeApi } from "@/pages/settings/data/smart-recipe.slice";
 import { thresholdsApi } from "@/pages/settings/data/thresholds.slice";
@@ -41,7 +43,9 @@ export const store = configureStore({
     [settingsApi.reducerPath]: settingsApi.reducer,
     [alertsApi.reducerPath]: alertsApi.reducer,
     [userManagementApi.reducerPath]: userManagementApi.reducer,
-    [smartRecipeApi.reducerPath]: smartRecipeApi.reducer
+    [smartRecipeApi.reducerPath]: smartRecipeApi.reducer,
+    [qaqcApi.reducerPath]: qaqcApi.reducer,
+    [qaqcDataApi.reducerPath]: qaqcDataApi.reducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -63,6 +67,8 @@ export const store = configureStore({
       .concat(alertsApi.middleware)
       .concat(userManagementApi.middleware)
       .concat(smartRecipeApi.middleware)
+      .concat(qaqcApi.middleware)
+      .concat(qaqcDataApi.middleware)
 });
 
 setupListeners(store.dispatch);
