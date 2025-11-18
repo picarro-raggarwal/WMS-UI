@@ -157,11 +157,13 @@ import { Alert } from "@/pages/alerts/data/alerts.slice";
 
 ### Prerequisites
 
-- Node.js 18+
-- npm 9+ or yarn 1.22+
+- Node.js 18+ (check with `node --version`)
+- npm 9+ or yarn 1.22+ (check with `npm --version`)
 - Modern web browser with WebGL support
 
-### Installation
+### Running Locally
+
+Follow these steps to run the WMS-UI application on your local machine:
 
 1. **Clone the repository**
 
@@ -176,36 +178,100 @@ import { Alert } from "@/pages/alerts/data/alerts.slice";
    npm install
    ```
 
-3. **Start development server**
+   This will install all required packages and dependencies listed in `package.json`.
+
+3. **Configure environment variables (optional)**
+
+   Create a `.env.local` file in the root directory if you need to customize API endpoints or other settings:
+
+   ```env
+   VITE_API_BASE_URL=http://localhost:3000/api
+   VITE_WS_URL=ws://localhost:3000/ws
+   VITE_APP_TITLE=Workplace Monitoring System
+   ```
+
+   > **Note:** The application will work with default settings if you skip this step.
+
+4. **Start the development server**
 
    ```bash
    npm run dev
    ```
 
-4. **Open your browser**
-   Navigate to `http://localhost:5173`
+   The development server will start and display the local URL (typically `http://localhost:3001`).
+
+5. **Open your browser**
+
+   Navigate to the URL shown in the terminal (usually `http://localhost:3001`).
+
+   The application should now be running locally and will automatically reload when you make changes to the code.
 
 ### Available Scripts
 
 ```bash
-npm run dev          # Start development server
+npm run dev          # Start development server (runs on http://localhost:3001)
 npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
-npm run type-check   # Run TypeScript type checking
+npm run buildwithts  # Build with TypeScript type checking
+npm run preview      # Preview production build locally
+npm run lint         # Run ESLint for code quality checks
 ```
+
+### Troubleshooting
+
+If you encounter issues:
+
+- **Port already in use**: If port 3001 is occupied, Vite will automatically use the next available port
+- **Dependencies issues**: Try deleting `node_modules` and `package-lock.json`, then run `npm install` again
+- **Type errors**: Run `npm run buildwithts` to check for TypeScript errors
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-Create a `.env.local` file in the root directory:
+For basic local development, environment variables are optional. However, if you need to customize API endpoints or other settings, create a `.env.local` file in the root directory (see [Running Locally](#running-locally) for basic setup).
+
+Available environment variables:
 
 ```env
-VITE_API_BASE_URL=http://localhost:3000/api
-VITE_WS_URL=ws://localhost:3000/ws
-VITE_APP_TITLE=Workplace Monitoring System
+# API Configuration
+VITE_API_BASE_URL=http://localhost:3000/api    # Backend API base URL
+VITE_WS_URL=ws://localhost:3000/ws             # WebSocket server URL for real-time data
+VITE_APP_TITLE=Workplace Monitoring System      # Application title
 ```
+
+> **Note:** These variables are prefixed with `VITE_` because Vite only exposes environment variables that start with this prefix to the client-side code.
+
+### API Server Configuration
+
+If you need to update the API server paths or WebSocket endpoints (e.g., `/api`, `/auth-api`, `/wms-api`, `/socket.io`), edit the proxy configuration in `vite.config.ts`.
+
+The proxy settings are located in the `server.proxy` section:
+
+```typescript
+server: {
+  port: 3001,
+  proxy: {
+    "/wms-api": {
+      target: "http://your-server:8000",
+      // ... proxy configuration
+    },
+    "/auth-api": {
+      target: "http://your-auth-server:8098",
+      // ... proxy configuration
+    },
+    "/api": {
+      target: "http://your-api-server:8000",
+      // ... proxy configuration
+    },
+    "/socket.io": {
+      target: "ws://your-websocket-server:8090",
+      // ... proxy configuration
+    }
+  }
+}
+```
+
+> **Note:** After modifying `vite.config.ts`, you need to restart the development server (`npm run dev`) for the changes to take effect.
 
 ### Docker Deployment
 
@@ -231,24 +297,78 @@ docker run -p 3000:3000 wms-ui
 
 ### Live Data
 
-- Real-time sensor data display
-- Interactive charts and graphs
-- Configurable measurement views
-- Wind and environmental data
+The Live Data page provides real-time monitoring of all sensor ports in a responsive card-based layout. Each port card displays:
+
+- **Port Information**: Port number, custom label, and current concentration values
+- **Status Indicators**: Visual status bars showing Normal, Warning, Critical, or Flow Error states
+- **Sampling Status**: Real-time indication when a port is actively sampling
+- **Interactive Details**: Click any port card to view a detailed time series chart with:
+  - 24-hour historical data visualization
+  - Configurable threshold overlays (warning and alarm levels)
+  - Zoom and pan controls for detailed analysis
+  - Last updated timestamp and port metadata
+
+The page automatically filters out disabled ports and adapts the card layout based on available screen space and the number of enabled ports.
 
 ### Data Review
 
-- Historical data analysis
-- Custom date range selection
-- Data export capabilities
-- Statistical analysis tools
+The Data Review page enables comprehensive historical data analysis with advanced visualization capabilities:
+
+- **Flexible Time Ranges**: Quick selection buttons for 1 hour, 24 hours, 7 days, or 1 month, plus a custom date range picker
+- **Multi-Port Comparison**: Select up to 4 ports simultaneously to compare data across different sensors
+- **Rolling Averages**: Apply 15-minute, 1-hour, or 24-hour rolling averages to smooth data trends
+- **Chart Synchronization**: Enable synchronized X-axis zooming and panning across all displayed charts for easy comparison
+- **Data Export**: Export selected time ranges and metrics to external formats for further analysis
+- **Interactive Charts**: Zoom, pan, and reset controls for detailed data exploration
+- **Real-time Updates**: Charts automatically regenerate when time ranges or port selections change
 
 ### Map Display
 
-- Geographic boundary mapping
-- Interactive boundary creation
-- Scale indicators and controls
-- Animated markers and overlays
+The Map Display page provides an interactive geographic visualization system for boundary and port management:
+
+- **Boundary Management**:
+  - Create custom boundaries by drawing polygons on the map
+  - Edit, delete, and manage multiple boundaries
+  - Visual boundary type indicators based on port statuses within each boundary
+- **Port Placement**:
+  - Place port markers within boundaries on the map
+  - Drag and reposition port markers (with boundary validation)
+  - Visual indicators for port status and sampling state
+- **Color Blending**:
+  - Enable color blending mode to visualize concentration levels across boundaries
+  - Automatic calculation of blended colors based on port statuses within each boundary
+- **Interactive Controls**:
+  - Collapsible sidebar for boundary and port management
+  - Scale indicators and coordinate display
+  - Image overlay support for custom map backgrounds
+  - Real-time validation to ensure ports remain within their assigned boundaries
+
+### Settings
+
+The Settings page provides comprehensive system configuration and management:
+
+- **System Information**:
+  - View system model, serial number, software version, and UI build
+  - Display analyzer details and hardware specifications
+  - Monitor system time, local time, and timezone information
+- **Display Settings**:
+  - Toggle dark mode (beta feature)
+  - Switch between default and custom Blendr font
+  - Configure sidebar default state (minimized or expanded)
+- **Port Configuration**:
+  - Enable/disable individual ports
+  - Assign custom names and labels to ports
+  - Configure port-specific settings and metadata
+- **Species Threshold**:
+  - Configure warning and alarm thresholds for different gas species
+  - Set custom threshold values per port or globally
+- **Smart Recipe**:
+  - Manage measurement and calibration recipes
+  - Configure automated sampling procedures
+- **User Management**:
+  - Create, edit, and manage user accounts
+  - Configure role-based access control
+  - Set user permissions and authentication settings
 
 ## 🔐 Security Features
 
