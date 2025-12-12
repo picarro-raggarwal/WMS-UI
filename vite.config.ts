@@ -25,7 +25,7 @@ export default defineConfig({
         target: "http://slim100-beta.corp.picarro.com:8000",
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace("/wms-api", "api")
+        rewrite: (path) => path.replace("/wms-api", "")
       },
       "/auth-api": {
         target: "http://slim100-beta.corp.picarro.com:8098",

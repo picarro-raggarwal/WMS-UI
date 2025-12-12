@@ -23,19 +23,20 @@ import {
   AMBIENT_PORT_NUMBER,
   generateAllPorts,
   getAmbientPort,
-  getPortsByBank,
   isAmbientPort,
   mockStepNames
 } from "@/types/common/ports";
-import { Check, Edit3, MapPin, RotateCcw, X, Zap } from "lucide-react";
+import { Check, Edit3, RotateCcw, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-// Import mock data from map-display
+import { mockPortLabelsData } from "../data/port-configuration-mock-data";
 import {
-  mockBoundaries,
-  mockPortMarkers,
-  type Boundary
-} from "@/pages/map-display/data/mock-data";
+  useGetInletsQuery,
+  useGetPortConfigurationQuery,
+  useGetPortLabelsQuery,
+  useUpdatePortConfigurationMutation,
+  useUpdatePortLabelMutation
+} from "../data/port-configuration.slice";
 
 interface Port {
   id: string;
@@ -47,19 +48,186 @@ interface Port {
 }
 
 export const PortConfigurationTab = () => {
-  // Load port configuration from shared storage
+  // Fetch port configuration from API
+  const { data: apiPortConfig, isLoading: isApiLoading } =
+    useGetPortConfigurationQuery();
+
+  // Fetch port labels from API
+  const { data: apiPortLabels, isError: isPortLabelsError } =
+    useGetPortLabelsQuery();
+
+  // Fetch inlets from API
+  const {
+    data: apiInlets,
+    isLoading: isInletsLoading,
+    isError: isInletsError
+  } = useGetInletsQuery();
+
+  // Mutation for updating port label
+  const [updatePortLabel] = useUpdatePortLabelMutation();
+
+  // Mutation for updating port configuration (enabled ports)
+  const [updatePortConfiguration] = useUpdatePortConfigurationMutation();
+
+  // State for validation errors
+  const [portLabelsError, setPortLabelsError] = useState<string | null>(null);
+  const [inletsError, setInletsError] = useState<string | null>(null);
+
+  // Validate port labels API response
+  useEffect(() => {
+    if (isPortLabelsError) {
+      const errorMsg = "Failed to fetch port labels from API";
+      console.error("Port Labels API Error:", errorMsg);
+      setPortLabelsError(errorMsg);
+      return;
+    }
+
+    if (!apiPortLabels) return;
+
+    if (!apiPortLabels.result) {
+      const errorMsg = "Port labels API returned null or undefined data";
+      console.error("Port Labels API Error:", errorMsg, apiPortLabels);
+      setPortLabelsError(errorMsg);
+    } else if (
+      Array.isArray(apiPortLabels.result) &&
+      apiPortLabels.result.length === 0
+    ) {
+      const errorMsg = "Port labels API returned empty array";
+      console.error("Port Labels API Error:", errorMsg, apiPortLabels);
+      setPortLabelsError(errorMsg);
+    } else {
+      setPortLabelsError(null);
+    }
+  }, [apiPortLabels, isPortLabelsError]);
+
+  // Validate inlets API response
+  useEffect(() => {
+    if (isInletsError) {
+      const errorMsg = "Failed to fetch inlets from API";
+      console.error("Inlets API Error:", errorMsg);
+      setInletsError(errorMsg);
+      return;
+    }
+
+    if (!apiInlets) return;
+
+    if (!apiInlets.result) {
+      const errorMsg = "Inlets API returned null or undefined data";
+      console.error("Inlets API Error:", errorMsg, apiInlets);
+      setInletsError(errorMsg);
+    } else if (
+      Array.isArray(apiInlets.result) &&
+      apiInlets.result.length === 0
+    ) {
+      const errorMsg = "Inlets API returned empty array";
+      console.error("Inlets API Error:", errorMsg, apiInlets);
+      setInletsError(errorMsg);
+    } else {
+      setInletsError(null);
+    }
+  }, [apiInlets, isInletsError]);
+
+  // Use mock data if API fails, otherwise use API data
+  const portLabelsData = useMemo(() => {
+    if (isPortLabelsError || !apiPortLabels || portLabelsError) {
+      return mockPortLabelsData;
+    }
+    return apiPortLabels;
+  }, [apiPortLabels, isPortLabelsError, portLabelsError]);
+
+  // Create port labels map from API/mock data
+  const portLabelsMap = useMemo(() => {
+    const labelsMap: Record<number, string> = {};
+    if (portLabelsData?.result) {
+      portLabelsData.result.forEach((label) => {
+        const portNumber = parseInt(label.portId, 10);
+        if (!isNaN(portNumber)) {
+          labelsMap[portNumber] = label.portLabel;
+        }
+      });
+    }
+    return labelsMap;
+  }, [portLabelsData]);
+
+  // Check if both APIs have returned data
+  const isDataReady = useMemo(() => {
+    return !!(apiInlets?.result && apiPortConfig?.result);
+  }, [apiInlets, apiPortConfig]);
+
+  // Initial state from API - this is the baseline for comparison
+  const [initialApiState, setInitialApiState] = useState<PortConfig | null>(
+    null
+  );
+
+  // Current port configuration state
   const [portConfig, setPortConfig] = useState<PortConfig>(() =>
     loadPortConfig()
   );
 
-  // Store the original mock data separately
-  const [originalMockNames] = useState<Record<number, string>>(() => {
+  // Update port config when both APIs return data
+  useEffect(() => {
+    // Only proceed if both APIs have data
+    if (!apiInlets?.result || !apiPortConfig?.result) return;
+
+    // Create Set of enabled port numbers from port configuration API
+    const enabledPortsSet = apiPortConfig.result.enabled_ports
+      ? new Set(apiPortConfig.result.enabled_ports)
+      : new Set<number>();
+
+    const apiConfig: PortConfig = {
+      names: {},
+      enabled: {}
+    };
+
+    // Process inlets data - only PORT type
+    apiInlets.result.forEach((inlet) => {
+      // Only process PORT type inlets
+      if (inlet.type !== "PORT") return;
+
+      if (!inlet.available) return;
+
+      // Calculate port number: (bankId - 1) * 8 + id
+      const portNumber = (inlet.bankId - 1) * 8 + inlet.id;
+
+      // Set enabled status from port configuration API
+      // Check if calculated port number exists in enabled_ports array
+      apiConfig.enabled[portNumber] = enabledPortsSet.has(portNumber);
+
+      // Set port names from inlet label or name
+      apiConfig.names[portNumber] =
+        inlet.label || inlet.name || `Port ${portNumber}`;
+    });
+
+    // Ensure Ambient port is always enabled
+    apiConfig.enabled[0] = true;
+    apiConfig.names[0] = "Ambient";
+
+    // Set initial API state (baseline for comparison)
+    setInitialApiState(apiConfig);
+
+    // Set current port config to API state
+    setPortConfig(apiConfig);
+  }, [apiInlets, apiPortConfig]);
+
+  // Store the original port names from API/mock data for reset functionality
+  const originalMockNames = useMemo<Record<number, string>>(() => {
     const initialNames: Record<number, string> = {};
-    for (let i = 1; i <= 64; i++) {
-      initialNames[i] = mockStepNames[i] || `Port ${i}`;
+    // Use port labels from API if available, otherwise fallback to mockStepNames
+    if (Object.keys(portLabelsMap).length > 0) {
+      Object.entries(portLabelsMap).forEach(([portNum, label]) => {
+        const portNumber = parseInt(portNum, 10);
+        if (!isNaN(portNumber)) {
+          initialNames[portNumber] = label;
+        }
+      });
+    } else {
+      // Fallback to mockStepNames if port labels not loaded yet
+      for (let i = 1; i <= 64; i++) {
+        initialNames[i] = mockStepNames[i] || `Port ${i}`;
+      }
     }
     return initialNames;
-  });
+  }, [portLabelsMap]);
 
   // Use portConfig state instead of separate portNames/portEnabled
   const portNames = portConfig.names;
@@ -99,45 +267,137 @@ export const PortConfigurationTab = () => {
   const [showSaveConfirmationDialog, setShowSaveConfirmationDialog] =
     useState(false);
 
-  // Track the last saved state to determine unsaved changes
-  const [lastSavedConfig, setLastSavedConfig] = useState<PortConfig>(() =>
-    loadPortConfig()
-  );
-
-  // Debug portEnabled state changes
-  useEffect(() => {
-    {
-      /* empty */
+  // Helper function to extract error message from API error
+  const extractErrorMessage = (error: any): string | null => {
+    if (
+      error?.data?.message &&
+      typeof error.data.message === "string" &&
+      error.data.message.trim()
+    ) {
+      return error.data.message.trim();
     }
-  }, [portEnabled]);
+    if (
+      error?.data?.error &&
+      typeof error.data.error === "string" &&
+      error.data.error.trim()
+    ) {
+      return error.data.error.trim();
+    }
+    if (
+      error?.message &&
+      typeof error.message === "string" &&
+      error.message.trim()
+    ) {
+      return error.message.trim();
+    }
+    if (typeof error === "string" && error.trim()) {
+      return error.trim();
+    }
+    return null;
+  };
 
-  // Check if there are unsaved changes
+  // Check if there are unsaved changes compared to initial API state
   const hasUnsavedChanges = useMemo(() => {
-    // Check if any port names have changed from last saved state
-    for (let i = 1; i <= 64; i++) {
-      if (portNames[i] !== lastSavedConfig.names[i]) {
+    if (!initialApiState) return false;
+
+    // Check port names changes
+    const allPortNumbers = new Set([
+      ...Object.keys(portNames).map(Number),
+      ...Object.keys(initialApiState.names).map(Number)
+    ]);
+
+    for (const portNumber of allPortNumbers) {
+      if (portNames[portNumber] !== initialApiState.names[portNumber]) {
         return true;
       }
     }
-    // Check if any port enabled status has changed from last saved state
-    for (let i = 1; i <= 64; i++) {
-      if (portEnabled[i] !== lastSavedConfig.enabled[i]) {
+
+    // Check port enabled status changes
+    const allEnabledPortNumbers = new Set([
+      ...Object.keys(portEnabled).map(Number),
+      ...Object.keys(initialApiState.enabled).map(Number)
+    ]);
+
+    for (const portNumber of allEnabledPortNumbers) {
+      if (portEnabled[portNumber] !== initialApiState.enabled[portNumber]) {
         return true;
       }
     }
+
     return false;
-  }, [portNames, portEnabled, lastSavedConfig]);
+  }, [portNames, portEnabled, initialApiState]);
 
   const handleSaveAllChanges = async () => {
     if (!hasUnsavedChanges) return;
 
     setIsSaving(true);
     try {
-      // TODO: Implement network call to save changes
-      // Example: await savePortConfiguration({ portNames, portEnabled })
+      // Update port labels via API for all changed port names
+      if (initialApiState) {
+        const portLabelUpdates: Promise<void>[] = [];
 
-      // Simulate network call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Find all changed port names
+        Object.entries(portNames).forEach(([portNum, currentName]) => {
+          const portNumber = parseInt(portNum, 10);
+          const originalName = initialApiState.names[portNumber];
+
+          // If name has changed and we have inlet info, add to update queue
+          if (
+            currentName &&
+            currentName !== originalName &&
+            portToInletMap[portNumber]
+          ) {
+            const inletInfo = portToInletMap[portNumber];
+            portLabelUpdates.push(
+              updatePortLabel({
+                bankId: inletInfo.bankId,
+                inletId: inletInfo.inletId,
+                label: currentName
+              })
+                .unwrap()
+                .then(() => {
+                  /* empty */
+                })
+                .catch((error: any) => {
+                  console.error(
+                    `Failed to update port label for port ${portNumber}:`,
+                    error
+                  );
+                  const errorMessage =
+                    extractErrorMessage(error) ||
+                    `Failed to update port ${portNumber}`;
+                  throw new Error(errorMessage);
+                })
+            );
+          }
+        });
+
+        // Execute all port label updates
+        if (portLabelUpdates.length > 0) {
+          await Promise.all(portLabelUpdates);
+        }
+      }
+
+      // Update port configuration (enabled ports) if status has changed
+      if (initialApiState) {
+        const hasPortStatusChanges = Object.entries(portEnabled).some(
+          ([portNum, enabled]) => {
+            const portNumber = parseInt(portNum, 10);
+            return enabled !== initialApiState.enabled[portNumber];
+          }
+        );
+
+        if (hasPortStatusChanges) {
+          const enabledPortsArray = Object.entries(portEnabled)
+            .filter(([_, enabled]) => enabled === true)
+            .map(([portNum]) => parseInt(portNum, 10))
+            .sort((a, b) => a - b);
+
+          await updatePortConfiguration({
+            enabled_ports: enabledPortsArray
+          }).unwrap();
+        }
+      }
 
       // Save to shared storage
       savePortConfig(portConfig);
@@ -149,10 +409,14 @@ export const PortConfigurationTab = () => {
       // Success toast
       toast.success("Port configuration saved successfully!");
 
-      // Update the last saved state to current values
-      setLastSavedConfig({ ...portConfig });
-    } catch (error) {
-      toast.error("Failed to save port configuration. Please try again.");
+      // Update the initial API state to current values (new baseline)
+      setInitialApiState({ ...portConfig });
+    } catch (error: any) {
+      console.error("Error saving port configuration:", error);
+      const errorMessage = extractErrorMessage(error);
+      toast.info(
+        errorMessage || "Failed to save port configuration. Please try again."
+      );
     } finally {
       setIsSaving(false);
     }
@@ -168,15 +432,21 @@ export const PortConfigurationTab = () => {
 
       toast.success("Flow rate established successfully!");
     } catch (error) {
-      toast.error("Failed to establish flow rate. Please try again.");
+      toast.info("Failed to establish flow rate. Please try again.");
     }
   };
 
   const handleSaveWithConfirmation = () => {
-    // Check if any port enabled status has changed
+    if (!initialApiState) {
+      handleSaveAllChanges();
+      return;
+    }
+
     const hasPortStatusChanges = Object.entries(portEnabled).some(
-      ([portNum, enabled]) =>
-        enabled !== lastSavedConfig.enabled[parseInt(portNum)]
+      ([portNum, enabled]) => {
+        const portNumber = parseInt(portNum, 10);
+        return enabled !== initialApiState.enabled[portNumber];
+      }
     );
 
     if (hasPortStatusChanges) {
@@ -186,72 +456,153 @@ export const PortConfigurationTab = () => {
     }
   };
 
-  // Create a mapping from boundary ID to boundary details
-  const boundaryMap = useMemo(() => {
-    const map = new Map<string, Boundary>();
-    mockBoundaries.forEach((boundary) => {
-      map.set(boundary.id, boundary);
-    });
+  // Create Set of enabled port numbers from port configuration API
+  const enabledPortsSet = useMemo(() => {
+    if (apiPortConfig?.result?.enabled_ports) {
+      return new Set(apiPortConfig.result.enabled_ports);
+    }
+    return new Set<number>();
+  }, [apiPortConfig]);
+
+  // Create a map from portNumber to {bankId, inletId} for API calls
+  const portToInletMap = useMemo(() => {
+    const map: Record<number, { bankId: number; inletId: number }> = {};
+
+    if (apiInlets?.result) {
+      apiInlets.result.forEach((inlet) => {
+        // Only process PORT type inlets
+        if (inlet.type !== "PORT") return;
+
+        // Skip if not available
+        if (!inlet.available) return;
+
+        // Calculate port number: (bankId - 1) * 8 + id
+        const portNumber = (inlet.bankId - 1) * 8 + inlet.id;
+
+        map[portNumber] = {
+          bankId: inlet.bankId,
+          inletId: inlet.id
+        };
+      });
+    }
+
     return map;
-  }, []);
+  }, [apiInlets]);
 
-  // Create a mapping from port number to boundary info
-  const portToBoundaryMap = useMemo(() => {
-    const map = new Map<number, Boundary>();
-    mockPortMarkers.forEach((marker) => {
-      const boundary = boundaryMap.get(marker.boundaryId);
-      if (boundary) {
-        map.set(marker.port.portNumber, boundary);
-      }
-    });
-    return map;
-  }, [boundaryMap]);
-
-  // Generate ports data using common configuration
-  const basePorts = useMemo(() => generateAllPorts(), []);
-
-  const ports = useMemo((): Port[] => {
-    const regularPorts = basePorts.map((port) => {
-      // If this port is currently being edited, use the editValue
-      // Otherwise use the stored portNames value
-      let displayName: string;
-      if (editingPort === port.portNumber) {
-        displayName = editValue;
-      } else {
-        displayName = portNames[port.portNumber] || port.name;
-      }
-
-      return {
-        id: port.id,
-        portNumber: port.portNumber,
-        name: displayName,
-        bankNumber: port.bankNumber,
-        enabled: portEnabled[port.portNumber] || true, // Use portEnabled state
-        type: "regular" as const
-      };
-    });
-
-    // Add Ambient port (always enabled, cannot be renamed)
-    const ambientPort: Port = {
-      ...getAmbientPort(),
-      name: portNames[AMBIENT_PORT_NUMBER] || getAmbientPort().name
-    };
-
-    return [ambientPort, ...regularPorts];
-  }, [basePorts, editingPort, editValue, portNames, portEnabled]);
-
+  // Transform inlets data to Port format and group by bankId
   const portsByBank = useMemo(() => {
-    const byBank = getPortsByBank(ports);
-    // Ensure Ambient port is in bank 0
-    if (!byBank[0]) {
-      byBank[0] = [];
+    const byBank: Record<number, Port[]> = {};
+
+    // Initialize bank 0 for Ambient port
+    byBank[0] = [
+      {
+        ...getAmbientPort(),
+        name: portNames[AMBIENT_PORT_NUMBER] || getAmbientPort().name
+      }
+    ];
+
+    // Process inlets if available
+    if (apiInlets?.result) {
+      apiInlets.result.forEach((inlet) => {
+        // Only display PORT type inlets
+        if (inlet.type !== "PORT") return;
+
+        // Skip if not available
+        if (!inlet.available) return;
+
+        // Calculate port number: (bankId - 1) * 8 + id
+        const portNumber = (inlet.bankId - 1) * 8 + inlet.id;
+
+        // Get display name (use label if available, otherwise name)
+        let displayName: string;
+        if (editingPort === portNumber) {
+          displayName = editValue;
+        } else {
+          displayName =
+            portNames[portNumber] ||
+            inlet.label ||
+            inlet.name ||
+            `Port ${portNumber}`;
+        }
+
+        // Determine enabled status from port configuration API
+        // Check if calculated port number exists in enabled_ports array
+        const isEnabledFromApi = enabledPortsSet.has(portNumber);
+
+        // Use portEnabled state if set, otherwise use enabled status from port configuration API
+        const enabled =
+          portEnabled[portNumber] !== undefined
+            ? portEnabled[portNumber] === true
+            : isEnabledFromApi;
+
+        const port: Port = {
+          id: `inlet-${inlet.id}`,
+          portNumber,
+          name: displayName,
+          bankNumber: inlet.bankId,
+          enabled,
+          type: "regular"
+        };
+
+        // Group by bankId
+        if (!byBank[inlet.bankId]) {
+          byBank[inlet.bankId] = [];
+        }
+        byBank[inlet.bankId].push(port);
+      });
+    } else {
+      // Fallback to original logic if inlets not available
+      const basePorts = generateAllPorts();
+      const availablePortNumbers = apiPortConfig?.result?.available_ports
+        ? new Set(apiPortConfig.result.available_ports)
+        : new Set(Array.from({ length: 64 }, (_, i) => i + 1));
+
+      basePorts
+        .filter((port) => availablePortNumbers.has(port.portNumber))
+        .forEach((port) => {
+          let displayName: string;
+          if (editingPort === port.portNumber) {
+            displayName = editValue;
+          } else {
+            displayName =
+              portNames[port.portNumber] ||
+              portLabelsMap[port.portNumber] ||
+              port.name;
+          }
+
+          const portData: Port = {
+            id: port.id,
+            portNumber: port.portNumber,
+            name: displayName,
+            bankNumber: port.bankNumber,
+            enabled: portEnabled[port.portNumber] === true,
+            type: "regular" as const
+          };
+
+          if (!byBank[port.bankNumber]) {
+            byBank[port.bankNumber] = [];
+          }
+          byBank[port.bankNumber].push(portData);
+        });
     }
-    const hasAmbient = byBank[0].some((p) => p.portNumber === 0);
-    if (!hasAmbient) {
-      byBank[0] = [getAmbientPort(), ...byBank[0]];
-    }
+
+    // Sort ports within each bank by portNumber
+    Object.keys(byBank).forEach((bankKey) => {
+      const bankNum = parseInt(bankKey, 10);
+      byBank[bankNum].sort((a, b) => a.portNumber - b.portNumber);
+    });
+
     return byBank;
-  }, [ports]);
+  }, [
+    apiInlets,
+    apiPortConfig,
+    enabledPortsSet,
+    editingPort,
+    editValue,
+    portNames,
+    portLabelsMap,
+    portEnabled
+  ]);
 
   const handleEditStart = (portNumber: number, currentName: string) => {
     // Prevent editing Ambient port
@@ -260,27 +611,25 @@ export const PortConfigurationTab = () => {
     }
     setEditingPort(portNumber);
     setEditValue(currentName);
-    // Always use the original mock data value for reset
     setOriginalValue(originalMockNames[portNumber]);
   };
 
   const handleEditSave = (portNumber: number) => {
     const trimmedValue = editValue.trim();
 
-    // Validation checks
-    if (!trimmedValue) {
-      return; // Don't save empty labels, but don't show error
-    }
+    if (!trimmedValue) return;
 
     if (trimmedValue.length > 20) {
-      toast.error("Port label cannot exceed 20 characters");
+      toast.info("Port label cannot exceed 20 characters");
       return;
     }
 
+    // Update local state - API will be called when user clicks Save button
     setPortNames((prev) => ({
       ...prev,
       [portNumber]: trimmedValue
     }));
+
     setEditingPort(null);
     setEditValue("");
   };
@@ -293,18 +642,49 @@ export const PortConfigurationTab = () => {
   const handleResetToOriginal = () => {
     if (originalValue) {
       setEditValue(originalValue);
-      // Don't update portNames state - only update the input field
-      // This way the reset is visible in the input but doesn't affect the displayed ports
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent, portNumber: number) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       handleEditSave(portNumber);
     } else if (e.key === "Escape") {
+      e.preventDefault();
       handleEditCancel();
     }
   };
+
+  // Show loading state until both APIs (inlets and port configuration) return data
+  if (isInletsLoading || isApiLoading || !isDataReady) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <div className="text-neutral-500 dark:text-neutral-400">
+          Loading port configuration...
+        </div>
+      </div>
+    );
+  }
+
+  // Show "No data" message if APIs returned invalid data
+  if (
+    inletsError ||
+    (apiInlets &&
+      (!apiInlets.result ||
+        (Array.isArray(apiInlets.result) && apiInlets.result.length === 0)))
+  ) {
+    return (
+      <div className="flex flex-col justify-center items-center p-8 space-y-4">
+        <div className="text-neutral-900 dark:text-neutral-100 text-lg font-semibold">
+          No Data Available
+        </div>
+        <div className="text-neutral-600 dark:text-neutral-400 text-sm text-center max-w-md">
+          {inletsError ||
+            "Inlets API returned no data. Please check the console for more details."}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -335,9 +715,11 @@ export const PortConfigurationTab = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setPortConfig({ ...lastSavedConfig });
+                      if (initialApiState) {
+                        setPortConfig({ ...initialApiState });
+                      }
                     }}
-                    disabled={isSaving}
+                    disabled={isSaving || !initialApiState}
                   >
                     Reset
                   </Button>
@@ -484,26 +866,6 @@ export const PortConfigurationTab = () => {
                                 </div>
                               )}
                             </div>
-
-                            {/* Show room name if available */}
-                            {portToBoundaryMap.has(port.portNumber) && (
-                              <div className="mt-1.5">
-                                {(() => {
-                                  const boundary = portToBoundaryMap.get(
-                                    port.portNumber
-                                  );
-                                  if (!boundary) return null;
-                                  return (
-                                    <div className="flex items-center gap-1.5">
-                                      <MapPin className="w-3 h-3  flex-shrink-0" />
-                                      <span className=" text-xs">
-                                        {boundary.name}
-                                      </span>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             {editingPort !== port.portNumber && (

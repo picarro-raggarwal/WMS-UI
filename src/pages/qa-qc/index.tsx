@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   Select,
@@ -8,24 +7,29 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, ExternalLink } from "lucide-react";
 import { useState } from "react";
-import { AuditLogs } from "./components/audit-logs";
 import { CalibrationHistory } from "./components/calibration-history";
 import { DataCompleteness } from "./components/data-completeness";
 import { GasCylinders } from "./components/gas-cylinders";
+import { QAQCExportDialog } from "./components/qa-qc-export-dialog";
 import { SystemMetrics } from "./components/system-metrics";
 
 const QAQCPage = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<"last30" | "active">(
     "last30"
   );
-  const tabsTriggerClasses =
-    "py-3 mb-1 rounded-none  data-[state=active]:bg-neutral-50  border-b-2 data-[state=active]:border-primary-500  ";
+
+  const tabsTriggerClasses = `px-1 py-3 
+   border-b-2 border-transparent mb-[4px] text-neutral-600 hover:text-neutral-900 rounded-none
+     transition-colors data-[state=active]:bg-transparent data-[state=active]:border-primary-500
+      data-[state=active]:text-black`;
+
   return (
     <>
-      <PageHeader />
-      <main className="max-w-8xl mx-auto py-6 h-full overflow-y-auto w-full px-8 md:px-12 space-y-8">
+      <PageHeader pageName="Quality Assurance & Control">
+        <QAQCExportDialog />
+      </PageHeader>
+      <main className="space-y-8 mx-auto px-8 md:px-12 py-6 w-full max-w-8xl h-full overflow-y-auto">
         <div className=" ">
           <div className="flex justify-between items-center mb-4">
             <Select
@@ -34,7 +38,7 @@ const QAQCPage = () => {
                 setSelectedPeriod(value)
               }
             >
-              <SelectTrigger className="w-[240px]">
+              <SelectTrigger className="bg-white w-[240px]">
                 <SelectValue placeholder="Select time period" />
               </SelectTrigger>
               <SelectContent>
@@ -42,55 +46,44 @@ const QAQCPage = () => {
                 <SelectItem value="active">Active Reporting Period</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-1">
-                <Download className="h-4 w-4 mr-1" />
-                Export QA Report
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1">
-                <ExternalLink className="h-4 w-4 mr-1" />
-                Cloud Audit Logs
-              </Button>
-            </div>
           </div>
           <SystemMetrics selectedPeriod={selectedPeriod} />
-          <div className="mt-8 border-t border-neutral-200 pt-8">
+          <div className="mt-8 rounded-none">
             <Tabs defaultValue="cylinders" className="w-full">
-              <TabsList className=" border-b border-neutral-200 w-full    rounded-none  p-2 flex items-center justify-start gap-2">
+              <TabsList className="flex justify-start items-center gap-3 bg-neutral-50 mb-4 -ml-1 p-0 border-neutral-200 border-b rounded-none w-full">
                 <TabsTrigger value="cylinders" className={tabsTriggerClasses}>
                   Gas Cylinders
                 </TabsTrigger>
                 <TabsTrigger value="calibration" className={tabsTriggerClasses}>
                   Calibration History
                 </TabsTrigger>
-                <TabsTrigger
-                  value="completeness"
-                  className={tabsTriggerClasses}
-                >
+                {/* <TabsTrigger value="completeness" className={tabsTriggerClasses}>
                   Data Completeness
                 </TabsTrigger>
                 <TabsTrigger value="audit" className={tabsTriggerClasses}>
                   Audit Logs
-                </TabsTrigger>
+                </TabsTrigger> */}
               </TabsList>
 
-              <TabsContent value="cylinders">
-                <GasCylinders />
+              <TabsContent value="cylinders" className="mt-0">
+                <div className="shadow-sm rounded-xl">
+                  <GasCylinders />
+                </div>
               </TabsContent>
 
-              <TabsContent value="calibration">
-                <CalibrationHistory />
+              <TabsContent value="calibration" className="mt-0">
+                <div className="shadow-sm rounded-xl">
+                  <CalibrationHistory />
+                </div>
               </TabsContent>
 
-              <TabsContent value="completeness">
-                <DataCompleteness selectedPeriod={selectedPeriod} />
-              </TabsContent>
-
-              <TabsContent value="audit">
-                <AuditLogs />
+              <TabsContent value="completeness" className="mt-0">
+                <div className="bg-white shadow-sm rounded-xl">
+                  <DataCompleteness selectedPeriod={selectedPeriod} />
+                </div>
               </TabsContent>
             </Tabs>
-          </div>{" "}
+          </div>
         </div>
       </main>
     </>

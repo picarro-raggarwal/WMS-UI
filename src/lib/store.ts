@@ -14,6 +14,10 @@ import { fencelineStateMachineApi } from "@/pages/method/data/fencelineStateMach
 import { recipesApi } from "@/pages/method/data/recipes.slice";
 import { qaqcApi } from "@/pages/qa-qc/data/qaqc.slice";
 import { qaqcDataApi } from "@/pages/qa-qc/data/qaqcData.slice";
+import {
+  inletsApi,
+  portConfigurationApi
+} from "@/pages/settings/data/port-configuration.slice";
 import { settingsApi } from "@/pages/settings/data/settings.slice";
 import { smartRecipeApi } from "@/pages/settings/data/smart-recipe.slice";
 import { thresholdsApi } from "@/pages/settings/data/thresholds.slice";
@@ -40,6 +44,8 @@ export const store = configureStore({
     [timeSyncApi.reducerPath]: timeSyncApi.reducer,
     [systemInfoApi.reducerPath]: systemInfoApi.reducer,
     [thresholdsApi.reducerPath]: thresholdsApi.reducer,
+    [portConfigurationApi.reducerPath]: portConfigurationApi.reducer,
+    [inletsApi.reducerPath]: inletsApi.reducer,
     [settingsApi.reducerPath]: settingsApi.reducer,
     [alertsApi.reducerPath]: alertsApi.reducer,
     [userManagementApi.reducerPath]: userManagementApi.reducer,
@@ -63,6 +69,8 @@ export const store = configureStore({
       .concat(timeSyncApi.middleware)
       .concat(systemInfoApi.middleware)
       .concat(thresholdsApi.middleware)
+      .concat(portConfigurationApi.middleware)
+      .concat(inletsApi.middleware)
       .concat(settingsApi.middleware)
       .concat(alertsApi.middleware)
       .concat(userManagementApi.middleware)

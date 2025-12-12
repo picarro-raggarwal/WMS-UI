@@ -1,5 +1,4 @@
-import { protectedBaseQuery } from "@/utils";
-import { createApi } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 interface ExportConcentrationParams {
   data_type?: "avg" | "time_series";
@@ -51,7 +50,9 @@ interface AvailableSubcomponentsResponse {
 
 export const dataExportApi = createApi({
   reducerPath: "dataExportApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_data_export/api/v1"),
+  baseQuery: fetchBaseQuery({
+    baseUrl: "/api/fenceline_data_export/api/v1"
+  }),
   tagTypes: ["Export"],
   endpoints: (builder) => ({
     exportConcentration: builder.mutation<
@@ -119,6 +120,17 @@ export const dataExportApi = createApi({
       query: () => ({
         url: "/export/available_subcomponent_list"
       })
+    }),
+    exportQAQCData: builder.mutation<
+      Blob,
+      { start_time: number; end_time: number }
+    >({
+      query: (body) => ({
+        url: "/export_qaqc_data",
+        method: "POST",
+        body,
+        responseHandler: (response) => response.blob()
+      })
     })
   })
 });
@@ -129,5 +141,6 @@ export const {
   useGetExportStatusQuery,
   useGetAllExportsQuery,
   useDownloadExportFileQuery,
-  useGetAvailableSubcomponentsQuery
+  useGetAvailableSubcomponentsQuery,
+  useExportQAQCDataMutation
 } = dataExportApi;

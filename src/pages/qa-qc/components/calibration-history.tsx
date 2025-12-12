@@ -177,9 +177,8 @@ export const CalibrationHistory = () => {
                   const isOpen = collapsed.has(idx);
 
                   return (
-                    <>
+                    <React.Fragment key={`fragment-${idx}`}>
                       <TableRow
-                        key={`main-${idx}`}
                         className={`rounded-lg border-none cursor-pointer select-none ${
                           idx % 2 === 0 ? "bg-neutral-100" : "bg-white"
                         } hover:bg-neutral-50`}
@@ -303,7 +302,7 @@ export const CalibrationHistory = () => {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </React.Fragment>
                   );
                 })}
               </TableBody>

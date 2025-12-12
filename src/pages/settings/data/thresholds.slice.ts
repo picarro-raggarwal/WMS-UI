@@ -1,26 +1,22 @@
 import { protectedBaseQuery } from "@/utils";
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { generateMockSpeciesThresholdsData } from "./species-threshold-mock-data";
 import {
   SpeciesThresholdsResponse,
+  SpeciesThresholdUpdatePayload,
   SpeciesThresholdUpdateRequest
 } from "./thresholds.types";
 
 export const thresholdsApi = createApi({
   reducerPath: "thresholdsApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
+  baseQuery: protectedBaseQuery("/api/thresholds/api/v2"),
   tagTypes: ["SpeciesThresholds"],
   endpoints: (builder) => ({
     getAllSpeciesThresholds: builder.query<SpeciesThresholdsResponse, void>({
       providesTags: ["SpeciesThresholds"],
-      async queryFn() {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return { data: generateMockSpeciesThresholdsData() };
+      query: () => "/thresholds_model",
+      transformResponse: (response: SpeciesThresholdsResponse) => {
+        return response;
       }
-      // query: () => "/get_all_species_thresholds",
-      // transformResponse: (response: SpeciesThresholdsResponse) => {
-      //   return response;
-      // }
     }),
 
     setAllSpeciesThresholds: builder.mutation<
@@ -28,8 +24,29 @@ export const thresholdsApi = createApi({
       SpeciesThresholdUpdateRequest
     >({
       invalidatesTags: ["SpeciesThresholds"],
-      async queryFn(body) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+      async queryFn(body, _queryApi, _extraOptions) {
+        // Transform request to only include species array
+        const payload: SpeciesThresholdUpdatePayload = {
+          species: body.species
+        };
+
+        // Use a separate baseQuery for the update endpoint (different base path)
+        const updateBaseQuery = protectedBaseQuery("/api");
+        const result = await updateBaseQuery(
+          {
+            url: "/thresholds/api/v0.1/update",
+            method: "POST",
+            body: payload
+          },
+          _queryApi,
+          _extraOptions
+        );
+
+        if (result.error) {
+          return { error: result.error };
+        }
+
+        // Return the original body as response (API might return success or the updated data)
         return { data: body };
       }
     })

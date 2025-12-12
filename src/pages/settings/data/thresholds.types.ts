@@ -48,3 +48,8 @@ export interface SpeciesThresholdUpdateRequest {
   last_updated_topology: string;
   last_modified: string;
 }
+
+// Update request payload - only species array is sent
+export interface SpeciesThresholdUpdatePayload {
+  species: Species[];
+}
