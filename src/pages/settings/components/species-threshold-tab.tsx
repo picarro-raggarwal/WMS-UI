@@ -468,7 +468,7 @@ export const SpeciesThresholdTab = () => {
     const validation = validateInlineEdit(type, numValue, currentThreshold);
 
     if (!validation.isValid) {
-      toast.info(validation.error!);
+      toast.error(validation.error!);
 
       // Reset to original value
       const originalValue = portThresholds[compound]?.[port]?.[type];

@@ -3,46 +3,38 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface SmartRecipeConfig {
   enabled: boolean;
-  iteration_count: number;
+  step_iterations: number;
 }
 
 export interface SmartRecipeConfigResponse {
-  data: SmartRecipeConfig;
+  result: SmartRecipeConfig;
 }
 
-// Mock data for development
-const mockConfig: SmartRecipeConfig = {
-  enabled: false,
-  iteration_count: 5
-};
+export interface UpdateSmartRecipeConfigRequest {
+  enabled: boolean;
+  step_iterations: number;
+}
 
 export const smartRecipeApi = createApi({
   reducerPath: "smartRecipeApi",
-  baseQuery: protectedBaseQuery("/api/smart_recipe"),
+  baseQuery: protectedBaseQuery("/api/system_status/api/v2"),
   tagTypes: ["SmartRecipeConfig"],
   endpoints: (builder) => ({
     getSmartRecipeConfig: builder.query<SmartRecipeConfigResponse, void>({
-      providesTags: ["SmartRecipeConfig"],
-      // Mock data for development - remove this when backend is ready
-      async queryFn() {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return { data: { data: mockConfig } };
-      }
+      query: () => "/smart_recipe_settings",
+      providesTags: ["SmartRecipeConfig"]
     }),
+
     updateSmartRecipeConfig: builder.mutation<
       SmartRecipeConfigResponse,
-      Partial<SmartRecipeConfig>
+      UpdateSmartRecipeConfigRequest
     >({
-      invalidatesTags: ["SmartRecipeConfig"],
-      // Mock data for development - remove this when backend is ready
-      async queryFn(body) {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        // Update mock data
-        Object.assign(mockConfig, body);
-        return { data: { data: mockConfig } };
-      }
+      query: (body) => ({
+        url: "/smart_recipe_settings",
+        method: "PUT",
+        body
+      }),
+      invalidatesTags: ["SmartRecipeConfig"]
     })
   })
 });
@@ -51,5 +43,3 @@ export const {
   useGetSmartRecipeConfigQuery,
   useUpdateSmartRecipeConfigMutation
 } = smartRecipeApi;
-
-

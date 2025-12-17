@@ -21,19 +21,19 @@ export const SmartRecipeTab = () => {
 
   // Initialize form with API data
   useEffect(() => {
-    if (configData?.data) {
-      setEnabled(configData.data.enabled);
-      setIterationCount(configData.data.iteration_count);
+    if (configData?.result) {
+      setEnabled(configData.result.enabled);
+      setIterationCount(configData.result.step_iterations);
       setHasChanges(false);
     }
   }, [configData]);
 
   // Track changes
   useEffect(() => {
-    if (configData?.data) {
+    if (configData?.result) {
       const hasChanges =
-        enabled !== configData.data.enabled ||
-        iterationCount !== configData.data.iteration_count;
+        enabled !== configData.result.enabled ||
+        iterationCount !== configData.result.step_iterations;
       setHasChanges(hasChanges);
     }
   }, [enabled, iterationCount, configData]);
@@ -42,7 +42,7 @@ export const SmartRecipeTab = () => {
     try {
       await updateConfig({
         enabled,
-        iteration_count: iterationCount
+        step_iterations: iterationCount
       }).unwrap();
 
       toast.success("Smart recipe configuration updated successfully");
@@ -54,9 +54,9 @@ export const SmartRecipeTab = () => {
   };
 
   const handleReset = () => {
-    if (configData?.data) {
-      setEnabled(configData.data.enabled);
-      setIterationCount(configData.data.iteration_count);
+    if (configData?.result) {
+      setEnabled(configData.result.enabled);
+      setIterationCount(configData.result.step_iterations);
       setHasChanges(false);
     }
   };

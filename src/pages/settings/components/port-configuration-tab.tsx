@@ -29,11 +29,10 @@ import {
 import { Check, Edit3, RotateCcw, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { mockPortLabelsData } from "../data/port-configuration-mock-data";
 import {
   useGetInletsQuery,
   useGetPortConfigurationQuery,
-  useGetPortLabelsQuery,
+  useRunEstablishFlowRateMutation,
   useUpdatePortConfigurationMutation,
   useUpdatePortLabelMutation
 } from "../data/port-configuration.slice";
@@ -47,16 +46,34 @@ interface Port {
   type: "regular" | "ambient";
 }
 
+/**
+ * Get label from inlet object with fallback priority:
+ * 1. inlet.label (if not empty/null)
+ * 2. inlet.name (if not empty/null)
+ * 3. Port #{id} (using inlet id)
+ */
+const getInletLabel = (inlet: {
+  bankId: number;
+  id: number;
+  label?: string;
+  name?: string;
+}): string => {
+  // Priority: label -> name -> Port #id
+  if (inlet.label && inlet.label.trim()) {
+    return inlet.label.trim();
+  }
+  if (inlet.name && inlet.name.trim()) {
+    return inlet.name.trim();
+  }
+  return `Port #${inlet.id}`;
+};
+
 export const PortConfigurationTab = () => {
   // Fetch port configuration from API
   const { data: apiPortConfig, isLoading: isApiLoading } =
     useGetPortConfigurationQuery();
 
-  // Fetch port labels from API
-  const { data: apiPortLabels, isError: isPortLabelsError } =
-    useGetPortLabelsQuery();
-
-  // Fetch inlets from API
+  // Fetch inlets from API (contains port labels)
   const {
     data: apiInlets,
     isLoading: isInletsLoading,
@@ -69,36 +86,11 @@ export const PortConfigurationTab = () => {
   // Mutation for updating port configuration (enabled ports)
   const [updatePortConfiguration] = useUpdatePortConfigurationMutation();
 
+  // Mutation for establishing flow rate
+  const [runEstablishFlowRate] = useRunEstablishFlowRateMutation();
+
   // State for validation errors
-  const [portLabelsError, setPortLabelsError] = useState<string | null>(null);
   const [inletsError, setInletsError] = useState<string | null>(null);
-
-  // Validate port labels API response
-  useEffect(() => {
-    if (isPortLabelsError) {
-      const errorMsg = "Failed to fetch port labels from API";
-      console.error("Port Labels API Error:", errorMsg);
-      setPortLabelsError(errorMsg);
-      return;
-    }
-
-    if (!apiPortLabels) return;
-
-    if (!apiPortLabels.result) {
-      const errorMsg = "Port labels API returned null or undefined data";
-      console.error("Port Labels API Error:", errorMsg, apiPortLabels);
-      setPortLabelsError(errorMsg);
-    } else if (
-      Array.isArray(apiPortLabels.result) &&
-      apiPortLabels.result.length === 0
-    ) {
-      const errorMsg = "Port labels API returned empty array";
-      console.error("Port Labels API Error:", errorMsg, apiPortLabels);
-      setPortLabelsError(errorMsg);
-    } else {
-      setPortLabelsError(null);
-    }
-  }, [apiPortLabels, isPortLabelsError]);
 
   // Validate inlets API response
   useEffect(() => {
@@ -126,28 +118,6 @@ export const PortConfigurationTab = () => {
       setInletsError(null);
     }
   }, [apiInlets, isInletsError]);
-
-  // Use mock data if API fails, otherwise use API data
-  const portLabelsData = useMemo(() => {
-    if (isPortLabelsError || !apiPortLabels || portLabelsError) {
-      return mockPortLabelsData;
-    }
-    return apiPortLabels;
-  }, [apiPortLabels, isPortLabelsError, portLabelsError]);
-
-  // Create port labels map from API/mock data
-  const portLabelsMap = useMemo(() => {
-    const labelsMap: Record<number, string> = {};
-    if (portLabelsData?.result) {
-      portLabelsData.result.forEach((label) => {
-        const portNumber = parseInt(label.portId, 10);
-        if (!isNaN(portNumber)) {
-          labelsMap[portNumber] = label.portLabel;
-        }
-      });
-    }
-    return labelsMap;
-  }, [portLabelsData]);
 
   // Check if both APIs have returned data
   const isDataReady = useMemo(() => {
@@ -193,9 +163,8 @@ export const PortConfigurationTab = () => {
       // Check if calculated port number exists in enabled_ports array
       apiConfig.enabled[portNumber] = enabledPortsSet.has(portNumber);
 
-      // Set port names from inlet label or name
-      apiConfig.names[portNumber] =
-        inlet.label || inlet.name || `Port ${portNumber}`;
+      // Set port names from inlet using helper function
+      apiConfig.names[portNumber] = getInletLabel(inlet);
     });
 
     // Ensure Ambient port is always enabled
@@ -209,25 +178,28 @@ export const PortConfigurationTab = () => {
     setPortConfig(apiConfig);
   }, [apiInlets, apiPortConfig]);
 
-  // Store the original port names from API/mock data for reset functionality
+  // Store the original port names from inlets API for reset functionality
   const originalMockNames = useMemo<Record<number, string>>(() => {
     const initialNames: Record<number, string> = {};
-    // Use port labels from API if available, otherwise fallback to mockStepNames
-    if (Object.keys(portLabelsMap).length > 0) {
-      Object.entries(portLabelsMap).forEach(([portNum, label]) => {
-        const portNumber = parseInt(portNum, 10);
-        if (!isNaN(portNumber)) {
-          initialNames[portNumber] = label;
-        }
+
+    // Use labels from inlets API if available
+    if (apiInlets?.result) {
+      apiInlets.result.forEach((inlet) => {
+        if (inlet.type !== "PORT" || !inlet.available) return;
+
+        initialNames[(inlet.bankId - 1) * 8 + inlet.id] = getInletLabel(inlet);
       });
-    } else {
-      // Fallback to mockStepNames if port labels not loaded yet
-      for (let i = 1; i <= 64; i++) {
+    }
+
+    // Fallback to mockStepNames for any missing ports
+    for (let i = 1; i <= 64; i++) {
+      if (!initialNames[i]) {
         initialNames[i] = mockStepNames[i] || `Port ${i}`;
       }
     }
+
     return initialNames;
-  }, [portLabelsMap]);
+  }, [apiInlets]);
 
   // Use portConfig state instead of separate portNames/portEnabled
   const portNames = portConfig.names;
@@ -414,7 +386,7 @@ export const PortConfigurationTab = () => {
     } catch (error: any) {
       console.error("Error saving port configuration:", error);
       const errorMessage = extractErrorMessage(error);
-      toast.info(
+      toast.error(
         errorMessage || "Failed to save port configuration. Please try again."
       );
     } finally {
@@ -424,15 +396,11 @@ export const PortConfigurationTab = () => {
 
   const handleEstablishFlowRate = async () => {
     try {
-      // TODO: Implement actual establish flow rate API call
-      // Example: await establishFlowRate()
-
-      // Simulate network call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
+      await runEstablishFlowRate().unwrap();
       toast.success("Flow rate established successfully!");
     } catch (error) {
-      toast.info("Failed to establish flow rate. Please try again.");
+      console.error("Error establishing flow rate:", error);
+      toast.error("Failed to establish flow rate. Please try again.");
     }
   };
 
@@ -518,11 +486,7 @@ export const PortConfigurationTab = () => {
         if (editingPort === portNumber) {
           displayName = editValue;
         } else {
-          displayName =
-            portNames[portNumber] ||
-            inlet.label ||
-            inlet.name ||
-            `Port ${portNumber}`;
+          displayName = portNames[portNumber] || getInletLabel(inlet);
         }
 
         // Determine enabled status from port configuration API
@@ -564,10 +528,7 @@ export const PortConfigurationTab = () => {
           if (editingPort === port.portNumber) {
             displayName = editValue;
           } else {
-            displayName =
-              portNames[port.portNumber] ||
-              portLabelsMap[port.portNumber] ||
-              port.name;
+            displayName = portNames[port.portNumber] || port.name;
           }
 
           const portData: Port = {
@@ -600,7 +561,6 @@ export const PortConfigurationTab = () => {
     editingPort,
     editValue,
     portNames,
-    portLabelsMap,
     portEnabled
   ]);
 
@@ -620,7 +580,7 @@ export const PortConfigurationTab = () => {
     if (!trimmedValue) return;
 
     if (trimmedValue.length > 20) {
-      toast.info("Port label cannot exceed 20 characters");
+      toast.error("Port label cannot exceed 20 characters");
       return;
     }
 

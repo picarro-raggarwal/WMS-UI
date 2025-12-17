@@ -89,10 +89,10 @@ export const portConfigurationApi = createApi({
       }
     }),
 
-    getPortLabels: builder.query<PortLabelsResponse, void>({
-      query: () => "/port_labels",
-      providesTags: ["PortLabels"]
-    }),
+    // getPortLabels: builder.query<PortLabelsResponse, void>({
+    //   query: () => "/port_labels",
+    //   providesTags: ["PortLabels"]
+    // }),
 
     updatePortConfiguration: builder.mutation<
       UpdatePortConfigurationResponse,
@@ -136,16 +136,28 @@ export const inletsApi = createApi({
         }
       }),
       invalidatesTags: ["Inlets"]
+    }),
+
+    runEstablishFlowRate: builder.mutation<void, void>({
+      query: () => ({
+        url: "/inlets/flow-rates/establish",
+        method: "POST"
+      })
     })
+    // invalidatesTags: ["Inlets"]
   })
 });
 
 // Export hooks from port configuration API
 export const {
   useGetPortConfigurationQuery,
-  useGetPortLabelsQuery,
+  // useGetPortLabelsQuery,
   useUpdatePortConfigurationMutation
 } = portConfigurationApi;
 
 // Export hooks from inlets API
-export const { useGetInletsQuery, useUpdatePortLabelMutation } = inletsApi;
+export const {
+  useGetInletsQuery,
+  useUpdatePortLabelMutation,
+  useRunEstablishFlowRateMutation
+} = inletsApi;
