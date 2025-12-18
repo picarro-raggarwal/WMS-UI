@@ -25,11 +25,13 @@ import { userManagementApi } from "@/pages/settings/data/user-management.slice";
 import { authApi } from "@/utils";
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import socketReducer from "./services/socketSlice";
+import socketReducer from "../services/socketSlice";
+import settingsGlobalReducer from "./settings-global.slice";
 
 export const store = configureStore({
   reducer: {
     socket: socketReducer,
+    settingsGlobal: settingsGlobalReducer,
     [authApi.reducerPath]: authApi.reducer,
     [recipesApi.reducerPath]: recipesApi.reducer,
     [systemStatusApi.reducerPath]: systemStatusApi.reducer,

@@ -1,3 +1,7 @@
+import {
+  setInlets,
+  setPortConfiguration
+} from "@/lib/store/settings-global.slice";
 import { protectedBaseQuery } from "@/utils";
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { mockPortConfigurationData } from "./port-configuration-mock-data";
@@ -86,6 +90,16 @@ export const portConfigurationApi = createApi({
 
         // Return the actual API response
         return { data: result.data as PortConfigurationResponse };
+      },
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            dispatch(setPortConfiguration(data));
+          }
+        } catch {
+          /* empty */
+        }
       }
     }),
 
@@ -121,6 +135,16 @@ export const inletsApi = createApi({
         return {
           result: response.results || response.result || []
         } as InletsResponse;
+      },
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            dispatch(setInlets(data));
+          }
+        } catch {
+          /* empty */
+        }
       }
     }),
 

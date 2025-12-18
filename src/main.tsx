@@ -1,5 +1,6 @@
 import { scan } from "react-scan";
 
+import { store } from "@/lib/store";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/wix-madefor-text";
 import "@fontsource/barlow/200.css";
@@ -21,7 +22,6 @@ import {
 import { DataProvider } from "./context/DataContext";
 import "./index.css";
 import AuthLayout from "./layouts/AuthLayout";
-import { store } from "./lib/store";
 import AlertsPage from "./pages/alerts";
 import DashboardPage from "./pages/dashboard";
 import DataReview2Page from "./pages/data-review";

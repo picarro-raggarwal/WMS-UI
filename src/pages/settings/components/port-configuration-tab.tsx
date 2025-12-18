@@ -12,6 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { RootState } from "@/lib/store";
+import {
+  InletsResponse,
+  InletWithPortId
+} from "@/lib/store/settings-global.slice";
 import {
   loadPortConfig,
   savePortConfig,
@@ -28,8 +33,10 @@ import {
 } from "@/types/common/ports";
 import { Check, Edit3, RotateCcw, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import { toast } from "sonner";
 import {
+  PortConfigurationResponse,
   useGetInletsQuery,
   useGetPortConfigurationQuery,
   useRunEstablishFlowRateMutation,
@@ -46,39 +53,20 @@ interface Port {
   type: "regular" | "ambient";
 }
 
-/**
- * Get label from inlet object with fallback priority:
- * 1. inlet.label (if not empty/null)
- * 2. inlet.name (if not empty/null)
- * 3. Port #{id} (using inlet id)
- */
-const getInletLabel = (inlet: {
-  bankId: number;
-  id: number;
-  label?: string;
-  name?: string;
-}): string => {
-  // Priority: label -> name -> Port #id
-  if (inlet.label && inlet.label.trim()) {
-    return inlet.label.trim();
-  }
-  if (inlet.name && inlet.name.trim()) {
-    return inlet.name.trim();
-  }
-  return `Port #${inlet.id}`;
-};
-
 export const PortConfigurationTab = () => {
-  // Fetch port configuration from API
-  const { data: apiPortConfig, isLoading: isApiLoading } =
-    useGetPortConfigurationQuery();
+  // Trigger API calls (they will automatically update global state)
+  const { isLoading: isApiLoading } = useGetPortConfigurationQuery();
+  const { isLoading: isInletsLoading, isError: isInletsError } =
+    useGetInletsQuery();
 
-  // Fetch inlets from API (contains port labels)
-  const {
-    data: apiInlets,
-    isLoading: isInletsLoading,
-    isError: isInletsError
-  } = useGetInletsQuery();
+  // Get data from global state
+  const apiPortConfig = useSelector(
+    (state: RootState) =>
+      (state as any).settingsGlobal?.portConfiguration ?? null
+  ) as PortConfigurationResponse | null;
+  const apiInlets = useSelector(
+    (state: RootState) => (state as any).settingsGlobal?.inlets ?? null
+  ) as InletsResponse | null;
 
   // Mutation for updating port label
   const [updatePortLabel] = useUpdatePortLabelMutation();
@@ -156,15 +144,17 @@ export const PortConfigurationTab = () => {
 
       if (!inlet.available) return;
 
-      // Calculate port number: (bankId - 1) * 8 + id
-      const portNumber = (inlet.bankId - 1) * 8 + inlet.id;
+      // Use portId from global state (already calculated)
+      const inletWithPortId = inlet as InletWithPortId;
+      const portNumber =
+        inletWithPortId.portId ?? (inlet.bankId - 1) * 8 + inlet.id;
 
       // Set enabled status from port configuration API
       // Check if calculated port number exists in enabled_ports array
       apiConfig.enabled[portNumber] = enabledPortsSet.has(portNumber);
 
-      // Set port names from inlet using helper function
-      apiConfig.names[portNumber] = getInletLabel(inlet);
+      // Set port names from inlet using displayLabel from global state
+      apiConfig.names[portNumber] = inletWithPortId.displayLabel;
     });
 
     // Ensure Ambient port is always enabled
@@ -187,7 +177,11 @@ export const PortConfigurationTab = () => {
       apiInlets.result.forEach((inlet) => {
         if (inlet.type !== "PORT" || !inlet.available) return;
 
-        initialNames[(inlet.bankId - 1) * 8 + inlet.id] = getInletLabel(inlet);
+        // Use portId from global state (already calculated)
+        const inletWithPortId = inlet as InletWithPortId;
+        const portNumber =
+          inletWithPortId.portId ?? (inlet.bankId - 1) * 8 + inlet.id;
+        initialNames[portNumber] = inletWithPortId.displayLabel;
       });
     }
 
@@ -444,8 +438,10 @@ export const PortConfigurationTab = () => {
         // Skip if not available
         if (!inlet.available) return;
 
-        // Calculate port number: (bankId - 1) * 8 + id
-        const portNumber = (inlet.bankId - 1) * 8 + inlet.id;
+        // Use portId from global state (already calculated)
+        const inletWithPortId = inlet as InletWithPortId;
+        const portNumber =
+          inletWithPortId.portId ?? (inlet.bankId - 1) * 8 + inlet.id;
 
         map[portNumber] = {
           bankId: inlet.bankId,
@@ -478,15 +474,17 @@ export const PortConfigurationTab = () => {
         // Skip if not available
         if (!inlet.available) return;
 
-        // Calculate port number: (bankId - 1) * 8 + id
-        const portNumber = (inlet.bankId - 1) * 8 + inlet.id;
+        // Use portId from global state (already calculated)
+        const inletWithPortId = inlet as InletWithPortId;
+        const portNumber =
+          inletWithPortId.portId ?? (inlet.bankId - 1) * 8 + inlet.id;
 
         // Get display name (use label if available, otherwise name)
         let displayName: string;
         if (editingPort === portNumber) {
           displayName = editValue;
         } else {
-          displayName = portNames[portNumber] || getInletLabel(inlet);
+          displayName = portNames[portNumber] || inletWithPortId.displayLabel;
         }
 
         // Determine enabled status from port configuration API

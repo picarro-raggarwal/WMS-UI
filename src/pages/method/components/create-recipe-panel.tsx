@@ -4,16 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DurationInput } from "@/components/ui/duration-input";
 import { Input } from "@/components/ui/input";
+import { RootState } from "@/lib/store";
 import {
   mockBoundaries,
   mockPortMarkers
 } from "@/pages/map-display/data/mock-data";
-import { loadPortConfig } from "@/types/common/port-config";
-import {
-  generateAllPorts,
-  getAmbientPort,
-  getPortsByBank
-} from "@/types/common/ports";
+import { getAmbientPort, getPortsByBank } from "@/types/common/ports";
 import {
   DndContext,
   DragEndEvent,
@@ -40,6 +36,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import { toast } from "sonner";
 import {
   useCreateRecipeMutation,
@@ -107,6 +104,11 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   const { data: apiSteps, isLoading } = useGetAllStepsQuery();
   const [createRecipe, { isLoading: isCreating }] = useCreateRecipeMutation();
 
+  // Get inlets from global state (APIs are triggered at app mount)
+  const globalInlets = useSelector(
+    (state: RootState) => (state as any).settingsGlobal?.inlets
+  );
+
   // Update form when initialData changes
   useEffect(() => {
     if (initialData) {
@@ -119,44 +121,37 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
     }
   }, [initialData]);
 
-  // Load port configuration from shared storage
-  const [portConfig, setPortConfig] = useState(() => loadPortConfig());
-
-  // Listen for port config updates from settings
-  useEffect(() => {
-    const handleConfigUpdate = (event: CustomEvent) => {
-      setPortConfig(event.detail);
-    };
-    window.addEventListener(
-      "port-config-updated",
-      handleConfigUpdate as EventListener
-    );
-    return () => {
-      window.removeEventListener(
-        "port-config-updated",
-        handleConfigUpdate as EventListener
-      );
-    };
-  }, []);
-
-  // Generate ports data using mock data as single source of truth
-  // Only show enabled ports from port configuration
-  // Include Ambient port (always enabled)
+  // Generate ports data from global state inlets
+  // Only show enabled PORT type inlets (exclude CLEAN and REFERENCE)
   const ports = useMemo(() => {
-    const basePorts = generateAllPorts();
-    const regularPorts = basePorts
-      .map((port) => ({
-        ...port,
-        name: portConfig.names[port.portNumber] || port.name,
-        enabled: portConfig.enabled[port.portNumber] ?? port.enabled
-      }))
-      .filter((port) => port.enabled); // Only show enabled ports
+    // If global state is empty, return empty array (APIs are being fetched)
+    if (!globalInlets?.result || globalInlets.result.length === 0) {
+      return [];
+    }
+
+    // Filter to only PORT type, isEnabled, and available inlets
+    const enabledPortInlets = globalInlets.result.filter(
+      (inlet) =>
+        inlet.type === "PORT" &&
+        inlet.isEnabled === true &&
+        inlet.available === true
+    );
+
+    // Transform inlets to Port format
+    const regularPorts: Port[] = enabledPortInlets.map((inlet) => ({
+      id: `inlet-${inlet.id}`,
+      portNumber: inlet.portId,
+      name: inlet.displayLabel,
+      type: "regular" as const,
+      bankNumber: inlet.bankId,
+      enabled: true
+    }));
 
     // Add Ambient port (always enabled, cannot be disabled)
     const ambientPort = getAmbientPort();
 
     return [ambientPort, ...regularPorts];
-  }, [portConfig]);
+  }, [globalInlets]);
 
   const portsByBank = useMemo(() => {
     const byBank = getPortsByBank(ports);
@@ -637,6 +632,10 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
           {isLoading ? (
             <div className="flex justify-center items-center p-8">
               <Spinner />
+            </div>
+          ) : ports.length === 0 ? (
+            <div className="flex justify-center items-center p-8 text-neutral-500 dark:text-neutral-400">
+              No enabled ports available
             </div>
           ) : (
             <div className="space-y-2">

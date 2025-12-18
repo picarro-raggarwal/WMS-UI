@@ -1,8 +1,10 @@
 import { PageHeader } from "@/components/ui/page-header";
-import { Port, generateAllPorts } from "@/types/common/ports";
+import { RootState } from "@/lib/store";
+import { Port } from "@/types/common/ports";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import { MapSection, MapSidebar } from "./components";
 import {
   Boundary,
@@ -79,7 +81,38 @@ const MapDisplay = () => {
     );
   }, [portMarkers, setBoundaries]);
 
-  const [allPorts] = useState<Port[]>(generateAllPorts(true));
+  // Get inlets from global state (APIs are triggered at app mount)
+  const globalInlets = useSelector(
+    (state: RootState) => (state as any).settingsGlobal?.inlets
+  );
+
+  // Generate ports from global state inlets - only isEnabled PORT type
+  const allPorts = useMemo<Port[]>(() => {
+    // If global state is empty, return empty array (APIs are being fetched)
+    if (!globalInlets?.result || globalInlets.result.length === 0) {
+      return [];
+    }
+
+    // Filter to only PORT type, isEnabled, and available inlets
+    const enabledPortInlets = globalInlets.result.filter(
+      (inlet) =>
+        inlet.type === "PORT" &&
+        inlet.isEnabled === true &&
+        inlet.available === true
+    );
+
+    // Transform inlets to Port format
+    const ports: Port[] = enabledPortInlets.map((inlet) => ({
+      id: `inlet-${inlet.id}`,
+      portNumber: inlet.portId,
+      name: inlet.displayLabel,
+      type: "regular" as const,
+      bankNumber: inlet.bankId,
+      enabled: true
+    }));
+
+    return ports;
+  }, [globalInlets]);
 
   // Custom hooks for utilities and handlers
   const { isPointInPolygon } = useMapUtils();
