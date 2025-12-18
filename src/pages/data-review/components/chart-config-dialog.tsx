@@ -9,14 +9,11 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { loadPortConfig } from "@/types/common/port-config";
-import {
-  generateAllPorts,
-  getAmbientPort,
-  isAmbientPort
-} from "@/types/common/ports";
+import { RootState } from "@/lib/store";
+import { getAmbientPort } from "@/types/common/ports";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 
 interface ChartConfigDialogProps {
   selectedPorts: string[];
@@ -29,56 +26,94 @@ export const ChartConfigDialog = ({
 }: ChartConfigDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [newSelectedPorts, setNewSelectedPorts] = useState<string[]>([]);
-  const [portConfig, setPortConfig] = useState(() => loadPortConfig());
 
-  // Listen for port config updates from settings
-  useEffect(() => {
-    const handleConfigUpdate = (event: CustomEvent) => {
-      setPortConfig(event.detail);
-    };
-    window.addEventListener(
-      "port-config-updated",
-      handleConfigUpdate as EventListener
-    );
-    return () => {
-      window.removeEventListener(
-        "port-config-updated",
-        handleConfigUpdate as EventListener
-      );
-    };
-  }, []);
+  // Get inlets from global state (APIs are triggered at app mount)
+  const globalInlets = useSelector(
+    (state: RootState) => (state as any).settingsGlobal?.inlets
+  );
 
-  // Generate ports using same source of truth - only enabled ports
+  // Generate ports from global state inlets - only isEnabled PORT type
   const availablePorts = useMemo(() => {
-    const commonPorts = generateAllPorts();
     const ambientPort = getAmbientPort();
+    const ambientPortData = {
+      id: ambientPort.id,
+      label: "Ambient",
+      number: ambientPort.portNumber,
+      unit: "ppb",
+      type: "ambient" as const
+    };
 
-    // Filter to only enabled ports
-    const enabledPorts = commonPorts.filter(
-      (port) => portConfig.enabled[port.portNumber] !== false
+    // If global state is empty, return only Ambient port (APIs are being fetched)
+    if (!globalInlets?.result || globalInlets.result.length === 0) {
+      return [ambientPortData];
+    }
+
+    // Filter to only PORT type, isEnabled, and available inlets
+    const enabledPortInlets = globalInlets.result.filter(
+      (inlet) =>
+        inlet.type === "PORT" &&
+        inlet.isEnabled === true &&
+        inlet.available === true
     );
+
+    // Sort by portId to ensure consistent ordering
+    const sortedInlets = [...enabledPortInlets].sort(
+      (a, b) => a.portId - b.portId
+    );
+
+    // Transform inlets to port format
+    const regularPorts = sortedInlets.map((inlet) => ({
+      id: `inlet-${inlet.id}`,
+      label: inlet.displayLabel,
+      number: inlet.portId,
+      unit: "ppb",
+      type: "generic" as const
+    }));
 
     // Combine Ambient port with enabled regular ports
-    const allPorts = [ambientPort, ...enabledPorts];
+    return [ambientPortData, ...regularPorts];
+  }, [globalInlets]);
 
-    return allPorts.map((port) => {
-      const portName =
-        portConfig.names[port.portNumber] ||
-        port.name ||
-        `Port ${port.portNumber}`;
-      return {
-        id: port.id,
-        label: isAmbientPort(port.portNumber) ? "Ambient" : portName,
-        number: port.portNumber,
-        unit: "ppb",
-        type: isAmbientPort(port.portNumber) ? "ambient" : "generic"
-      };
-    });
-  }, [portConfig]);
+  // Get first 4 regular ports (excluding Ambient) sorted by portId
+  const firstFourPortIds = useMemo(() => {
+    if (!globalInlets?.result || globalInlets.result.length === 0) {
+      return [];
+    }
+
+    // Filter to only PORT type, isEnabled, and available inlets
+    const enabledPortInlets = globalInlets.result.filter(
+      (inlet) =>
+        inlet.type === "PORT" &&
+        inlet.isEnabled === true &&
+        inlet.available === true
+    );
+
+    // Sort by portId and take first 4
+    const sortedInlets = [...enabledPortInlets]
+      .sort((a, b) => a.portId - b.portId)
+      .slice(0, 4);
+
+    return sortedInlets.map((inlet) => `inlet-${inlet.id}`);
+  }, [globalInlets]);
 
   useEffect(() => {
     setNewSelectedPorts(selectedPorts);
   }, [selectedPorts]);
+
+  // Preselect first 4 ports when dialog state initializes and no ports are selected
+  useEffect(() => {
+    // Only preselect if:
+    // 1. We have first 4 port IDs available
+    // 2. No ports are currently selected in the dialog
+    // 3. No ports were passed from parent (meaning it's a fresh open)
+    if (
+      firstFourPortIds.length > 0 &&
+      newSelectedPorts.length === 0 &&
+      selectedPorts.length === 0
+    ) {
+      setNewSelectedPorts(firstFourPortIds);
+    }
+  }, [firstFourPortIds, newSelectedPorts, selectedPorts]);
 
   const handlePortToggle = (portId: string) => {
     if (newSelectedPorts.includes(portId)) {

@@ -8,6 +8,7 @@ import { useChartContext } from "./data-review-chart-context";
 
 type StatsBarProps = {
   label: string;
+  portId?: number;
   mean: number;
   stdDev: number;
   unit: string;
@@ -27,6 +28,7 @@ type StatsBarProps = {
 
 const StatsBar = ({
   label,
+  portId,
   mean,
   stdDev,
   thresholds,
@@ -58,9 +60,16 @@ const StatsBar = ({
               </p>
               {isFetchingMetricsData && <Spinner />}
             </div>
-            <p className="font-bold text-black dark:text-white text-xl md:text-2xl tracking-tight whitespace-nowrap">
-              {formatLabel(label)}
-            </p>
+            <div className="flex items-baseline gap-2">
+              <p className="font-bold text-black dark:text-white text-xl md:text-2xl tracking-tight whitespace-nowrap">
+                {formatLabel(label)}
+              </p>{" "}
+              {portId !== undefined && (
+                <p className="text-neutral-500 dark:text-neutral-400 text-sm font-medium">
+                  Port #{portId}
+                </p>
+              )}
+            </div>
 
             {dateRange && (
               <p className="text-neutral-600 dark:text-neutral-300 text-xs">

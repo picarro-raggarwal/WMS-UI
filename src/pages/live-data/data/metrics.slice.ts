@@ -11,6 +11,7 @@ type MetricDataParams = {
   latest_value?: boolean;
   downsample_data?: boolean;
   downsample_mode?: DownsampleMode;
+  rollingAvg?: string;
 };
 
 type MetricData = {
@@ -45,7 +46,8 @@ export const metricsApi = createApi({
         metrics,
         latest_value,
         downsample_data,
-        downsample_mode
+        downsample_mode,
+        rollingAvg
       }) => ({
         url: "/metric_data",
         params: {
@@ -54,7 +56,8 @@ export const metricsApi = createApi({
           metrics,
           latest_value,
           downsample_data,
-          downsample_mode
+          downsample_mode,
+          rollingAvg
         }
       }),
       transformResponse: (response: { result: MetricDataResponse }) =>

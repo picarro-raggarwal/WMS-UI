@@ -18,9 +18,10 @@ import { useLocalStorage } from "@mantine/hooks";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 
-import { loadPortConfig } from "@/types/common/port-config";
-import { generateAllPorts, isAmbientPort } from "@/types/common/ports";
+import { RootState } from "@/lib/store";
+import { useGetMetricDataQuery } from "@/pages/live-data/data/metrics.slice";
 import { formatDate, formatDateTime } from "@/utils";
+import { useSelector } from "react-redux";
 import { ChartConfigDialog } from "./components/chart-config-dialog";
 import {
   ChartSyncProvider,
@@ -28,7 +29,6 @@ import {
 } from "./components/chart-sync-context";
 import { ExportDialog } from "./components/export-dialog";
 import { PortChartContainer } from "./components/port-chart-container";
-import { generateMockDataForPorts, getPortById } from "./data/mock-data";
 
 type TimeRange = "1h" | "24h" | "7d" | "1month" | "custom";
 type RollingAverage = "15min" | "1hour" | "24hour";
@@ -46,27 +46,35 @@ const ROLLING_AVERAGE_OPTIONS = [
   { value: "24hour", label: "24 Hour" }
 ] as const;
 
-// Get default selected ports - first 4 enabled ports (excluding port #0)
-export const getDefaultSelectedPorts = (): string[] => {
-  const portConfig = loadPortConfig();
-  const allPorts = generateAllPorts();
+// Get default selected ports - first 4 enabled PORT type inlets
+export const getDefaultSelectedPorts = (globalInlets: any): string[] => {
+  // If global state is empty, return empty array
+  if (!globalInlets?.result || globalInlets.result.length === 0) {
+    return [];
+  }
 
-  // Filter to only enabled ports, excluding port #0 (Ambient)
-  const enabledPorts = allPorts
+  // Filter to only PORT type, isEnabled, and available inlets
+  const enabledPortInlets = globalInlets.result
     .filter(
-      (port) =>
-        !isAmbientPort(port.portNumber) &&
-        portConfig.enabled[port.portNumber] === true
+      (inlet: any) =>
+        inlet.type === "PORT" &&
+        inlet.isEnabled === true &&
+        inlet.available === true
     )
     .slice(0, 4); // Take first 4 ports
 
-  return enabledPorts.map((port) => port.id);
+  // Return port IDs
+  return enabledPortInlets.map((inlet: any) => `inlet-${inlet.id}`);
 };
-
-export const DEFAULT_SELECTED_PORTS: string[] = getDefaultSelectedPorts();
 
 const DataReviewPageContent = () => {
   const { isSyncEnabled, setIsSyncEnabled } = useChartSync();
+
+  // Get inlets from global state (APIs are triggered at app mount)
+  const globalInlets = useSelector(
+    (state: RootState) => (state as any).settingsGlobal?.inlets
+  );
+
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(Date.now() - 24 * 60 * 60 * 1000),
@@ -77,18 +85,51 @@ const DataReviewPageContent = () => {
   );
   const [selectedPorts, setSelectedPorts] = useLocalStorage<string[]>({
     key: "data-review-selected-ports-v3",
-    defaultValue: DEFAULT_SELECTED_PORTS
+    defaultValue: []
   });
+
+  // Calculate default selected ports from global state and set if empty
+  useEffect(() => {
+    const defaultSelectedPorts = getDefaultSelectedPorts(globalInlets);
+    // Only set defaults if no ports are currently selected and we have defaults
+    if (defaultSelectedPorts.length > 0 && selectedPorts.length === 0) {
+      setSelectedPorts(defaultSelectedPorts);
+    }
+  }, [globalInlets, selectedPorts.length, setSelectedPorts]);
   const [rollingAverage, setRollingAverage] = useState<RollingAverage>("15min");
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [mockData, setMockData] = useState<Record<string, any>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const [startEndTimeRange, setStartEndTimeRange] = useState<{
     start: number;
     end: number;
   } | null>(null);
+
+  // Prepare metrics string for API (comma-separated port IDs)
+  const metricsString = selectedPorts.length > 0 ? selectedPorts.join(",") : "";
+
+  // Fetch metric data from API
+  const {
+    data: metricData,
+    isLoading,
+    isFetching,
+    isError
+  } = useGetMetricDataQuery(
+    {
+      start: startEndTimeRange?.start,
+      end: startEndTimeRange?.end,
+      metrics: metricsString,
+      downsample_data: true,
+      downsample_mode: "MEAN",
+      rollingAvg: rollingAverage
+    },
+    {
+      skip: !startEndTimeRange || selectedPorts.length === 0 || !metricsString
+    }
+  );
+
+  // Determine if we're regenerating (has existing data and is fetching)
+  const isRegenerating =
+    isFetching && metricData && Object.keys(metricData).length > 0;
 
   useEffect(() => {
     if (timeRange === "custom") {
@@ -107,59 +148,6 @@ const DataReviewPageContent = () => {
       });
     }
   }, [timeRange, dateRange]);
-
-  // Generate mock data when time range or selected ports change
-  useEffect(() => {
-    if (!startEndTimeRange || selectedPorts.length === 0) return;
-
-    // If we already have data, show regenerating state instead of loading
-    const hasExistingData = Object.keys(mockData).length > 0;
-
-    if (hasExistingData) {
-      setIsRegenerating(true);
-    } else {
-      setIsLoading(true);
-    }
-
-    // Simulate API delay
-    setTimeout(() => {
-      try {
-        const ports = selectedPorts
-          .map((portId) => getPortById(portId))
-          .filter(Boolean);
-
-        if (ports.length === 0) {
-          setMockData({});
-          setIsLoading(false);
-          setIsRegenerating(false);
-          return;
-        }
-
-        const data = generateMockDataForPorts(
-          ports,
-          startEndTimeRange.start,
-          startEndTimeRange.end,
-          60000 // 1 minute intervals
-        );
-
-        const dataMap: Record<string, any> = {};
-        data.forEach((item) => {
-          if (item && item.portId) {
-            dataMap[item.portId] = item;
-          }
-        });
-
-        setMockData(dataMap);
-        setIsLoading(false);
-        setIsRegenerating(false);
-      } catch (error) {
-        console.error("Error generating mock data:", error);
-        setMockData({});
-        setIsLoading(false);
-        setIsRegenerating(false);
-      }
-    }, 500);
-  }, [startEndTimeRange, selectedPorts]);
 
   return (
     <>
@@ -321,7 +309,7 @@ const DataReviewPageContent = () => {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                Sync X:
+                Sync Charts:
               </span>
               <Switch
                 checked={isSyncEnabled}
@@ -364,9 +352,10 @@ const DataReviewPageContent = () => {
                   portId={portId}
                   timeRange={timeRange}
                   startEndTimeRange={startEndTimeRange}
-                  mockData={mockData[portId] || null}
+                  metricData={metricData?.[portId] || null}
                   isLoading={isLoading}
                   isRegenerating={isRegenerating}
+                  isError={isError}
                   rollingAverage={rollingAverage}
                 />
               ))}
