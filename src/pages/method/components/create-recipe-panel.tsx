@@ -1,15 +1,15 @@
 import { Spinner } from "@/components/spinner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DurationInput } from "@/components/ui/duration-input";
 import { Input } from "@/components/ui/input";
 import { RootState } from "@/lib/store";
+import { InletWithPortId } from "@/lib/store/settings-global.slice";
 import {
   mockBoundaries,
   mockPortMarkers
 } from "@/pages/map-display/data/mock-data";
-import { getAmbientPort, getPortsByBank } from "@/types/common/ports";
+import { getAmbientPort } from "@/types/common/ports";
 import {
   DndContext,
   DragEndEvent,
@@ -28,13 +28,7 @@ import {
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  AlertCircle,
-  ArrowLeft,
-  GripVertical,
-  Plus,
-  Trash2
-} from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -49,16 +43,18 @@ interface RecipeStep {
   type: string;
   name: string;
   duration: number;
+  inletId?: number;
+  bankId?: number;
+  inletIdentifier?: number;
 }
 
-interface Port {
-  id: string;
+// Port interface matches Inlet structure - includes all Inlet fields
+type Port = Omit<InletWithPortId, "type"> & {
+  type: InletWithPortId["type"] | "ambient"; // Extend type to include ambient
   portNumber: number;
-  name: string;
-  type: "regular" | "ambient";
   bankNumber: number;
   enabled: boolean;
-}
+};
 
 interface CreateRecipePanelProps {
   onBack?: () => void;
@@ -91,10 +87,6 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [totalDuration, setTotalDuration] = useState("00:00");
-  const [apiError, setApiError] = useState<{
-    message: string;
-    description: string;
-  } | null>(null);
   const [isEditing, setIsEditing] = useState(!!initialData);
   const [applyToAllDuration, setApplyToAllDuration] = useState(0); // Default 2 minutes
   const [durationInputErrors, setDurationInputErrors] = useState<Set<string>>(
@@ -137,33 +129,47 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         inlet.available === true
     );
 
-    // Transform inlets to Port format
+    // Transform inlets to Port format - use all Inlet fields
     const regularPorts: Port[] = enabledPortInlets.map((inlet) => ({
-      id: `inlet-${inlet.id}`,
-      portNumber: inlet.portId,
-      name: inlet.displayLabel,
-      type: "regular" as const,
-      bankNumber: inlet.bankId,
-      enabled: true
+      ...inlet, // Include all InletWithPortId fields
+      portNumber: inlet.portId, // Alias for compatibility
+      bankNumber: inlet.bankId, // Alias for compatibility
+      enabled: inlet.isEnabled // Alias for compatibility
     }));
 
     // Add Ambient port (always enabled, cannot be disabled)
-    const ambientPort = getAmbientPort();
+    // Convert ambient port to match Port interface with Inlet structure
+    const ambientPortFromCommon = getAmbientPort();
+    const ambientPort: Port = {
+      type: "ambient",
+      name: ambientPortFromCommon.name,
+      bankId: 0,
+      id: 0, // Ambient port has id 0
+      zeroPort: false,
+      isActive: true,
+      available: true,
+      label: ambientPortFromCommon.name,
+      portId: 0,
+      displayLabel: ambientPortFromCommon.name,
+      isEnabled: true,
+      portNumber: 0,
+      bankNumber: 0,
+      enabled: true
+    };
 
     return [ambientPort, ...regularPorts];
   }, [globalInlets]);
 
+  // Group ports by bank - manually group since we're using Inlet structure
   const portsByBank = useMemo(() => {
-    const byBank = getPortsByBank(ports);
-    // Ambient port is in bank 0, ensure it's included
-    if (!byBank[0]) {
-      byBank[0] = [];
-    }
-    // Add Ambient port to bank 0 if not already there
-    const hasAmbient = byBank[0].some((p) => p.portNumber === 0);
-    if (!hasAmbient) {
-      byBank[0] = [getAmbientPort(), ...byBank[0]];
-    }
+    const byBank: Record<number, Port[]> = {};
+    ports.forEach((port) => {
+      const bankKey = port.bankNumber;
+      if (!byBank[bankKey]) {
+        byBank[bankKey] = [];
+      }
+      byBank[bankKey].push(port);
+    });
     return byBank;
   }, [ports]);
 
@@ -246,13 +252,16 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   );
 
   const handleAddPortToRecipe = useCallback((port: Port) => {
-    // Create a step based on the port
+    // Create a step based on the port with all available Inlet fields
     const newStep: RecipeStep = {
-      id: crypto.randomUUID(),
-      step_id: port.portNumber,
-      type: port.type,
-      name: port.name,
-      duration: 120 // Default 2 minutes (120 seconds)
+      id: `inlet-${port.id}`, // Keep string format for step id
+      step_id: port.portId, // Use portId from Inlet
+      type: port.type === "ambient" ? "ambient" : port.type,
+      name: port.displayLabel || port.name,
+      duration: 120, // Default 2 minutes (120 seconds)
+      inletId: port.id,
+      bankId: port.bankId,
+      inletIdentifier: port.id
     };
     setRecipeSteps((prev) => [...prev, newStep]);
   }, []);
@@ -260,13 +269,19 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   const handleAddAllPortsToRecipe = useCallback(() => {
     // Add all ports to the recipe (all ports shown are enabled)
     const allPorts = Object.values(portsByBank).flat();
-    const newSteps: RecipeStep[] = allPorts.map((port) => ({
-      id: crypto.randomUUID(),
-      step_id: port.portNumber,
-      type: port.type,
-      name: port.name,
-      duration: 120 // Default 2 minutes (120 seconds)
-    }));
+    const newSteps: RecipeStep[] = allPorts.map((port) => {
+      // Use all Inlet fields from port object
+      return {
+        id: `inlet-${port.id}`, // Keep string format for step id
+        step_id: port.portId, // Use portId from Inlet
+        type: port.type === "ambient" ? "ambient" : port.type,
+        name: port.displayLabel || port.name,
+        duration: 120, // Default 2 minutes (120 seconds)
+        inletId: port.id,
+        bankId: port.bankId,
+        inletIdentifier: port.id
+      };
+    });
     setRecipeSteps((prev) => [...prev, ...newSteps]);
     toast.success(`Added ${allPorts.length} ports to recipe`);
   }, [portsByBank]);
@@ -327,8 +342,6 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   }, []);
 
   const handleSave = useCallback(async () => {
-    setApiError(null);
-
     if (!recipeName.trim()) {
       toast.error("Please enter a recipe name");
       return;
@@ -345,9 +358,16 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         0
       );
       const formattedSteps = recipeSteps.map((step, index) => ({
-        step_id: step.step_id,
-        step_duration: step.duration,
-        step_sequence: index
+        step_id: step.step_id, // Port ID from Inlet (portId)
+        step_duration: step.duration, // Duration from DurationInput component
+        step_sequence: index,
+        ...(step.inletId !== undefined &&
+          step.bankId !== undefined &&
+          step.inletIdentifier !== undefined && {
+            inletId: step.inletId,
+            bankId: step.bankId,
+            id: step.inletIdentifier
+          })
       }));
 
       if (isEditing) {
@@ -366,8 +386,12 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
       // Reset form
       setRecipeName("");
       setRecipeSteps([]);
-      setApiError(null);
       setIsEditing(false);
+
+      // Close dialog if onBack is provided (dialog mode)
+      if (onBack) {
+        onBack();
+      }
     } catch (error: unknown) {
       console.error("Error saving recipe:", error);
       let errorMessage = {
@@ -390,10 +414,12 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
         }
       }
 
-      setApiError(errorMessage);
-      toast.error(errorMessage.message);
+      toast.error(errorMessage.message, {
+        description: errorMessage.description,
+        duration: 5000
+      });
     }
-  }, [recipeName, recipeSteps, createRecipe, isEditing]);
+  }, [recipeName, recipeSteps, createRecipe, isEditing, onBack]);
 
   const PortItem = useCallback(
     ({ port }: { port: Port }) => {
@@ -585,7 +611,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
   );
 
   return (
-    <Card className="relative flex flex-col shadow-xl p-6 h-[calc(100vh-150px)] overflow-auto">
+    <Card className="relative flex flex-col shadow-xl p-6 h-full overflow-auto">
       <div className="top-0 left-0 absolute -mt-px w-full overflow-hidden">
         <div className="flex h-[2px] w-full-scale-x-100">
           <div className="flex-none blur-sm w-full [background-image:linear-gradient(90deg,rgba(56,189,248,0)_0%,#0EA5E9_32.29%,rgba(88,186,37,0.3)_67.19%,rgba(236,72,153,0)_100%)]"></div>
@@ -610,19 +636,6 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
           )}
         </div>
       </div>
-
-      {apiError && (
-        <Alert variant="destructive" className="flex-shrink-0 mb-6">
-          <AlertCircle className="w-4 h-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            <div className="flex flex-col gap-1">
-              <span>{apiError.message}</span>
-              <span>{apiError.description}</span>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
 
       <div className="flex flex-1 gap-6 h-full min-h-0">
         {/* Left Panel - Ports */}
@@ -683,29 +696,33 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
                 value={recipeName}
                 onChange={(e) => setRecipeName(e.target.value)}
                 placeholder="Enter recipe name"
-                className="w-full max-w-md bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100"
+                className={`w-full bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 ${
+                  onBack ? "" : "max-w-md"
+                }`}
               />
 
-              <Button
-                variant="primary"
-                loading={isCreating}
-                onClick={handleSave}
-                disabled={
-                  isCreating ||
-                  !recipeName ||
-                  recipeSteps.length === 0 ||
-                  recipeSteps?.some((step) => step.duration > 3600) ||
-                  durationInputErrors.size > 0
-                }
-              >
-                {isCreating
-                  ? isEditing
-                    ? "Updating..."
-                    : "Creating..."
-                  : isEditing
-                  ? "Update Recipe"
-                  : "Create Recipe"}
-              </Button>
+              {!onBack && (
+                <Button
+                  variant="primary"
+                  loading={isCreating}
+                  onClick={handleSave}
+                  disabled={
+                    isCreating ||
+                    !recipeName ||
+                    recipeSteps.length === 0 ||
+                    recipeSteps?.some((step) => step.duration > 3600) ||
+                    durationInputErrors.size > 0
+                  }
+                >
+                  {isCreating
+                    ? isEditing
+                      ? "Updating..."
+                      : "Creating..."
+                    : isEditing
+                    ? "Update Recipe"
+                    : "Create Recipe"}
+                </Button>
+              )}
             </div>
 
             {/* Action Buttons and Duration Control */}
@@ -768,7 +785,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
               </div>
             )}
 
-            <div className="flex flex-col flex-1 h-[calc(100vh-420px)] min-h-0 overflow-auto">
+            <div className="flex flex-col flex-1 h-[calc(100vh-440px)] min-h-0 overflow-auto">
               <div className="flex justify-between items-center mb-2">
                 <div className="text-neutral-500 dark:text-neutral-400 text-sm">
                   <span className="mr-1 font-medium text-neutral-900 dark:text-neutral-100">
@@ -818,6 +835,39 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
                 )}
               </div>
             </div>
+
+            {/* Dialog Action Buttons */}
+            {onBack && (
+              <div className="flex justify-end items-center gap-3  border-neutral-200 dark:border-neutral-700">
+                <Button
+                  variant="outline"
+                  onClick={onBack}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  loading={isCreating}
+                  onClick={handleSave}
+                  disabled={
+                    isCreating ||
+                    !recipeName ||
+                    recipeSteps.length === 0 ||
+                    recipeSteps?.some((step) => step.duration > 3600) ||
+                    durationInputErrors.size > 0
+                  }
+                >
+                  {isCreating
+                    ? isEditing
+                      ? "Updating..."
+                      : "Creating..."
+                    : isEditing
+                    ? "Update Recipe"
+                    : "Create Recipe"}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

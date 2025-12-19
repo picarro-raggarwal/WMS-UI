@@ -4,7 +4,6 @@ import {
 } from "@/lib/store/settings-global.slice";
 import { protectedBaseQuery } from "@/utils";
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { mockPortConfigurationData } from "./port-configuration-mock-data";
 
 export interface PortConfigurationResult {
   enabled_ports: number[];
@@ -67,30 +66,31 @@ export interface UpdatePortConfigurationResponse {
 // Main port configuration API (uses /api/system_status/api/v2)
 export const portConfigurationApi = createApi({
   reducerPath: "portConfigurationApi",
-  baseQuery: protectedBaseQuery("/api/system_status/api/v2"),
+  baseQuery: protectedBaseQuery("/wms-api/system_status/api/v2"),
   tagTypes: ["PortConfiguration", "PortLabels"],
   endpoints: (builder) => ({
     getPortConfiguration: builder.query<PortConfigurationResponse, void>({
       providesTags: ["PortConfiguration"],
-      async queryFn(_arg, _queryApi, _extraOptions) {
-        const baseQuery = protectedBaseQuery("/api/system_status/api/v2");
-        const result = await baseQuery(
-          {
-            url: "/port_configuration",
-            method: "GET"
-          },
-          _queryApi,
-          _extraOptions
-        );
+      query: () => "/port_configuration",
+      // async queryFn(_arg, _queryApi, _extraOptions) {
+      //   const baseQuery = protectedBaseQuery("/wms-api/system_status/api/v2");
+      //   const result = await baseQuery(
+      //     {
+      //       url: "/port_configuration",
+      //       method: "GET"
+      //     },
+      //     _queryApi,
+      //     _extraOptions
+      //   );
 
-        // If API fails, return mock data
-        if (result.error) {
-          return { data: mockPortConfigurationData };
-        }
+      //   // If API fails, return mock data
+      //   if (result.error) {
+      //     return { data: mockPortConfigurationData };
+      //   }
 
-        // Return the actual API response
-        return { data: result.data as PortConfigurationResponse };
-      },
+      //   // Return the actual API response
+      //   return { data: result.data as PortConfigurationResponse };
+      // },
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;

@@ -235,6 +235,7 @@ export const PortConfigurationTab = () => {
 
   // Helper function to extract error message from API error
   const extractErrorMessage = (error: any): string | null => {
+    console.log(error);
     if (
       error?.data?.message &&
       typeof error.data.message === "string" &&
@@ -255,6 +256,13 @@ export const PortConfigurationTab = () => {
       error.message.trim()
     ) {
       return error.message.trim();
+    }
+    if (
+      error?.data?.text &&
+      typeof error.data.text === "string" &&
+      error.data.text?.trim()
+    ) {
+      return error.data.text.trim();
     }
     if (typeof error === "string" && error.trim()) {
       return error.trim();

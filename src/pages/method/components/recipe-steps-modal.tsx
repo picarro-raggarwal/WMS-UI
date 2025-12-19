@@ -15,19 +15,14 @@ import {
 import { ChevronDown, ChevronUp, Clock, Settings } from "lucide-react";
 import { useState } from "react";
 import { mockStepNames } from "../data/mock-recipe";
-
-interface MockRecipeStep {
-  step_id: number;
-  duration: number;
-  step_sequence: number;
-}
+import { RecipeStep } from "../data/recipes.slice";
 
 interface RecipeStepsModalProps {
   isOpen: boolean;
   onClose: () => void;
   recipeName: string;
   recipeId: number;
-  steps: MockRecipeStep[];
+  steps: RecipeStep[];
   onEdit?: () => void;
   readOnly?: boolean;
 }
@@ -57,7 +52,7 @@ const RecipeStepsModal = ({
 
   // Sort steps by sequence
   const sortedSteps = [...steps].sort((a, b) => {
-    return a.step_sequence - b.step_sequence;
+    return a.sequence - b.sequence;
   });
 
   // Toggle step expansion
@@ -106,7 +101,7 @@ const RecipeStepsModal = ({
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <div className="flex justify-center items-center bg-neutral-100 dark:bg-neutral-800 rounded-full w-6 h-6 font-medium text-neutral-900 dark:text-neutral-100 text-sm">
-                        {step.step_sequence + 1}
+                        {step.sequence + 1}
                       </div>
                       <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
                         {getStepName(step.step_id)}
@@ -158,7 +153,7 @@ const RecipeStepsModal = ({
                         Sequence
                       </span>
                       <span className="font-medium text-neutral-700 dark:text-neutral-300">
-                        {step.step_sequence}
+                        {step.sequence}
                       </span>
                     </div>
                   </div>
@@ -175,9 +170,7 @@ const RecipeStepsModal = ({
                         <p className="mt-1">
                           Duration: {formatDuration(step.duration)}
                         </p>
-                        <p className="mt-1">
-                          Sequence: {step.step_sequence + 1}
-                        </p>
+                        <p className="mt-1">Sequence: {step.sequence + 1}</p>
                       </div>
                     </div>
                   )}
