@@ -92,7 +92,8 @@ export type NewGasTankReplacement = {
 export const gasTanksApi = createApi({
   reducerPath: "gasTanksApi",
   baseQuery: protectedBaseQuery(
-    import.meta.env.VITE_FENCELINE_API_BASE_URL || "/api/fenceline_data/api/v1"
+    import.meta.env.VITE_WMS_SYSTEM_HEALTH_API_BASE_URL ||
+      "/wms-api/wms_system_health/api/v1"
   ),
   tagTypes: [
     "GasTanks",
@@ -109,16 +110,19 @@ export const gasTanksApi = createApi({
         lastFetched: Date.now()
       })
     }),
+
     getRecentGasTanks: builder.query<RecentGasTank[], number>({
       query: (number) => `/recent_gas_tanks?number=${number}`,
       transformResponse: (response: RecentGasTanksResponse) =>
         response.recent_tanks,
       providesTags: ["RecentGasTanks"]
     }),
+
     getGasTankTypes: builder.query<GasTankTypesResponse, void>({
       query: () => "/gas_tank_types",
       providesTags: ["GasTankTypes"]
     }),
+
     getGasTankConcentrations: builder.query<
       GasTankConcentrationsResponse,
       number
@@ -126,6 +130,7 @@ export const gasTanksApi = createApi({
       query: (gasTankId) => `/gas_tank_concentrations?gas_tank_id=${gasTankId}`,
       providesTags: ["GasTankConcentrations"]
     }),
+
     updateGasTank: builder.mutation<void, GasTankReplacement>({
       query: (replacement) => ({
         url: "/gas_tank_replaced",
@@ -134,6 +139,7 @@ export const gasTanksApi = createApi({
       }),
       invalidatesTags: ["GasTanks"]
     }),
+
     replaceGasTank: builder.mutation<void, NewGasTankReplacement>({
       query: (replacement) => ({
         url: "/gas_tank_replaced",
