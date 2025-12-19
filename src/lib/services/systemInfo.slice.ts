@@ -21,7 +21,10 @@ export interface SystemInfoResponse {
 
 export const systemInfoApi = createApi({
   reducerPath: "systemInfoApi",
-  baseQuery: protectedBaseQuery("/api/system_status/api/v2"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_SYSTEM_STATUS_API_BASE_URL ||
+      "/wms_api/system_status/api/v2"
+  ),
   endpoints: (builder) => ({
     getSystemInfo: builder.query<SystemInfoResponse, void>({
       query: () => "/about_info"

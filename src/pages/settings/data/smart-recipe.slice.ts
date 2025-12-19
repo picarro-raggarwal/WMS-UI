@@ -17,7 +17,10 @@ export interface UpdateSmartRecipeConfigRequest {
 
 export const smartRecipeApi = createApi({
   reducerPath: "smartRecipeApi",
-  baseQuery: protectedBaseQuery("/api/system_status/api/v2"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_SYSTEM_STATUS_API_BASE_URL ||
+      "/api/system_status/api/v2"
+  ),
   tagTypes: ["SmartRecipeConfig"],
   endpoints: (builder) => ({
     getSmartRecipeConfig: builder.query<SmartRecipeConfigResponse, void>({

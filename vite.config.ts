@@ -22,26 +22,32 @@ export default defineConfig({
     port: 3001,
     proxy: {
       "/wms-api": {
-        // target: "http://slim100-beta.corp.picarro.com:8000",
-        target: "http://20.20.14.230:32769",
+        target:
+          process.env.VITE_PROXY_WMS_API_TARGET || "http://20.20.14.230:32769",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace("/wms-api", "")
       },
       "/auth-api": {
-        target: "http://slim100-beta.corp.picarro.com:8098",
+        target:
+          process.env.VITE_PROXY_AUTH_API_TARGET ||
+          "http://slim100-beta.corp.picarro.com:8098",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace("/auth-api", "api")
       },
       "/api": {
-        target: "http://fenceline-dell1.corp.picarro.com:8000",
+        target:
+          process.env.VITE_PROXY_API_TARGET ||
+          "http://fenceline-dell1.corp.picarro.com:8000",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace("/api", "")
       },
       "/socket.io": {
-        target: "ws://fenceline-dell1.corp.picarro.com:8090",
+        target:
+          process.env.VITE_PROXY_SOCKET_IO_TARGET ||
+          "ws://fenceline-dell1.corp.picarro.com:8090",
         changeOrigin: true,
         secure: false,
         ws: true

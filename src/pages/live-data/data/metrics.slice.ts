@@ -32,7 +32,9 @@ export type MetricDataResponse = {
 
 export const metricsApi = createApi({
   reducerPath: "metricsApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_API_BASE_URL || "/api/fenceline_data/api/v1"
+  ),
   tagTypes: ["Metrics"],
   endpoints: (builder) => ({
     getMetrics: builder.query<MetricsResponse, void>({

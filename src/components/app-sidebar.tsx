@@ -29,7 +29,7 @@ import {
   SystemInfoResponse,
   useGetSystemInfoQuery
 } from "@/lib/services/systemInfo.slice";
-// import { useGetTimeQuery } from "@/lib/services/timesync.slice";
+import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { useGetSystemMetricsQuery } from "@/pages/dashboard/data/systemMetrics.slice";
 import { WebSocketJobStateData } from "@/types";
 import { formatTime } from "@/utils";
@@ -213,7 +213,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       : "opacity-0 pointer-events-none"
                   }`}
                 >
-                  WMS
+                  SYS-WMS
                   <p className="-mt-0.5 text-neutral-400 text-xs text-nowrap">
                     {isLoadingSystemInfo ? (
                       <div className="bg-neutral-500 rounded-full w-full h-4 animate-pulse"></div>
@@ -243,7 +243,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
 const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
   const { fencelineJobState, connected } = useSocket();
-  // const { data: timeData } = useGetTimeQuery();
+  const { data: timeData } = useGetTimeQuery();
 
   const [currentTime, setCurrentTime] = useState<{
     epoch: number;
@@ -253,14 +253,14 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
   const [browserTime, setBrowserTime] = useState(new Date());
 
   // Update local time when server data changes
-  // useEffect(() => {
-  //   if (timeData?.epoch && timeData?.timezone) {
-  //     setCurrentTime({
-  //       epoch: timeData.epoch,
-  //       timezone: timeData.timezone
-  //     });
-  //   }
-  // }, [timeData]);
+  useEffect(() => {
+    if (timeData?.epoch && timeData?.timezone) {
+      setCurrentTime({
+        epoch: timeData.epoch,
+        timezone: timeData.timezone
+      });
+    }
+  }, [timeData]);
 
   // increment local time every second in between polling
   useEffect(() => {
@@ -345,7 +345,7 @@ const SystemFooter = ({ systemInfo }: { systemInfo: SystemInfoResponse }) => {
     <div className="space-y-4 px-2 py-4 border-neutral-800 border-t border-b text-xs">
       <div className={`space-y-0.5`}>
         <h2 className="font-medium text-white text-nowrap wrap-nowrap">
-          {systemInfo?.model || "WMS"}
+          {systemInfo?.model || "SYS-WMS"}
         </h2>
         <p className="text-neutral-400 text-nowrap">
           {systemInfo?.serial_number}

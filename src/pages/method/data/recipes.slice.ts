@@ -74,7 +74,10 @@ export interface DeleteRecipeRequest {
 
 export const recipesApi = createApi({
   reducerPath: "recipesApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_recipes/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_RECIPE_BASE_URL ||
+      "/api/fenceline_recipes/api/v1"
+  ),
   tagTypes: ["Recipe", "Step"],
   endpoints: (builder) => ({
     getAllRecipes: builder.query<Recipe[], void>({

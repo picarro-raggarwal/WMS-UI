@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetSystemInfoQuery } from "@/lib/services/systemInfo.slice";
+import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { convertTimestampToTimezone, formatDateTime } from "@/utils";
 import { useLocalStorage } from "@mantine/hooks";
 import {
@@ -56,7 +57,7 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
   const { data: systemInfo, isLoading: isSystemInfoLoading } =
     useGetSystemInfoQuery();
 
-  // const { data: timeData } = useGetTimeQuery();
+  const { data: timeData } = useGetTimeQuery();
 
   const [currentTime, setCurrentTime] = useState<{
     epoch: number;
@@ -65,14 +66,14 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
 
   const [browserTime, setBrowserTime] = useState(new Date());
 
-  // useEffect(() => {
-  //   if (timeData?.epoch && timeData?.timezone) {
-  //     setCurrentTime({
-  //       epoch: timeData.epoch,
-  //       timezone: timeData.timezone
-  //     });
-  //   }
-  // }, [timeData]);
+  useEffect(() => {
+    if (timeData?.epoch && timeData?.timezone) {
+      setCurrentTime({
+        epoch: timeData.epoch,
+        timezone: timeData.timezone
+      });
+    }
+  }, [timeData]);
 
   // Increment local time every 5 seconds (reduced from 1 second)
   useEffect(() => {
@@ -256,7 +257,7 @@ const SettingsPage = ({ noTitle }: { noTitle?: boolean }) => {
                     <div className="flex-1 space-y-6">
                       <div>
                         <h1 className="mb-2 font-bold text-neutral-900 dark:text-neutral-100 text-2xl">
-                          {systemInfo.model}
+                          {systemInfo.model || "SYS-WMS"}
                         </h1>
                         <p className="text-neutral-600 dark:text-neutral-400 text-lg">
                           {systemInfo.serial_number}

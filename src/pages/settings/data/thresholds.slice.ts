@@ -8,7 +8,9 @@ import {
 
 export const thresholdsApi = createApi({
   reducerPath: "thresholdsApi",
-  baseQuery: protectedBaseQuery("/api/thresholds/api/v2"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_THRESHOLDS_API_BASE_URL || "/api/thresholds/api/v2"
+  ),
   tagTypes: ["SpeciesThresholds"],
   endpoints: (builder) => ({
     getAllSpeciesThresholds: builder.query<SpeciesThresholdsResponse, void>({

@@ -91,7 +91,9 @@ export type NewGasTankReplacement = {
 
 export const gasTanksApi = createApi({
   reducerPath: "gasTanksApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_API_BASE_URL || "/api/fenceline_data/api/v1"
+  ),
   tagTypes: [
     "GasTanks",
     "RecentGasTanks",

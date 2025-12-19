@@ -41,7 +41,9 @@ type CreateUserRequest = {
 
 export const userManagementApi = createApi({
   reducerPath: "userManagementApi",
-  baseQuery: protectedBaseQuery("/auth-api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_AUTH_API_V1_BASE_URL || "/auth-api/v1"
+  ),
   tagTypes: ["UsersList"],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({

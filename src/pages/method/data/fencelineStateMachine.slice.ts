@@ -26,7 +26,10 @@ export interface MeasurementStatus {
 
 export const fencelineStateMachineApi = createApi({
   reducerPath: "fencelineStateMachineApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_state_machine/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_STATE_MACHINE_API_BASE_URL ||
+      "/api/fenceline_state_machine/api/v1"
+  ),
   tagTypes: ["FencelineState", "MeasurementStatus"],
   endpoints: (builder) => ({
     getCurrentState: builder.query<FencelineState, void>({

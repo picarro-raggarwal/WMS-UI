@@ -44,7 +44,7 @@ const ALL_NAMESPACES = [
 class SocketService {
   private sockets: Record<string, Socket | null> = {};
   private readonly serverUrl = window.location.origin;
-  private path = "/socket.io";
+  private path = import.meta.env.VITE_SOCKET_IO_PATH || "/socket.io";
 
   // Namespace mappings
   private namespaces = {

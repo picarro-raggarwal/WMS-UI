@@ -10,7 +10,9 @@ interface WindRoseParams {
 
 export const dataReviewApi = createApi({
   reducerPath: "dataReviewApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_API_BASE_URL || "/api/fenceline_data/api/v1"
+  ),
   tagTypes: ["WindRose"],
   endpoints: (builder) => ({
     getWindRose: builder.query<WindData, WindRoseParams>({

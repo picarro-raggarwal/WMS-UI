@@ -12,7 +12,10 @@ interface SystemStatus {
 
 export const systemStatusApi = createApi({
   reducerPath: "systemStatusApi",
-  baseQuery: protectedBaseQuery("/wms-api/wms_system_health/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_WMS_SYSTEM_HEALTH_API_BASE_URL ||
+      "/wms-api/wms_system_health/api/v1"
+  ),
   tagTypes: ["SystemStatus"],
   endpoints: (builder) => ({
     getSystemStatus: builder.query<SystemStatus, void>({

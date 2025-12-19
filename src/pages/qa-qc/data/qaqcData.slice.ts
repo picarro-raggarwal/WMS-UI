@@ -3,7 +3,9 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 
 export const qaqcDataApi = createApi({
   reducerPath: "qaqcDataApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_API_BASE_URL || "/api/fenceline_data/api/v1"
+  ),
   tagTypes: ["QaQcState", "QaQcStateSummary", "QaQcHistory"],
   endpoints: (builder) => ({
     getQaQcState: builder.query<QaQcStateResponse, void>({

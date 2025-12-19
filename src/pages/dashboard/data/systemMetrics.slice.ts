@@ -59,7 +59,10 @@ interface SystemMetricsResponse {
 
 export const systemMetricsApi = createApi({
   reducerPath: "systemMetricsApi",
-  baseQuery: protectedBaseQuery("/wms-api/wms_system_health/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_WMS_SYSTEM_HEALTH_API_BASE_URL ||
+      "/wms-api/wms_system_health/api/v1"
+  ),
   tagTypes: ["SystemMetrics"],
   endpoints: (builder) => ({
     getSystemMetrics: builder.query<SystemMetricsResponse, void>({

@@ -30,7 +30,10 @@ export type SystemUptimeQueryType = "active_quarter" | `${number}`;
 
 export const qaqcApi = createApi({
   reducerPath: "qaqcApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_qaqc/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_QAQC_API_BASE_URL ||
+      "/api/fenceline_qaqc/api/v1"
+  ),
   tagTypes: ["DataCompleteness", "SystemUptime"],
   endpoints: (builder) => ({
     getDataCompleteness: builder.query<

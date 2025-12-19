@@ -15,7 +15,10 @@ interface JobHistoryItem {
 
 export const fencelineJobApi = createApi({
   reducerPath: "fencelineJobApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_job/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_JOB_API_BASE_URL ||
+      "/api/fenceline_job/api/v1"
+  ),
   tagTypes: ["JobHistory"],
   endpoints: (builder) => ({
     getJobHistory: builder.query<JobHistoryItem[], void>({

@@ -1,3 +1,7 @@
+import {
+  useGetInletsQuery,
+  useGetPortConfigurationQuery
+} from "@/pages/settings/data/port-configuration.slice";
 import { useGetProfileQuery } from "@/pages/settings/data/user-management.slice";
 import { AuthTokenResponse, PasswordUpdateRequiredResponse } from "@/utils";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -61,12 +65,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
   // Fetch user profile when authenticated
-  const { data: profileData, isLoading: isLoadingProfile } = useGetProfileQuery(
-    undefined,
-    {
-      skip: !isAuthenticated || !localStorage.getItem("token")
-    }
-  );
+  const { data: profileData } = useGetProfileQuery(undefined, {
+    skip: !isAuthenticated || !localStorage.getItem("token")
+  });
+
+  // Track if profile API was successful
+  const isProfileSuccess = !!profileData?.result;
+
+  // Trigger inlet and port configuration APIs only after profile API is successful
+  useGetInletsQuery(undefined, {
+    skip:
+      !isAuthenticated || !localStorage.getItem("token") || !isProfileSuccess
+  });
+
+  useGetPortConfigurationQuery(undefined, {
+    skip:
+      !isAuthenticated || !localStorage.getItem("token") || !isProfileSuccess
+  });
 
   // Update user data when profile is fetched
   useEffect(() => {

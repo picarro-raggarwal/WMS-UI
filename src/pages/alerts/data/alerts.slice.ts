@@ -92,7 +92,10 @@ export const normalizeSeverity = (severity: number | string): number => {
 
 export const alertsApi = createApi({
   reducerPath: "alertsApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_alert/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_ALERT_API_BASE_URL ||
+      "/api/fenceline_alert/api/v1"
+  ),
   tagTypes: ["Alerts", "ActiveAlerts", "AlertsSummary"],
   endpoints: (builder) => ({
     getAlerts: builder.query<AlertsResponse, AlertsQueryParams | void>({

@@ -446,7 +446,7 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
                 )}
               </div>
               <div className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5 truncate">
-                {port.name}
+                {port.displayLabel}
               </div>
               {roomName && (
                 <div className="flex items-center gap-1.5 mt-1">

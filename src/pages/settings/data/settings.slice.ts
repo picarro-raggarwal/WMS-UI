@@ -29,7 +29,10 @@ export interface SetHardwareSettingsRequest {
 
 export const settingsApi = createApi({
   reducerPath: "settingsApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_settings"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_SETTINGS_API_BASE_URL ||
+      "/api/fenceline_settings"
+  ),
   tagTypes: ["Settings"],
   endpoints: (builder) => ({
     getHardwareSettings: builder.query<SettingsResponse, void>({

@@ -51,7 +51,9 @@ interface AvailableSubcomponentsResponse {
 export const dataExportApi = createApi({
   reducerPath: "dataExportApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api/fenceline_data_export/api/v1"
+    baseUrl:
+      import.meta.env.VITE_FENCELINE_DATA_EXPORT_API_BASE_URL ||
+      "/api/fenceline_data_export/api/v1"
   }),
   tagTypes: ["Export"],
   endpoints: (builder) => ({

@@ -66,7 +66,10 @@ export interface UpdatePortConfigurationResponse {
 // Main port configuration API (uses /api/system_status/api/v2)
 export const portConfigurationApi = createApi({
   reducerPath: "portConfigurationApi",
-  baseQuery: protectedBaseQuery("/wms-api/system_status/api/v2"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_WMS_SYSTEM_STATUS_API_BASE_URL ||
+      "/wms-api/system_status/api/v2"
+  ),
   tagTypes: ["PortConfiguration", "PortLabels"],
   endpoints: (builder) => ({
     getPortConfiguration: builder.query<PortConfigurationResponse, void>({
@@ -125,7 +128,10 @@ export const portConfigurationApi = createApi({
 // Separate API for inlets endpoints (uses /wms-api/manage_inlet/api/v2)
 export const inletsApi = createApi({
   reducerPath: "inletsApi",
-  baseQuery: protectedBaseQuery("/wms-api/manage_inlet/api/v2"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_WMS_MANAGE_INLET_API_BASE_URL ||
+      "/wms-api/manage_inlet/api/v2"
+  ),
   tagTypes: ["Inlets"],
   endpoints: (builder) => ({
     getInlets: builder.query<InletsResponse, void>({

@@ -9,7 +9,9 @@ export interface TimeSyncResponse {
 
 export const timeSyncApi = createApi({
   reducerPath: "timeSyncApi",
-  baseQuery: protectedBaseQuery("/api/timesync/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_TIMESYNC_API_BASE_URL || "/api/timesync/api/v1"
+  ),
   endpoints: (builder) => ({
     getTime: builder.query<TimeSyncResponse, void>({
       query: () => "/time"

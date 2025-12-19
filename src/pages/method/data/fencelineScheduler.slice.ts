@@ -52,7 +52,10 @@ interface RunManualJobRequest {
 
 export const fencelineSchedulerApi = createApi({
   reducerPath: "fencelineSchedulerApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_scheduler/api/v1"),
+  baseQuery: protectedBaseQuery(
+    import.meta.env.VITE_FENCELINE_SCHEDULER_API_BASE_URL ||
+      "/api/fenceline_scheduler/api/v1"
+  ),
   tagTypes: ["SchedulerHealth", "Schedule"],
   endpoints: (builder) => ({
     getHealthCheck: builder.query<HealthCheckResponse, void>({

@@ -406,10 +406,6 @@ const RecipeFormModal = ({
       }}
     >
       <DialogContent className="!gap-0 bg-neutral-50 p-0 max-w-5xl">
-        {/* <DialogHeader className="bg-white p-6 rounded-t-lg">
-          <DialogTitle>{editingRecipeId ? "Edit Recipe" : "Create New Recipe"}</DialogTitle>
-        </DialogHeader> */}
-
         <div className="max-h-[calc(100vh-50px)] overflow-y-auto">
           <div className="gap-8 grid grid-cols-1 md:grid-cols-6 h-full">
             <div className="col-span-1 md:col-span-2 pt-6 pl-8">

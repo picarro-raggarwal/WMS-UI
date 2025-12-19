@@ -29,7 +29,7 @@ export const protectedBaseQuery = (
   // const client_secret = import.meta.env.VITE_AUTH_CLIENT_SECRET as string;
 
   const refreshRawBaseQuery = fetchBaseQuery({
-    baseUrl: "/auth-api/v1/auth",
+    baseUrl: import.meta.env.VITE_AUTH_API_BASE_URL || "/auth-api/v1/auth",
     prepareHeaders: (headers) => {
       // headers.set("Content-Type", "application/x-www-form-urlencoded");
       return headers;

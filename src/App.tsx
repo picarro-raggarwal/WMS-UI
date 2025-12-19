@@ -2,15 +2,11 @@ import { SystemStartupModal } from "@/components/SystemStartupModal";
 import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useSocket } from "@/hooks/useSocket";
-// import { useGetTimeQuery } from "@/lib/services/timesync.slice";
+import { useGetTimeQuery } from "@/lib/services/timesync.slice";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router";
 import { useGetSystemInfoQuery } from "./lib/services/systemInfo.slice";
 import { useGetSystemComponentsAvailabilityQuery } from "./pages/dashboard/data/systemMetrics.slice";
-import {
-  useGetInletsQuery,
-  useGetPortConfigurationQuery
-} from "./pages/settings/data/port-configuration.slice";
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -28,21 +24,12 @@ function App() {
   });
 
   // Initialize timesync at root level with polling every 30 seconds
-  // useGetTimeQuery(undefined, {
-  //   pollingInterval: 30000
-  // });
+  useGetTimeQuery(undefined, {
+    pollingInterval: 30000
+  });
 
   // Initialize system info at root level - only fetch when user is authenticated
   useGetSystemInfoQuery(undefined, {
-    skip: !isAuthenticated || !localStorage.getItem("token")
-  });
-
-  // Initialize inlets and port configuration at root level - only fetch when user is authenticated
-  // These APIs automatically update the global state via onQueryStarted callbacks
-  useGetInletsQuery(undefined, {
-    skip: !isAuthenticated || !localStorage.getItem("token")
-  });
-  useGetPortConfigurationQuery(undefined, {
     skip: !isAuthenticated || !localStorage.getItem("token")
   });
 
