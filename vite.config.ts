@@ -22,7 +22,8 @@ export default defineConfig({
     port: 3001,
     proxy: {
       "/wms-api": {
-        target: "http://slim100-beta.corp.picarro.com:8000",
+        // target: "http://slim100-beta.corp.picarro.com:8000",
+        target: "http://20.20.14.230:32769",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace("/wms-api", "")

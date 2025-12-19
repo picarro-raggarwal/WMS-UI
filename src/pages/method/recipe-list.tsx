@@ -1,8 +1,10 @@
+import { Spinner } from "@/components/spinner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
@@ -45,7 +47,12 @@ import CreateRecipePanel from "./components/create-recipe-panel";
 import DeleteRecipeModal from "./components/delete-recipe-modal";
 import RecipeStepsModal from "./components/recipe-steps-modal";
 import { useGetCurrentScheduleQuery } from "./data/fencelineScheduler.slice";
-import { MockRecipe, mockRecipes, mockStepNames } from "./data/mock-recipe";
+import { mockStepNames } from "./data/mock-recipe";
+import {
+  Recipe,
+  RecipeStep,
+  useGetAllRecipesQuery
+} from "./data/recipes.slice";
 
 interface EditingRecipe {
   id: number;
@@ -78,22 +85,24 @@ const RecipeList = () => {
   const [editingRecipe, setEditingRecipe] = useState<EditingRecipe | null>(
     null
   );
-  const [showCreateRecipe, setShowCreateRecipe] = useState(false);
+  const [createRecipeDialogOpen, setCreateRecipeDialogOpen] = useState(false);
 
   // Schedule confirmation modal state
   const [scheduleConfirmModalOpen, setScheduleConfirmModalOpen] =
     useState(false);
-  const [schedulingRecipe, setSchedulingRecipe] = useState<MockRecipe | null>(
-    null
-  );
+  const [schedulingRecipe, setSchedulingRecipe] = useState<Recipe | null>(null);
 
   const { data: currentSchedule } = useGetCurrentScheduleQuery();
 
-  // Use mock data instead of API
-  const recipes = mockRecipes;
+  // Fetch recipes from get_all_recipes API
+  const {
+    data: recipes,
+    isLoading: isLoadingRecipes,
+    isError: isErrorRecipes
+  } = useGetAllRecipesQuery();
 
-  const filteredRecipes = recipes
-    ?.filter((recipe) =>
+  const filteredRecipes = (recipes || [])
+    .filter((recipe) =>
       recipe.recipe_name.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter((recipe) => recipe.duration > 0);
@@ -106,7 +115,7 @@ const RecipeList = () => {
     return mockStepNames[stepId] || `Step ${stepId}`;
   };
 
-  const handleEditRecipe = (recipe: MockRecipe) => {
+  const handleEditRecipe = (recipe: Recipe) => {
     setEditingRecipe({
       id: recipe.recipe_row_id,
       name: recipe.recipe_name,
@@ -120,10 +129,10 @@ const RecipeList = () => {
           duration: step.duration
         })) || []
     });
-    setShowCreateRecipe(true);
+    setCreateRecipeDialogOpen(true);
   };
 
-  const handleDeleteRecipe = (recipe: MockRecipe) => {
+  const handleDeleteRecipe = (recipe: Recipe) => {
     setSelectedRecipe(recipe.recipe_row_id);
     setDeleteModalOpen(true);
   };
@@ -136,15 +145,15 @@ const RecipeList = () => {
 
   const handleCreateRecipe = () => {
     setEditingRecipe(null);
-    setShowCreateRecipe(true);
+    setCreateRecipeDialogOpen(true);
   };
 
-  const handleBackToRecipes = () => {
-    setShowCreateRecipe(false);
+  const handleCloseCreateRecipeDialog = () => {
+    setCreateRecipeDialogOpen(false);
     setEditingRecipe(null);
   };
 
-  const handleScheduleRecipe = (recipe: MockRecipe) => {
+  const handleScheduleRecipe = (recipe: Recipe) => {
     setSchedulingRecipe(recipe);
     setScheduleConfirmModalOpen(true);
   };
@@ -219,25 +228,6 @@ const RecipeList = () => {
     return null;
   };
 
-  if (showCreateRecipe) {
-    return (
-      <div className="h-full">
-        <CreateRecipePanel
-          onBack={handleBackToRecipes}
-          initialData={
-            editingRecipe
-              ? {
-                  name: editingRecipe.name,
-                  version_id: editingRecipe.version_id,
-                  steps: editingRecipe.steps
-                }
-              : undefined
-          }
-        />
-      </div>
-    );
-  }
-
   return (
     <Card className="relative flex flex-col shadow-xl p-6 overflow-hidden">
       <div className="top-0 left-0 absolute -mt-px w-full overflow-hidden">
@@ -275,7 +265,15 @@ const RecipeList = () => {
       </div>
 
       <div className="py-4 h-[calc(100vh-300px)] overflow-auto">
-        {filteredRecipes?.length === 0 ? (
+        {isLoadingRecipes ? (
+          <div className="flex justify-center items-center py-8">
+            <Spinner />
+          </div>
+        ) : isErrorRecipes ? (
+          <div className="py-8 text-red-500 dark:text-red-400 text-center">
+            Failed to load recipes. Please try again.
+          </div>
+        ) : filteredRecipes?.length === 0 ? (
           <div className="py-8 text-neutral-500 dark:text-neutral-400 text-center">
             {searchTerm ? "No recipes match your search" : "No recipes found"}
           </div>
@@ -460,9 +458,10 @@ const RecipeList = () => {
           }}
           recipeName={selectedRecipeData.recipe_name}
           recipeId={selectedRecipeData.recipe_row_id}
-          steps={selectedRecipeData.steps || []}
+          steps={(selectedRecipeData.steps || []) as RecipeStep[]}
           onEdit={() => {
             setStepsModalOpen(false);
+            setSelectedRecipe(null);
             handleEditRecipe(selectedRecipeData);
           }}
         />
@@ -479,6 +478,39 @@ const RecipeList = () => {
           recipeId={selectedRecipeData.recipe_row_id}
         />
       )}
+
+      {/* Create/Edit Recipe Dialog */}
+      <Dialog
+        open={createRecipeDialogOpen}
+        onOpenChange={setCreateRecipeDialogOpen}
+      >
+        <DialogContent className="max-w-[95vw] w-full h-[90vh] max-h-[90vh] overflow-hidden p-0 flex flex-col">
+          <DialogHeader className="sr-only">
+            <DialogTitle>
+              {editingRecipe ? "Edit Recipe" : "Create New Recipe"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingRecipe
+                ? "Modify the recipe name, steps, and durations"
+                : "Create a new recipe by adding ports and configuring step durations"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <CreateRecipePanel
+              onBack={handleCloseCreateRecipeDialog}
+              initialData={
+                editingRecipe
+                  ? {
+                      name: editingRecipe.name,
+                      version_id: editingRecipe.version_id,
+                      steps: editingRecipe.steps
+                    }
+                  : undefined
+              }
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Schedule Confirmation Modal */}
       <Dialog

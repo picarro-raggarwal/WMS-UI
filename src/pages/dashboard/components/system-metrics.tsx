@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger
 } from "@/components/ui/tooltip";
-import { useSocket } from "@/hooks/useSocket";
+// import { useSocket } from "@/hooks/useSocket";
 import { formatLabel } from "@/utils";
 import NumberFlow from "@number-flow/react";
 import { AlertCircle, CheckCircle2, Info } from "lucide-react";
@@ -284,7 +284,7 @@ function MetricCard({ metric }: { metric: SystemMetric }) {
 }
 
 export function MetricsCards() {
-  const { fencelineJobState, connected } = useSocket();
+  // const { fencelineJobState, connected } = useSocket();
   const [hasStableError, setHasStableError] = useState(false); // this is to prevent the error from flickering when the data is loading while error is present
 
   const {
@@ -293,9 +293,10 @@ export function MetricsCards() {
     isError: isMetricsDataError,
     isSuccess
   } = useGetSystemMetricsQuery(undefined, {
-    skip: fencelineJobState?.state === "SystemStartup" || !connected,
+    // skip: fencelineJobState?.state === "SystemStartup" || !connected,
     pollingInterval:
-      fencelineJobState?.state === "SystemStartup" || !connected ? 0 : 5000
+      // fencelineJobState?.state === "SystemStartup" || !connected ? 0 : 5000
+      5000
   });
 
   useEffect(() => {

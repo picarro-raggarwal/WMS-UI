@@ -59,7 +59,7 @@ interface SystemMetricsResponse {
 
 export const systemMetricsApi = createApi({
   reducerPath: "systemMetricsApi",
-  baseQuery: protectedBaseQuery("/api/fenceline_data/api/v1"),
+  baseQuery: protectedBaseQuery("/wms-api/wms_system_health/api/v1"),
   tagTypes: ["SystemMetrics"],
   endpoints: (builder) => ({
     getSystemMetrics: builder.query<SystemMetricsResponse, void>({

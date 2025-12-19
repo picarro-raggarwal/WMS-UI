@@ -29,17 +29,25 @@ export const DurationInput: FC<DurationInputProps> = ({
 
   const minutesRef = useRef<HTMLInputElement>(null);
   const secondsRef = useRef<HTMLInputElement>(null);
+  const onErrorRef = useRef(onError);
+  const onSuccessRef = useRef(onSuccess);
+
+  // Keep refs up to date
+  useEffect(() => {
+    onErrorRef.current = onError;
+    onSuccessRef.current = onSuccess;
+  }, [onError, onSuccess]);
 
   // Call error callbacks when error state changes
   useEffect(() => {
-    if (onError && onSuccess) {
+    if (onErrorRef.current && onSuccessRef.current) {
       if (error.isError) {
-        onError();
+        onErrorRef.current();
       } else {
-        onSuccess();
+        onSuccessRef.current();
       }
     }
-  }, [error.isError, onError, onSuccess]);
+  }, [error.isError]);
 
   // Update internal state when value prop changes
   useEffect(() => {
