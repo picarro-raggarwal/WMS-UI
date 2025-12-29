@@ -33,7 +33,7 @@ type ScheduleJob = MeasurementJob | CalibrationJob;
 // Interface for scheduling a measure job (simpler, one-time job)
 interface ScheduleMeasureJobRequest {
   start_epoch: number;
-  recipe_row_id: number;
+  recipe_id: number;
 }
 
 // Interface for scheduling a calibration job (recurring job)
@@ -42,12 +42,14 @@ interface ScheduleCalibrationJobRequest {
   end_epoch: number;
   frequency_unit: string;
   frequency: number;
-  recipe_row_id: number;
+  recipe_id: number;
 }
 
 // Interface for running a manual job
 interface RunManualJobRequest {
-  recipe_row_id: number;
+  port_id: number;
+  bank_id: number;
+  duration_seconds: number;
 }
 
 export const fencelineSchedulerApi = createApi({

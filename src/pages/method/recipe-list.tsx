@@ -55,9 +55,8 @@ import {
 } from "./data/recipes.slice";
 
 interface EditingRecipe {
-  id: number;
+  recipe_id: number;
   name: string;
-  version_id: number;
   steps: {
     id: string;
     step_id: number;
@@ -108,7 +107,7 @@ const RecipeList = () => {
     .filter((recipe) => recipe.duration > 0);
 
   const selectedRecipeData = recipes?.find(
-    (r) => r.recipe_row_id === selectedRecipe
+    (r) => r.recipe_id === selectedRecipe
   );
 
   const getStepName = (stepId: number) => {
@@ -117,9 +116,8 @@ const RecipeList = () => {
 
   const handleEditRecipe = (recipe: Recipe) => {
     setEditingRecipe({
-      id: recipe.recipe_row_id,
+      recipe_id: recipe.recipe_id,
       name: recipe.recipe_name,
-      version_id: recipe.version_id,
       steps:
         recipe.steps?.map((step) => ({
           id: crypto.randomUUID(),
@@ -133,7 +131,7 @@ const RecipeList = () => {
   };
 
   const handleDeleteRecipe = (recipe: Recipe) => {
-    setSelectedRecipe(recipe.recipe_row_id);
+    setSelectedRecipe(recipe.recipe_id);
     setDeleteModalOpen(true);
   };
 
@@ -162,16 +160,14 @@ const RecipeList = () => {
     if (schedulingRecipe) {
       // TODO: Replace this with actual API call in the future
       // This handler contains all the recipe information you need:
-      const recipeInfo = {
-        recipe_row_id: schedulingRecipe.recipe_row_id,
-        recipe_id: schedulingRecipe.recipe_id,
-        recipe_name: schedulingRecipe.recipe_name,
-        version_id: schedulingRecipe.version_id,
-        duration: schedulingRecipe.duration,
-        steps: schedulingRecipe.steps,
-        created_at: schedulingRecipe.created_at
-        // Add any other fields you need for the API
-      };
+      // const recipeInfo = {
+      //   recipe_id: schedulingRecipe.recipe_id,
+      //   recipe_name: schedulingRecipe.recipe_name,
+      //   duration: schedulingRecipe.duration,
+      //   steps: schedulingRecipe.steps,
+      //   created_at: schedulingRecipe.created_at
+      //   // Add any other fields you need for the API
+      // };
 
       // console.log("Recipe scheduled with info:", recipeInfo);
 
@@ -211,9 +207,7 @@ const RecipeList = () => {
 
     const measurementJob = currentSchedule.find(
       (job) =>
-        job.job_type === "measure" &&
-        "recipe_row_id" in job &&
-        job.recipe_row_id === recipeId
+        job.job_type === "measure" && "recipe" in job && job.recipe === recipeId
     );
 
     if (measurementJob) {
@@ -306,12 +300,12 @@ const RecipeList = () => {
                 <TableBody>
                   {filteredRecipes.map((recipe) => {
                     const scheduleInfo = getRecipeScheduleInfo(
-                      recipe.recipe_row_id
+                      recipe.recipe_id
                     );
 
                     return (
                       <TableRow
-                        key={recipe.recipe_row_id}
+                        key={recipe.recipe_id}
                         className="hover:bg-neutral-100 dark:hover:bg-neutral-800"
                       >
                         <TableCell className="font-medium">
@@ -321,8 +315,7 @@ const RecipeList = () => {
                                 {formatLabel(recipe.recipe_name)}
                               </div>
                               <div className="text-neutral-500 dark:text-neutral-400 text-sm">
-                                ID: {recipe.recipe_row_id} • Version{" "}
-                                {recipe.version_id}
+                                ID: {recipe.recipe_id}
                               </div>
                             </div>
                           </div>
@@ -394,7 +387,7 @@ const RecipeList = () => {
                               variant="outline"
                               size="sm"
                               onClick={(e) =>
-                                handleViewSteps(e, recipe.recipe_row_id)
+                                handleViewSteps(e, recipe.recipe_id)
                               }
                               className="text-xs"
                             >
@@ -457,7 +450,7 @@ const RecipeList = () => {
             setSelectedRecipe(null);
           }}
           recipeName={selectedRecipeData.recipe_name}
-          recipeId={selectedRecipeData.recipe_row_id}
+          recipeId={selectedRecipeData.recipe_id}
           steps={(selectedRecipeData.steps || []) as RecipeStep[]}
           onEdit={() => {
             setStepsModalOpen(false);
@@ -475,7 +468,7 @@ const RecipeList = () => {
             setSelectedRecipe(null);
           }}
           recipeName={selectedRecipeData.recipe_name}
-          recipeId={selectedRecipeData.recipe_row_id}
+          recipeId={selectedRecipeData.recipe_id}
         />
       )}
 
@@ -502,7 +495,6 @@ const RecipeList = () => {
                 editingRecipe
                   ? {
                       name: editingRecipe.name,
-                      version_id: editingRecipe.version_id,
                       steps: editingRecipe.steps
                     }
                   : undefined

@@ -214,7 +214,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   }`}
                 >
                   SYS-WMS
-                  <p className="-mt-0.5 text-neutral-400 text-xs text-nowrap">
+                  <div className="-mt-0.5 text-neutral-400 text-xs text-nowrap">
                     {isLoadingSystemInfo ? (
                       <div className="bg-neutral-500 rounded-full w-full h-4 animate-pulse"></div>
                     ) : systemInfo?.serial_number ? (
@@ -222,7 +222,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     ) : (
                       "System Software"
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
             </button>

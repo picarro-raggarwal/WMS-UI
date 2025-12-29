@@ -133,10 +133,13 @@ export const convertTimestampToTimezone = (
     throw new Error("Invalid unix timestamp: must be a finite number");
   }
 
-  // Validate timezone
+  // Validate and normalize timezone (remove leading slashes)
   if (typeof timezone !== "string" || timezone.trim() === "") {
     throw new Error("Invalid timezone: must be a non-empty string");
   }
+
+  // Normalize timezone by removing leading slashes (e.g., '/UTC' -> 'UTC')
+  const normalizedTimezone = timezone.trim().replace(/^\/+/, "");
 
   // Convert unix timestamp to Date object
   const date = fromUnixTime(unixTimestamp);
@@ -149,7 +152,7 @@ export const convertTimestampToTimezone = (
   // Validate timezone by attempting to create a date formatter
   try {
     // Test timezone validity by creating a formatter
-    new Intl.DateTimeFormat("en-US", { timeZone: timezone });
+    new Intl.DateTimeFormat("en-US", { timeZone: normalizedTimezone });
   } catch (error) {
     throw new Error(
       `Invalid timezone '${timezone}': ${
@@ -162,7 +165,7 @@ export const convertTimestampToTimezone = (
   try {
     // Get the date components in the target timezone
     const formatter = new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone,
+      timeZone: normalizedTimezone,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -193,7 +196,7 @@ export const convertTimestampToTimezone = (
     return format(localDate, formatString);
   } catch (error) {
     throw new Error(
-      `Failed to convert timestamp to timezone '${timezone}': ${
+      `Failed to convert timestamp to timezone '${normalizedTimezone}': ${
         error instanceof Error ? error.message : "Unknown error"
       }`
     );

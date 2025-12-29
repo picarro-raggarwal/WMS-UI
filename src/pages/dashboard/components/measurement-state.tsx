@@ -11,8 +11,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { useGetJobHistoryQuery } from "@/pages/method/data/fencelineJob.slice";
 import {
   CurrentJob,
-  useGetCurrentStateQuery,
-  useGetMeasurementStatusQuery
+  useGetCurrentStateQuery
 } from "@/pages/method/data/fencelineStateMachine.slice";
 import { WebSocketJobData, WebSocketJobStateData } from "@/types";
 import { formatLabel, formatTime, formatUnixTimestamp } from "@/utils";
@@ -39,12 +38,6 @@ const MeasurementState = () => {
   // Only query these endpoints if websocket has an error or is not connected
   const { data: stateData, isLoading: isStateLoading } =
     useGetCurrentStateQuery(undefined, {
-      pollingInterval: 5000,
-      skip: connected && !wsError
-    });
-
-  const { data: measurementStateData, isLoading: isMeasurementStateLoading } =
-    useGetMeasurementStatusQuery(undefined, {
       pollingInterval: 5000,
       skip: connected && !wsError
     });
@@ -94,18 +87,16 @@ const MeasurementState = () => {
 
   // Fall back to API data if websocket fails
   useEffect(() => {
-    if (!wsError || !stateData || !measurementStateData) return;
+    if (!wsError || !stateData) return;
 
     setCurrentState({
       state: stateData.state,
-      current_job: measurementStateData.current_job,
+      current_job: null,
       lastFetched: Date.now()
     });
-  }, [wsError, stateData, measurementStateData]);
+  }, [wsError, stateData]);
 
-  const isLoading =
-    (!connected && (isStateLoading || isMeasurementStateLoading)) ||
-    isJobHistoryLoading;
+  const isLoading = (!connected && isStateLoading) || isJobHistoryLoading;
 
   if (isLoading || !currentState) {
     return (

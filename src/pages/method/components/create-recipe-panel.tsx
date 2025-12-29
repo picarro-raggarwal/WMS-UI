@@ -60,7 +60,6 @@ interface CreateRecipePanelProps {
   onBack?: () => void;
   initialData?: {
     name: string;
-    version_id: number;
     steps: {
       id: string;
       step_id: number;
@@ -376,7 +375,6 @@ const CreateRecipePanel = ({ onBack, initialData }: CreateRecipePanelProps) => {
       } else {
         await createRecipe({
           recipe_name: recipeName,
-          version_id: 1, // Default version
           recipe_duration: totalDurationSeconds,
           steps: formattedSteps
         }).unwrap();

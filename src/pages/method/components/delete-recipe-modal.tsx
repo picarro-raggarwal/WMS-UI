@@ -1,15 +1,15 @@
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useDeleteRecipeMutation } from "../data/recipes.slice";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useDeleteRecipeMutation } from "../data/recipes.slice";
 
 interface DeleteRecipeModalProps {
   isOpen: boolean;
@@ -18,14 +18,18 @@ interface DeleteRecipeModalProps {
   recipeId: number;
 }
 
-const DeleteRecipeModal = ({ isOpen, onClose, recipeName, recipeId }: DeleteRecipeModalProps) => {
+const DeleteRecipeModal = ({
+  isOpen,
+  onClose,
+  recipeName,
+  recipeId
+}: DeleteRecipeModalProps) => {
   const [deleteRecipe, { isLoading }] = useDeleteRecipeMutation();
 
   const handleDelete = async () => {
     try {
       await deleteRecipe({
-        id: recipeId,
-        name: recipeName,
+        recipe_name: recipeName
       }).unwrap();
       toast.success("Recipe deleted successfully");
       onClose();
@@ -41,7 +45,8 @@ const DeleteRecipeModal = ({ isOpen, onClose, recipeName, recipeId }: DeleteReci
         <DialogHeader>
           <DialogTitle>Delete Recipe</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the recipe "{recipeName}"? This action cannot be undone.
+            Are you sure you want to delete the recipe "{recipeName}"? This
+            action cannot be undone.
           </DialogDescription>
         </DialogHeader>
 
@@ -50,7 +55,11 @@ const DeleteRecipeModal = ({ isOpen, onClose, recipeName, recipeId }: DeleteReci
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isLoading}>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

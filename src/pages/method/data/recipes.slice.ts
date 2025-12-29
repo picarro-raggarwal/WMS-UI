@@ -3,16 +3,13 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 
 export interface RecipeStep {
   recipe_step_id: number;
-  recipe_row_id: number;
   step_id: number;
   duration: number;
   sequence: number;
 }
 
 export interface Recipe {
-  recipe_row_id: number;
   recipe_id: number;
-  version_id: number;
   duration: number;
   recipe_name: string;
   created_at: number; // Unix timestamp
@@ -25,7 +22,6 @@ export interface RecipeResponse {
 
 export interface CreateRecipeRequest {
   recipe_name: string;
-  version_id: number;
   recipe_duration: number;
   steps?: {
     step_id: number;
@@ -56,9 +52,7 @@ export interface StepResponse {
 }
 
 export interface UpdateRecipeRequest {
-  recipe_row_id: number;
   recipe_name: string;
-  version_id: number;
   recipe_duration: number;
   steps?: {
     step_id: number;
@@ -68,8 +62,7 @@ export interface UpdateRecipeRequest {
 }
 
 export interface DeleteRecipeRequest {
-  id: number;
-  name: string;
+  recipe_name: string;
 }
 
 export const recipesApi = createApi({
@@ -86,9 +79,9 @@ export const recipesApi = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ recipe_row_id }) => ({
+              ...result.map(({ recipe_id }) => ({
                 type: "Recipe" as const,
-                id: recipe_row_id.toString()
+                id: recipe_id.toString()
               })),
               { type: "Recipe", id: "LIST" }
             ]
@@ -124,22 +117,21 @@ export const recipesApi = createApi({
         method: "POST",
         body: recipe
       }),
-      invalidatesTags: (result, error, { recipe_row_id }) => [
-        { type: "Recipe", id: recipe_row_id.toString() },
+      invalidatesTags: (result, error, { recipe_name }) => [
+        { type: "Recipe", id: recipe_name },
         { type: "Recipe", id: "LIST" }
       ]
     }),
 
     deleteRecipe: builder.mutation<void, DeleteRecipeRequest>({
       query: (params) => ({
-        url: `/delete_recipe?recipe_name=${encodeURIComponent(params.name)}`,
-        method: "DELETE",
-        body: {
-          recipe_row_id: params.id
-        }
+        url: `/delete_recipe?recipe_name=${encodeURIComponent(
+          params.recipe_name
+        )}`,
+        method: "DELETE"
       }),
       invalidatesTags: (result, error, params) => [
-        { type: "Recipe", id: params.id.toString() },
+        { type: "Recipe", id: params.recipe_name },
         { type: "Recipe", id: "LIST" }
       ]
     })

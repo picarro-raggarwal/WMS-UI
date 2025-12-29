@@ -1,15 +1,12 @@
-import { Spinner } from "@/components/spinner";
 import { PageHeader } from "@/components/ui/page-header";
 import { useMemo } from "react";
 import MeasurementState from "../dashboard/components/measurement-state";
 import SchedulerActions from "../dashboard/components/scheduler-actions";
-import { useGetHealthCheckQuery } from "./data/fencelineScheduler.slice";
 import { useGetAllRecipesQuery } from "./data/recipes.slice";
 import RecipeList from "./recipe-list";
 
 const MethodPage = () => {
   const { data: allRecipes } = useGetAllRecipesQuery();
-  const { isLoading, error } = useGetHealthCheckQuery();
 
   // Filter recipes with duration < 0 for manual jobs
   const manualRecipes = useMemo(() => {
@@ -18,18 +15,18 @@ const MethodPage = () => {
     // return allRecipes.filter((recipe: ApiRecipe) => recipe.duration <= 0);
   }, [allRecipes]);
 
-  if (isLoading)
-    return (
-      <div className="flex flex-col h-full overflow-hidden">
-        <PageHeader pageName="Method" />
-        <main className="flex flex-col gap-6 mx-auto px-8 md:px-12 py-3 w-full max-w-8xl h-full overflow-y-auto">
-          <div className="flex justify-center items-center p-40">
-            <Spinner size="8" />
-          </div>
-        </main>
-      </div>
-    );
-  if (error) return <div>Error checking scheduler health</div>;
+  // if (isLoading)
+  //   return (
+  //     <div className="flex flex-col h-full overflow-hidden">
+  //       <PageHeader pageName="Method" />
+  //       <main className="flex flex-col gap-6 mx-auto px-8 md:px-12 py-3 w-full max-w-8xl h-full overflow-y-auto">
+  //         <div className="flex justify-center items-center p-40">
+  //           <Spinner size="8" />
+  //         </div>
+  //       </main>
+  //     </div>
+  //   );
+  // if (error) return <div>Error checking scheduler health</div>;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

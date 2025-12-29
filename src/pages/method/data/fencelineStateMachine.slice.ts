@@ -18,19 +18,13 @@ export interface CurrentJob {
   recipe_name: string;
 }
 
-export interface MeasurementStatus {
-  system_status: string;
-  current_job?: CurrentJob;
-  lastFetched?: number;
-}
-
 export const fencelineStateMachineApi = createApi({
   reducerPath: "fencelineStateMachineApi",
   baseQuery: protectedBaseQuery(
     import.meta.env.VITE_STATE_MACHINE_API_BASE_URL ||
       "/api/fenceline_state_machine/api/v1"
   ),
-  tagTypes: ["FencelineState", "MeasurementStatus"],
+  tagTypes: ["FencelineState"],
   endpoints: (builder) => ({
     getCurrentState: builder.query<FencelineState, void>({
       query: () => "/current_state",
@@ -39,19 +33,8 @@ export const fencelineStateMachineApi = createApi({
         ...response,
         lastFetched: Date.now()
       })
-    }),
-    getMeasurementStatus: builder.query<MeasurementStatus, void>({
-      query: () => "/measurement_status",
-      providesTags: ["MeasurementStatus"],
-      transformResponse: (
-        response: Omit<MeasurementStatus, "lastFetched">
-      ) => ({
-        ...response,
-        lastFetched: Date.now()
-      })
     })
   })
 });
 
-export const { useGetCurrentStateQuery, useGetMeasurementStatusQuery } =
-  fencelineStateMachineApi;
+export const { useGetCurrentStateQuery } = fencelineStateMachineApi;
