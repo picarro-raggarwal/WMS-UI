@@ -11,7 +11,8 @@ const routeToPageName: Record<string, string> = {
   "/dashboard/method/create": "Create Recipe",
   "/dashboard/settings": "Settings",
   "/dashboard/service": "Service",
-  "/dashboard/alerts": "Alerts"
+  "/dashboard/alerts": "Alerts",
+  "/dashboard/personal-exposure": "Personal Exposure"
 };
 
 interface PageHeaderProps {

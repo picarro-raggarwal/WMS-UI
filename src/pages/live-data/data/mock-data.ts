@@ -12,7 +12,15 @@ export type MockData = {
   status: 0 | 1 | 2 | 3;
 };
 
-export function generateMockData(count: number): MockData[] {
+export function generateMockData(
+  portNumbers: number[] | number
+): MockData[] {
+  // Support both array of port numbers and count (for backward compatibility)
+  const ports: number[] =
+    typeof portNumbers === "number"
+      ? Array.from({ length: portNumbers }, (_, i) => i + 1)
+      : portNumbers;
+
   const getRandomConc = () => {
     const rand = Math.random();
     if (rand < 0.1) return null; // 10% chance of null
@@ -46,7 +54,7 @@ export function generateMockData(count: number): MockData[] {
   const activePorts: number[] = [];
 
   // First, generate all ports and identify active ones (non-null concentration)
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < ports.length; i++) {
     const conc = getRandomConc();
     if (conc !== null) {
       activePorts.push(i);
@@ -55,16 +63,20 @@ export function generateMockData(count: number): MockData[] {
 
   // Choose random indices for isSampling and isPrime only from active ports
   const samplingIndex =
-    activePorts[Math.floor(Math.random() * activePorts.length)];
+    activePorts.length > 0
+      ? activePorts[Math.floor(Math.random() * activePorts.length)]
+      : -1;
   let pumpIndex: number;
   do {
-    pumpIndex = activePorts[Math.floor(Math.random() * activePorts.length)];
-  } while (pumpIndex === samplingIndex); // Ensure different index
+    pumpIndex =
+      activePorts.length > 0
+        ? activePorts[Math.floor(Math.random() * activePorts.length)]
+        : -1;
+  } while (pumpIndex === samplingIndex && activePorts.length > 1); // Ensure different index
 
-  // Generate final data using centralized port names
-  // Generate all ports from 1 to 64 consistently (no randomization of which ports exist)
-  for (let i = 0; i < count; i++) {
-    const portNum = i + 1; // Ports 1 to 64 (not using modulo)
+  // Generate final data using actual port numbers from enabled ports
+  for (let i = 0; i < ports.length; i++) {
+    const portNum = ports[i]; // Use actual port number from API
     const conc = getRandomConc();
 
     // Use port number as seed for deterministic isDisabled/isActive

@@ -12,7 +12,9 @@ export type Boundary = {
 import { PortMarker } from "../types";
 import {
   calculateBoundaryType,
-  filterPortsInBoundaries
+  filterPortsInBoundaries,
+  getRandomConcentration,
+  getStatusFromConcentration
 } from "../utils/mapUtils";
 
 // Image configuration
@@ -77,7 +79,14 @@ const baseBoundaries: Omit<Boundary, "type">[] = [
   }
 ];
 
+// Helper function to generate status from concentration for mock data
+const generateStatusFromConcentration = (): 0 | 1 | 2 => {
+  const concentration = getRandomConcentration();
+  return getStatusFromConcentration(concentration);
+};
+
 // Default port markers placed in boundaries - 3 ports per boundary
+// Status is generated using concentration logic
 const baseMockPortMarkers: PortMarker[] = [
   // Room 1: Production Bay A - 3 ports
   {
@@ -92,7 +101,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-1",
     position: { x: 1600, y: 1600 },
-    status: 0 // green
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-2",
@@ -106,7 +115,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-1",
     position: { x: 1750, y: 1450 },
-    status: 1 // amber
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-3",
@@ -120,7 +129,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-1",
     position: { x: 1700, y: 1550 },
-    status: 2 // red
+    status: generateStatusFromConcentration()
   },
   // Room 2: Assembly Line 1 - 3 ports
   {
@@ -135,7 +144,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-2",
     position: { x: 1000, y: 1000 },
-    status: 0 // green
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-5",
@@ -149,7 +158,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-2",
     position: { x: 1150, y: 1100 },
-    status: 1 // amber
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-6",
@@ -163,7 +172,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-2",
     position: { x: 1300, y: 900 },
-    status: 2 // red
+    status: generateStatusFromConcentration()
   },
   // Room 3: Utilities Room - 3 ports
   {
@@ -178,7 +187,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-3",
     position: { x: 600, y: 1600 },
-    status: 0 // green
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-8",
@@ -192,7 +201,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-3",
     position: { x: 680, y: 1550 },
-    status: 1 // amber
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-9",
@@ -206,7 +215,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-3",
     position: { x: 750, y: 1500 },
-    status: 0 // green
+    status: generateStatusFromConcentration()
   },
   // Room 4: Quality Control - 3 ports
   {
@@ -221,7 +230,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-4",
     position: { x: 1000, y: 500 },
-    status: 1 // amber
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-11",
@@ -235,7 +244,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-4",
     position: { x: 1150, y: 600 },
-    status: 2 // red
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-12",
@@ -249,7 +258,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-4",
     position: { x: 1200, y: 700 },
-    status: 0 // green
+    status: generateStatusFromConcentration()
   },
   // Room 5: Storage Bay - 3 ports
   {
@@ -264,7 +273,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-5",
     position: { x: 950, y: 1650 },
-    status: 0 // green
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-14",
@@ -278,7 +287,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-5",
     position: { x: 1000, y: 1600 },
-    status: 1 // amber
+    status: generateStatusFromConcentration()
   },
   {
     id: "port-marker-15",
@@ -292,7 +301,7 @@ const baseMockPortMarkers: PortMarker[] = [
     },
     boundaryId: "room-5",
     position: { x: 1060, y: 1700 },
-    status: 2 // red
+    status: generateStatusFromConcentration()
   }
 ];
 

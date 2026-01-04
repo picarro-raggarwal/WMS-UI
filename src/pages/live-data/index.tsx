@@ -2,9 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/ui/page-header";
-import { loadPortConfig, type PortConfig } from "@/types/common/port-config";
+import { RootState } from "@/lib/store";
 import { FlaskConical, RotateCcw } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { ChartSyncProvider } from "../data-review/components/chart-sync-context";
 import { ChartProvider } from "../data-review/components/data-review-chart-context";
 import DataReviewLineChart from "../data-review/components/data-review-line-chart";
@@ -16,45 +17,63 @@ import {
   getStatusTextColorClass
 } from "./utils/colors";
 
-const TOTAL_PORTS = 64; // All 64 ports
-
 const LiveDataPage = () => {
-  // Load port configuration from shared storage
-  const [portConfig, setPortConfig] = useState<PortConfig>(() =>
-    loadPortConfig()
+  // Get inlets from global state (APIs are triggered at app mount)
+  const globalInlets = useSelector(
+    (state: RootState) => (state as any).settingsGlobal?.inlets
   );
 
-  // Listen for port config updates from settings
-  useEffect(() => {
-    const handleConfigUpdate = (event: CustomEvent) => {
-      setPortConfig(event.detail);
-    };
-    window.addEventListener(
-      "port-config-updated",
-      handleConfigUpdate as EventListener
-    );
-    return () => {
-      window.removeEventListener(
-        "port-config-updated",
-        handleConfigUpdate as EventListener
-      );
-    };
-  }, []);
+  // Get enabled ports from inlet API response and create a map for quick lookup
+  const enabledPortsMap = useMemo(() => {
+    // If global state is empty, return empty map (APIs are being fetched)
+    if (!globalInlets?.result || globalInlets.result.length === 0) {
+      return new Map<number, { portId: number; displayLabel: string }>();
+    }
 
-  // Generate mock data and update labels with port configuration
-  // Filter out disabled ports (both from port config and isDisabled field)
+    // Filter to only PORT type and isEnabled inlets
+    const enabledPortInlets = globalInlets.result.filter(
+      (inlet) => inlet.type === "PORT" && inlet.isEnabled === true
+    );
+
+    // Create a map of portId -> displayLabel for quick lookup
+    const portMap = new Map<number, { portId: number; displayLabel: string }>();
+    enabledPortInlets.forEach((inlet) => {
+      portMap.set(inlet.portId, {
+        portId: inlet.portId,
+        displayLabel: inlet.displayLabel
+      });
+    });
+
+    return portMap;
+  }, [globalInlets]);
+
+  // Extract port numbers (portId) from enabled inlets
+  const enabledPorts = useMemo(() => {
+    return Array.from(enabledPortsMap.keys());
+  }, [enabledPortsMap]);
+
+  // Generate mock data only for enabled ports from inlet API
+  // Use displayLabel from globalInlets for port names
   const liveData = useMemo(() => {
-    const data = generateMockData(TOTAL_PORTS);
-    // Update labels to use port configuration names and filter disabled ports
+    // If no enabled ports from API yet, return empty array
+    if (enabledPorts.length === 0) {
+      return [];
+    }
+
+    // Generate mock data only for enabled ports
+    const data = generateMockData(enabledPorts);
+
+    // Update labels to use displayLabel from globalInlets
     return data
-      .map((port) => ({
-        ...port,
-        label: portConfig.names[port.portNum] || port.label
-      }))
-      .filter(
-        (port) => portConfig.enabled[port.portNum] !== false && !port.isDisabled
-      );
-  }, [portConfig]);
+      .map((port) => {
+        const inletInfo = enabledPortsMap.get(port.portNum);
+        return {
+          ...port,
+          label: inletInfo?.displayLabel || port.label
+        };
+      })
+      .filter((port) => !port.isDisabled);
+  }, [enabledPorts, enabledPortsMap]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);

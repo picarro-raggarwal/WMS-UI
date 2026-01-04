@@ -20,7 +20,12 @@ import {
   usePortState
 } from "./hooks";
 import { PortMarker } from "./types";
-import { calculateBoundaryType, getAvailablePorts } from "./utils";
+import {
+  calculateBoundaryType,
+  getAvailablePorts,
+  getRandomConcentration,
+  getStatusFromConcentration
+} from "./utils";
 
 const MapDisplay = () => {
   // Sidebar collapse state
@@ -93,12 +98,9 @@ const MapDisplay = () => {
       return [];
     }
 
-    // Filter to only PORT type, isEnabled, and available inlets
+    // Filter to only PORT type and isEnabled inlets
     const enabledPortInlets = globalInlets.result.filter(
-      (inlet) =>
-        inlet.type === "PORT" &&
-        inlet.isEnabled === true &&
-        inlet.available === true
+      (inlet) => inlet.type === "PORT" && inlet.isEnabled === true
     );
 
     // Transform inlets to Port format
@@ -281,12 +283,16 @@ const MapDisplay = () => {
 
           // Only create marker if port is inside a valid boundary
           if (containingBoundary) {
+            // Generate concentration and status using same logic as live-data
+            const concentration = getRandomConcentration();
+            const status = getStatusFromConcentration(concentration);
             return {
               id: `port-marker-${Date.now()}-${Math.random()}`,
               port: previewMarker.port,
               boundaryId: containingBoundary.id,
-              position: previewMarker.coordinates
-            };
+              position: previewMarker.coordinates,
+              status
+            } as PortMarker;
           }
           return null;
         })

@@ -601,3 +601,40 @@ export const filterPortsInBoundaries = (
     return isPortInBoundary(marker.position, boundary);
   });
 };
+
+/**
+ * Generate a random concentration value using the same logic as live-data
+ * @returns Concentration string in ppb format or null
+ */
+export const getRandomConcentration = (): string | null => {
+  const rand = Math.random();
+  if (rand < 0.1) return null; // 10% chance of null
+
+  // Generate more varied concentration values for better threshold demonstration
+  if (rand > 0.1 && rand < 0.2) {
+    return `${(80 + Math.random() * 40).toFixed(1)} ppb`; // 80-120 ppb (above alarm threshold)
+  } else if (rand >= 0.2 && rand < 0.4) {
+    return `${(50 + Math.random() * 30).toFixed(1)} ppb`; // 50-80 ppb (above warning threshold)
+  } else if (rand >= 0.4 && rand < 0.7) {
+    return `${(20 + Math.random() * 30).toFixed(1)} ppb`; // 20-50 ppb (normal range)
+  } else {
+    return `${(Math.random() * 20).toFixed(1)} ppb`; // 0-20 ppb (very low)
+  }
+};
+
+/**
+ * Get port status from concentration value using the same logic as live-data
+ * @param concentration - Concentration string in ppb format or null
+ * @returns Status: 0 = Normal, 1 = Warning, 2 = Critical
+ */
+export const getStatusFromConcentration = (
+  concentration: string | null
+): 0 | 1 | 2 => {
+  // 0: Normal, 1: Warning, 2: Critical
+  if (concentration === null) return 0; // Treat null as normal for map display
+
+  const concNum = parseFloat(concentration);
+  if (concNum > 100) return 2; // Critical
+  if (concNum > 50) return 1; // Warning
+  return 0; // Normal
+};
